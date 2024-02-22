@@ -1,8 +1,8 @@
 {
   "dependencies": {
-    "@aws-sdk/client-s3": "3.515.0",
-    "@pulumi/aws": "6.22.2",
-    "@pulumi/awsx": "2.5.0",
+    "@google-cloud/storage": "7.7.0",
+    "@pulumi/docker": "4.5.1",
+    "@pulumi/gcp": "7.9.0",
     "@pulumi/pulumi": "3.106.0",
     "@pulumi/random": "4.15.1",
     "dotenv": "16.4.5",
@@ -13,12 +13,12 @@
   "devDependencies": {
     "@babel/cli": "7.23.9",
     "@babel/core": "7.23.9",
+    "@babel/plugin-syntax-import-attributes": "7.23.3",
     "@babel/preset-typescript": "7.23.3",
     "@busybox/babel-preset-typescript": "2024.1.27-alpha.131",
     "@busybox/eslint-config": "2024.1.27-alpha.131",
     "@busybox/prettier-config": "2024.1.27-alpha.131",
     "@busybox/tsconfig": "2024.1.27-alpha.131",
-    "@pulumi/awsguard": "0.4.0",
     "@pulumi/policy": "1.10.0",
     "@types/lodash.kebabcase": "4.1.9",
     "@types/node": "20.11.19",
@@ -34,7 +34,7 @@
   "name": "infrastructure",
   "private": true,
   "scripts": {
-    "build": "npx babel --out-dir ./bin --extensions .ts --ignore ./src/aws/ecr/node_modules --copy-files --no-copy-ignored ./src"
+    "build": "npx babel --out-dir ./bin --extensions .ts --ignore ./src/gcp/**/node_modules --copy-files --no-copy-ignored ./src"
   },
   "type": "module",
   "version": "2023.10.29-alpha.1713"

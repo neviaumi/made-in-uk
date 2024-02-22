@@ -1,5 +1,5 @@
-description: A minimal AWS TypeScript Pulumi for serverless
-name: project-bootstrap
+description: A infrastructure as code configurations
+name: made-in-uk
 runtime:
   name: nodejs
   options:

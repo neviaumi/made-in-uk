@@ -1,0 +1,19 @@
+{
+  "dependencies": {
+    "@google-cloud/firestore": "7.3.0",
+    "@google-cloud/pubsub": "4.3.2"
+  },
+  "engines": {
+    "node": ">=20",
+    "yarn": "Use npm"
+  },
+  "license": "MIT",
+  "main": "simple-http-counter.js",
+  "name": "api-sample",
+  "private": true,
+  "scripts": {
+    "start": "node simple-http-counter.js"
+  },
+  "type": "module",
+  "version": "0.0.14"
+}
