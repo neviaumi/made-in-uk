@@ -10,10 +10,9 @@ import {
 
 import { AppEnvironment } from '../../config/config.constants';
 import { ConfigService } from '../../config/config.module';
-import { Resource } from './resource.constants';
 import { SeederService } from './seeder.service';
 
-@Controller(`/test/seeder/${Resource.GAME}`)
+@Controller(`/test/seeder`)
 export class SeederController {
   constructor(
     private seederService: SeederService,
@@ -30,20 +29,20 @@ export class SeederController {
   async fineOne(@Param('id') id: string) {
     if (!this.shouldExposeEndpoint())
       throw new NotFoundException('Route Not found');
-    return { data: await this.seederService.fineOne(id) };
+    return { data: { id } };
   }
 
   @Get('/')
   async fineMany(@Query() query: any) {
     if (!this.shouldExposeEndpoint())
       throw new NotFoundException('Route Not found');
-    return { data: { items: await this.seederService.fineMany(query) } };
+    return { data: { items: [], query } };
   }
 
   @Post('/')
   async create(@Body() payload: any) {
     if (!this.shouldExposeEndpoint())
       throw new NotFoundException('Route Not found');
-    return { data: await this.seederService.create(payload) };
+    return { data: payload };
   }
 }

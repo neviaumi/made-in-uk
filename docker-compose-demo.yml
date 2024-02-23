@@ -1,0 +1,14 @@
+services:
+  api:
+    build:
+      context: ./systems/api
+      dockerfile: Dockerfile
+    command: node ./dist/main.js
+    environment:
+      - API_DATABASE_ID=made-in-uk-local-my-database-628698a
+      - API_ENV=development
+      - API_PORT=3000
+    ports:
+      - '3000:3000'
+    restart: on-failure
+version: '3.7'

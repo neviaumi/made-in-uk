@@ -55,7 +55,7 @@ onlyAllowServiceToServiceForInvokeAPI({
 });
 
 export const INFRASTRUCTURE_CLOUD_RUN_SERVICE_ACCOUNT = serviceAccount;
-export const API_DB_DATABASE_NAME = fireStoreDB.name;
+export const API_DATABASE_ID = fireStoreDB.name;
 export const WEB_BACKEND_HOST = apiUrl;
 export const API_WEB_HOST = webUrl;
 export const DOCKER_REGISTRY = dockerRepository;

@@ -25,16 +25,19 @@ import {
   Resolver,
 } from '@nestjs/graphql';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import type { TestingModuleBuilder } from '@nestjs/testing';
 import gql from 'graphql-tag';
 import type { Mock } from 'jest-mock';
+import { pipe } from 'ramda';
 
 import { createRequestAgent } from '../test-helpers/create-request-agent';
 import { expectResponseCode } from '../test-helpers/expect-response-code';
 import { getApolloServer } from '../test-helpers/get-apollo-server';
 import {
+  createTestingApp,
+  createTestingAppModule,
   startTestingServer,
-  withNestModuleBuilderContext,
-} from '../test-helpers/nest-app-context';
+} from '../test-helpers/with-api-server';
 
 @ObjectType()
 class TestModel {
@@ -69,28 +72,33 @@ class TestController {
   }
 }
 
-const moduleBuilderContext = withNestModuleBuilderContext({
-  controllers: [TestController],
-  imports: [],
-  providers: [TestResolver],
-});
-
 describe('General logging interceptor', () => {
   let app: NestExpressApplication;
   let logger: LoggerService;
+  const appBuilder = (logger: LoggerService) =>
+    pipe(
+      createTestingAppModule,
+      (moduleBuilder: TestingModuleBuilder) => moduleBuilder.compile(),
+      createTestingApp,
+      async appPromise => {
+        const app = (await appPromise) as NestExpressApplication;
+        app.useLogger(logger);
+        app.setViewEngine('hbs');
+        return app;
+      },
+      startTestingServer,
+    );
   beforeEach(async () => {
-    const module = await moduleBuilderContext.moduleBuilder.compile();
-    app = module.createNestApplication<NestExpressApplication>();
     logger = {
       error: jest.fn(),
       log: jest.fn(),
       warn: jest.fn(),
     };
-
-    app.useLogger(logger);
-    app.setViewEngine('hbs');
-
-    await startTestingServer(app);
+    app = (await appBuilder(logger)({
+      controllers: [TestController],
+      imports: [],
+      providers: [TestResolver],
+    })) as NestExpressApplication;
   });
   afterEach(async () => {
     await app?.close();

@@ -16,7 +16,10 @@ import gql from 'graphql-tag';
 
 import { getApolloServer } from '../test-helpers/get-apollo-server';
 import { getGraphqlErrorCodes } from '../test-helpers/get-graphql-error';
-import { withNestServerContext } from '../test-helpers/nest-app-context';
+import {
+  createTestingServer,
+  withAPIServer,
+} from '../test-helpers/with-api-server';
 
 @ObjectType()
 class TestModel {
@@ -67,13 +70,14 @@ class TestResolver {
   }
 }
 
-const appContext = withNestServerContext({
-  controllers: [],
-  imports: [],
-  providers: [TestResolver],
-});
-
-describe('Date sclar', () => {
+describe('Date scalar', () => {
+  const appContext = withAPIServer(
+    createTestingServer({
+      controllers: [],
+      imports: [],
+      providers: [TestResolver],
+    }),
+  );
   describe('query', () => {
     it('call graphql query with incorrect date input', async () => {
       const app = appContext.app;

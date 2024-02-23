@@ -1,20 +1,23 @@
 # Builder Stage
-FROM node:17.2.0-alpine3.13 AS builder
+FROM node:20-alpine AS builder
 
-WORKDIR /usr/src/demo
+WORKDIR /app
 
-COPY ./ .
+COPY ./package.json ./package-lock.json ./tsconfig.json ./
+COPY ./src/ ./src/
+# dev-seeding is used to demo purposes only
+COPY ./scripts/build.sh ./scripts/build.sh
 
 RUN npm ci --ignore-scripts && \
-    npm run build
+     sh ./scripts/build.sh
 
 # Run stage
-FROM node:17.2.0-alpine3.13
+FROM node:20-alpine
 
-WORKDIR /usr/src/demo
+WORKDIR /app
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json /app/package-lock.json ./
 
-RUN apk add dumb-init
-
-COPY --from=builder /usr/src/demo/ ./
+RUN npm ci --ignore-scripts --omit=dev
 
 USER node
