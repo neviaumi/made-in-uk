@@ -38,24 +38,29 @@ const { imageId: sampleApiImageId } = createApiSampleImage({
 const { imageId: sampleWebImageId } = createWebSampleImage({
   repositoryUrl: dockerRepository,
 });
-const { name: serviceName, url: apiUrl } = await createCloudRunForApi({
+const { name: apiServiceName, url: apiUrl } = await createCloudRunForApi({
   databaseName: fireStoreDB.name,
   simpleApiImage: sampleApiImageId,
-  topicId: topic.topicId,
 });
 
-const { serviceAccount, url: webUrl } = await createCloudRunForWeb({
+const {
+  name: webServiceName,
+  serviceAccount,
+  url: webUrl,
+} = await createCloudRunForWeb({
   apiEndpoint: apiUrl,
   simpleWebImage: sampleWebImageId,
 });
 
 onlyAllowServiceToServiceForInvokeAPI({
-  apiCloudRunServiceName: serviceName,
+  apiCloudRunServiceName: apiServiceName,
   webCloudRunServiceAccount: serviceAccount,
 });
 
 export const INFRASTRUCTURE_CLOUD_RUN_SERVICE_ACCOUNT = serviceAccount;
 export const API_DATABASE_ID = fireStoreDB.name;
-export const WEB_BACKEND_HOST = apiUrl;
-export const API_WEB_HOST = webUrl;
+export const API_CLOUD_RUN_SERVICE_NAME = apiServiceName;
+export const WEB_API_HOST = apiUrl;
+export const WEB_CLOUD_RUN_SERVICE_NAME = webServiceName;
+export const WEB_HOST = webUrl;
 export const DOCKER_REGISTRY = dockerRepository;

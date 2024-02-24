@@ -18,8 +18,12 @@ export async function createCloudRunForWeb({
         {
           envs: [
             {
-              name: 'WEB_BACKEND_HOST',
+              name: 'WEB_API_HOST',
               value: apiEndpoint,
+            },
+            {
+              name: 'WEB_PORT',
+              value: '8080',
             },
           ],
           image: simpleWebImage,
@@ -34,6 +38,7 @@ export async function createCloudRunForWeb({
   });
 
   return {
+    name: cloudRunService.name,
     serviceAccount: cloudRunService.template.serviceAccount,
     url: cloudRunService.uri,
   };
@@ -42,11 +47,9 @@ export async function createCloudRunForWeb({
 export async function createCloudRunForApi({
   databaseName,
   simpleApiImage,
-  topicId,
 }: {
   databaseName: Output<string>;
   simpleApiImage: Output<string>;
-  topicId: Output<string>;
 }) {
   const cloudRunService = new cloudrunv2.Service(resourceName`api`, {
     ingress: 'INGRESS_TRAFFIC_ALL',
@@ -57,12 +60,12 @@ export async function createCloudRunForApi({
         {
           envs: [
             {
-              name: 'FIRESTORE_DB',
+              name: 'API_DATABASE_ID',
               value: databaseName,
             },
             {
-              name: 'TOPIC_ID',
-              value: topicId,
+              name: 'API_PORT',
+              value: '8080',
             },
           ],
           image: simpleApiImage,
@@ -70,11 +73,6 @@ export async function createCloudRunForApi({
       ],
     },
   });
-  // new cloudrun.IamBinding(resourceName`allow-any-user-iam-binding`, {
-  //   members: ['allUsers'],
-  //   role: 'roles/run.invoker',
-  //   service: cloudRunService.name,
-  // });
 
   return {
     name: cloudRunService.name,

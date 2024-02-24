@@ -8,6 +8,15 @@ services:
       - API_DATABASE_ID=made-in-uk-local-my-database-628698a
       - API_ENV=development
       - API_PORT=3000
+    restart: on-failure
+  web:
+    build:
+      context: ./systems/web
+      dockerfile: Dockerfile
+    command: sh ./scripts/docker/start.sh
+    environment:
+      - WEB_API_HOST=http://api:3000
+      - WEB_PORT=3000
     ports:
       - '3000:3000'
     restart: on-failure

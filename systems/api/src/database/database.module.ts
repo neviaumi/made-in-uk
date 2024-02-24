@@ -9,7 +9,7 @@ export class DatabaseConnection {
 
   constructor(private config: ConfigService) {
     const storeConfig = {
-      databaseId: this.config.get('firestore.databaseId'),
+      databaseId: this.config.getOrThrow('database.id'),
     };
     this.store = new Firestore(storeConfig);
   }

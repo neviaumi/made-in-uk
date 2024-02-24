@@ -1,9 +1,23 @@
 {
-  "$schema": "https://json.schemastore.org/tsconfig",
+  "include": ["remix.env.d.ts", "**/*.ts", "**/*.tsx"],
   "compilerOptions": {
-    "emitDeclarationOnly": false,
+    "lib": ["DOM", "DOM.Iterable", "ES2022"],
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "jsx": "react-jsx",
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "target": "ES2022",
+    "strict": true,
+    "allowJs": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./app/*"]
+    },
+
+    // Remix takes care of building everything in `remix build`.
     "noEmit": true
-  },
-  "extends": "@busybox/tsconfig/tsconfig-react.json",
-  "include": ["src", "cypress/support/component.tsx"]
+  }
 }

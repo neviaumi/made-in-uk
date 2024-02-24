@@ -15,5 +15,5 @@
     "start": "node simple-http-counter.js"
   },
   "type": "module",
-  "version": "0.0.14"
+  "version": "0.0.21"
 }

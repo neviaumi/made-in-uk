@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 
 import { GoogleAuth } from 'google-auth-library';
 
-const backendHost = process.env['WEB_BACKEND_HOST'];
+const backendHost = process.env['WEB_API_HOST'];
 const port = process.env['PORT'] || 8080;
 if (!backendHost) throw new Error('environment variable not set.');
 const auth = new GoogleAuth();
