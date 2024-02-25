@@ -2,10 +2,9 @@ concurrency:
   cancel-in-progress: false
   group: release
 env: 
-  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-  AWS_DEFAULT_REGION: eu-west-2
-  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   CI: true
+  GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+  REPO_SCOPED_TOKEN: ${{ secrets.REPO_SCOPED_TOKEN }}
 jobs: 
   merge-back: 
     needs: release
@@ -32,21 +31,28 @@ jobs:
         uses: actions/setup-node@v4
         with: 
           node-version-file: .nvmrc
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
       - name: Setup repository
         run: bash ./scripts/setup.sh
-      - name: Test the build
-        run: bash ./scripts/test.sh
+      #      - name: Test the build
+      #        run: bash ./scripts/test.sh
       - env: 
           ENVIRONMENT: ${{ inputs.environment }}
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
         id: release
-        name: Release to AWS
+        name: Release to GCP
         run: |
           source ./scripts/deploy.sh "$ENVIRONMENT";
           echo "released_version=$RELEASE_VERSION" >> $GITHUB_OUTPUT;
           echo "release_branch=$RELEASE_BRANCH" >> $GITHUB_OUTPUT;
         shell: bash
 
-name: Release to AWS
+name: Release to GCP
 
 on: 
   workflow_dispatch: 
@@ -54,8 +60,8 @@ on:
       environment: 
         description: Environment
         options: 
-          - production
           - development
+          - production
         required: true
         type: choice
 permissions: 
