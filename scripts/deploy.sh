@@ -4,11 +4,15 @@ set -ex
 ENVIRONMENT=$1
 
 if [ -z "$CI" ]; then
-  # https://github.com/orgs/community/discussions/26560
+  echo ""
+else
+  echo "I am in CI"
   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
   git config user.name "github-actions[bot]"
 fi
 
+echo "Running in email: $(git config user.email)"
+echo "Running in name: $(git config user.name)"
 # Disable the commit hook
 export HUSKY=0
 SCRIPT_LOCATION=$(dirname $(pwd)/${BASH_SOURCE[0]})
@@ -25,11 +29,13 @@ fi
 export RELEASE_BRANCH="release-$RELEASE_VERSION"
 export RELEASE_VERSION=$RELEASE_VERSION
 export CURRENT_BRANCH=$CURRENT_BRANCH
-COMMIT_MESSAGE="release v$RELEASE_VERSION [skip ci]"
+COMMIT_MESSAGE="release candidate v$RELEASE_VERSION [skip ci]"
 git switch -c "$RELEASE_BRANCH"
 git push --set-upstream origin "$RELEASE_BRANCH"
 npx lerna version --message "$COMMIT_MESSAGE" --yes $RELEASE_VERSION
 #npx lerna version --no-git-tag-version --no-push --yes $RELEASE_VERSION
+gcloud auth application-default login --no-browser --quiet
+
 npx lerna exec --stream \
 --scope 'infrastructure' \
 -- "bash scripts/ci/deploy.sh $ENVIRONMENT"
@@ -53,3 +59,7 @@ npx lerna exec --stream \
 npx lerna exec --stream \
 --scope 'web' \
 -- "bash scripts/ci/deploy.sh"
+
+git add .
+git commit -m "release v$RELEASE_VERSION [skip ci]"
+git push
