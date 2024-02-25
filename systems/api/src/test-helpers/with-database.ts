@@ -1,9 +1,8 @@
-import * as process from 'node:process';
-
 import { Firestore } from '@google-cloud/firestore';
 import { beforeEach } from '@jest/globals';
 import { TestingModuleBuilder } from '@nestjs/testing';
 
+import { configuration } from '../config/configuration';
 import { DatabaseConnection } from '../database/database.module';
 
 function cleanupCollection(firestore: Firestore, collectionName: string) {
@@ -24,12 +23,14 @@ function cleanupCollection(firestore: Firestore, collectionName: string) {
 }
 
 export function withDatabaseCleanup(testCollectionName: string) {
-  const databaseId = process.env['API_DATABASE_ID'];
-  if (!databaseId) {
-    throw new Error('API_DATABASE_ID is required');
-  }
+  const databaseId = configuration().database.id;
   const firestore = new Firestore({
     databaseId,
+  });
+  // eslint-disable-next-line no-console
+  console.log({
+    databaseId,
+    message: 'Cleaning up collection',
   });
   beforeEach(async () => {
     await cleanupCollection(firestore, `test-${testCollectionName}`)();
@@ -38,10 +39,7 @@ export function withDatabaseCleanup(testCollectionName: string) {
 }
 
 export function withDatabase(testCollectionName: string) {
-  const databaseId = process.env['API_DATABASE_ID'];
-  if (!databaseId) {
-    throw new Error('API_DATABASE_ID is required');
-  }
+  const databaseId = configuration().database.id;
   const firestore = new Firestore({
     databaseId,
   });

@@ -15,11 +15,14 @@ export function configuration() {
     allowed: 'strict',
   });
   const env = envSchema.get('env');
+  const shouldUseFirestoreEmulator =
+    [AppEnvironment.TEST as string].includes(env) &&
+    process.env['FIRESTORE_EMULATOR_HOST'];
   const configSchema = convict({
     database: {
       id: {
-        default: null,
-        env: 'API_DATABASE_ID',
+        default: shouldUseFirestoreEmulator ? 'unused' : null,
+        env: shouldUseFirestoreEmulator ? 'UNUSED' : 'API_DATABASE_ID',
         format: String,
       },
     },
