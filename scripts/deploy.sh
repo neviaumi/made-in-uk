@@ -4,11 +4,15 @@ set -ex
 ENVIRONMENT=$1
 
 if [ -z "$CI" ]; then
-  # https://github.com/orgs/community/discussions/26560
+  echo ""
+else
+  echo "I am in CI"
   git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
   git config user.name "github-actions[bot]"
 fi
 
+echo "Running in email: $(git config user.email)"
+echo "Running in name: $(git config user.name)"
 # Disable the commit hook
 export HUSKY=0
 SCRIPT_LOCATION=$(dirname $(pwd)/${BASH_SOURCE[0]})
