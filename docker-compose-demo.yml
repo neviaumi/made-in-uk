@@ -5,10 +5,16 @@ services:
       dockerfile: Dockerfile
     command: node ./dist/main.js
     environment:
-      - API_DATABASE_ID=made-in-uk-local-my-database-628698a
+      - API_DATABASE_ID=made-in-uk-demo
       - API_ENV=development
       - API_PORT=3000
+      - FIRESTORE_EMULATOR_HOST=firestore:8080
     restart: on-failure
+  firestore:
+    command: gcloud firestore start --host-port=0.0.0.0:8080
+    environment:
+      - FIRESTORE_EMULATOR_HOST=firestore:8080
+    image: 'gcr.io/google.com/cloudsdktool/cloud-sdk:latest'
   web:
     build:
       context: ./systems/web

@@ -1,47 +1,47 @@
-import type { MetaFunction } from "@remix-run/node";
-import {json } from "@remix-run/node";
-import {useLoaderData} from "@remix-run/react";
-import gql from 'graphql-tag'
-import {print} from 'graphql'
+import type { MetaFunction } from '@remix-run/node';
+import { json } from '@remix-run/node';
+import { useLoaderData } from '@remix-run/react';
+import { print } from 'graphql';
+import gql from 'graphql-tag';
+
+import { createFetchClient } from '../fetch.server.ts';
+
+const fetchClient = createFetchClient('graphql', {
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  method: 'POST',
+});
 export const meta: MetaFunction = () => {
   return [
-    { title: "New Remix App" },
-    { name: "description", content: "Welcome to Remix!" },
+    { title: 'New Remix App' },
+    { content: 'Welcome to Remix!', name: 'description' },
   ];
 };
 
-export async function loader ()  {
-  const {
-    webApiHost
-  } = {webApiHost: process.env['WEB_API_HOST']!}
-  if (!webApiHost) throw new Error('webApiHost is not defined');
-  const resp = await fetch(new URL('/graphql', webApiHost).toString(), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+export async function loader() {
+  const resp = await fetchClient('', {
     body: JSON.stringify({
       query: print(gql`
-      query getVisitCount {
-        visitCount {
+        query getVisitCount {
+          visitCount {
             count
+          }
         }
-      }
-      `)
-    })
+      `),
+    }),
   }).then(res => res.json());
   return json(resp);
 }
 
 export default function Index() {
-  const loaderData = useLoaderData<typeof loader>()
+  const loaderData = useLoaderData<typeof loader>();
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.8" }}>
+    <div style={{ fontFamily: 'system-ui, sans-serif', lineHeight: '1.8' }}>
       <h1>Welcome to Remix</h1>
       <ul>
         <li>
-          <pre>{JSON.stringify(loaderData, null, 4)}
-          </pre>
+          <pre>{JSON.stringify(loaderData, null, 4)}</pre>
         </li>
       </ul>
     </div>

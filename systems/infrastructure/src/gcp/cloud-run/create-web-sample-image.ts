@@ -16,34 +16,33 @@ export function createWebSampleImage({
 }: {
   repositoryUrl: Output<string>;
 }) {
-  const apiImage = repositoryUrl.apply(async repositoryUrl => {
+  return repositoryUrl.apply(async repositoryUrl => {
     const sampleApiVersion = packageJson['version'] as string;
     const apiImage = isRunningOnLocal()
       ? `${repositoryUrl}/sample-web:${sampleApiVersion}`
       : `${repositoryUrl}/sample-web:0.0.0`;
-    return await getRemoteImage({
+    const { exist: isImageExist } = await getRemoteImage({
       name: apiImage,
     })
-      .then(result => {
-        return {
-          id: result.name,
-          // name: result.name,
-        };
-      })
-      .catch(() => {
-        const image = new Image(resourceName`sample-web-image`, {
-          build: {
-            context: path.join(currentDir, 'sample-web'),
-          },
-          imageName: apiImage,
-        });
-        return {
-          id: image.id,
-          // name: image.imageName,
-        };
-      });
+      .then(() => ({
+        exist: true,
+      }))
+      .catch(() => ({
+        exist: false,
+      }));
+    const image = new Image(resourceName`sample-web-image`, {
+      build: {
+        context: path.join(currentDir, 'sample-web'),
+        platform: 'linux/amd64',
+      },
+      buildOnPreview: !isImageExist,
+      imageName: apiImage,
+      registry: {
+        server: repositoryUrl,
+      },
+    });
+    return {
+      imageId: image.id,
+    };
   });
-  return {
-    imageId: apiImage.id,
-  };
 }

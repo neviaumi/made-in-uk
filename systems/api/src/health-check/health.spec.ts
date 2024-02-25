@@ -25,10 +25,16 @@ describe('GET /healthz', () => {
         api: {
           status: 'up',
         },
+        database: {
+          status: 'up',
+        },
       },
       error: {},
       info: {
         api: {
+          status: 'up',
+        },
+        database: {
           status: 'up',
         },
       },

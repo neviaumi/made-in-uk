@@ -1,28 +1,22 @@
 {
-  "name": "web",
-  "private": true,
-  "sideEffects": false,
-  "type": "module",
-  "scripts": {
-    "build": "remix build",
-    "dev": "remix dev --manual",
-    "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
-    "start": "remix-serve ./build/index.js",
-    "typecheck": "tsc"
-  },
   "dependencies": {
     "@remix-run/css-bundle": "2.7.2",
     "@remix-run/node": "2.7.2",
     "@remix-run/react": "2.7.2",
     "@remix-run/serve": "2.7.2",
-    "graphql": "^16.8.1",
-    "graphql-tag": "^2.12.6",
+    "google-auth-library": "9.6.3",
+    "graphql": "16.8.1",
+    "graphql-tag": "2.12.6",
     "isbot": "4.1.0",
+    "ramda": "0.29.1",
     "react": "18.2.0",
     "react-dom": "18.2.0"
   },
   "devDependencies": {
+    "@busybox/eslint-config": "2024.1.27-alpha.131",
+    "@busybox/tsconfig": "2024.1.27-alpha.131",
     "@remix-run/dev": "2.7.2",
+    "@types/ramda": "0.29.10",
     "@types/react": "18.2.20",
     "@types/react-dom": "18.2.7",
     "@typescript-eslint/eslint-plugin": "6.7.4",
@@ -32,9 +26,24 @@
     "eslint-plugin-jsx-a11y": "6.7.1",
     "eslint-plugin-react": "7.33.2",
     "eslint-plugin-react-hooks": "4.6.0",
+    "gaxios": "6.3.0",
     "typescript": "5.1.6"
   },
   "engines": {
-    "node": ">=20.0.0"
-  }
+    "node": ">=20",
+    "yarn": "Use npm"
+  },
+  "license": "UNLICENSED",
+  "name": "web",
+  "private": true,
+  "scripts": {
+    "build": "remix build",
+    "dev": "remix dev --manual",
+    "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
+    "start": "remix-serve ./build/index.js",
+    "typecheck": "tsc"
+  },
+  "sideEffects": false,
+  "type": "module",
+  "version": "2024.2.24-alpha.2329"
 }

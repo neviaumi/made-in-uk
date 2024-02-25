@@ -55,6 +55,7 @@ on:
         description: Environment
         options: 
           - production
+          - development
         required: true
         type: choice
 permissions: 

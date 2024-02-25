@@ -29,6 +29,7 @@ COMMIT_MESSAGE="release v$RELEASE_VERSION [skip ci]"
 git switch -c "$RELEASE_BRANCH"
 git push --set-upstream origin "$RELEASE_BRANCH"
 npx lerna version --message "$COMMIT_MESSAGE" --yes $RELEASE_VERSION
+#npx lerna version --no-git-tag-version --no-push --yes $RELEASE_VERSION
 npx lerna exec --stream \
 --scope 'infrastructure' \
 -- "bash scripts/ci/deploy.sh $ENVIRONMENT"

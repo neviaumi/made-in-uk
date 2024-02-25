@@ -2,13 +2,12 @@
 /// <reference types="@remix-run/node" />
 
 type Env = {
-    WEB_API_HOST: string;
-
-}
+  WEB_API_HOST: string;
+};
 
 declare global {
-    export const ENV: Env;
-    interface Window {
-        ENV: Env;
-    }
+  export const ENV: Env;
+  interface Window {
+    ENV: Env;
+  }
 }
