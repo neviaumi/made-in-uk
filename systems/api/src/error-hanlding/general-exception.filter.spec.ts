@@ -15,10 +15,13 @@ import {
 import gql from 'graphql-tag';
 
 import { createRequestAgent } from '../test-helpers/create-request-agent';
-import { expectResponseCode } from '../test-helpers/expect-response-code';
+import { withResponseCodeCheck } from '../test-helpers/expect-response-code';
 import { getApolloServer } from '../test-helpers/get-apollo-server';
 import { getGraphqlErrorCodes } from '../test-helpers/get-graphql-error';
-import { withNestServerContext } from '../test-helpers/nest-app-context';
+import {
+  createTestingServer,
+  withAPIServer,
+} from '../test-helpers/with-api-server';
 import { ApolloException } from './apollo.exception';
 
 @ObjectType()
@@ -71,19 +74,24 @@ class TestController {
   }
 }
 
-const appContext = withNestServerContext({
-  controllers: [TestController],
-  imports: [],
-  providers: [TestResolver],
-});
-
 describe('General exception filter', () => {
+  const appContext = withAPIServer(
+    createTestingServer({
+      controllers: [TestController],
+      imports: [],
+      providers: [TestResolver],
+    }),
+  );
   describe('rest', () => {
     it('should response code ERR_UNHANDLED when endpoint response generic error', async () => {
       const app = appContext.app;
-      const { body } = await createRequestAgent(app.getHttpServer())
-        .get('/test-case/unexpected-error')
-        .expect(expectResponseCode({ expectedStatusCode: 500 }));
+      const { body } = await withResponseCodeCheck({
+        expectedStatusCode: 500,
+      })(
+        createRequestAgent(app.getHttpServer()).get(
+          '/test-case/unexpected-error',
+        ),
+      );
       expect(body).toStrictEqual({
         errors: [
           {
@@ -103,9 +111,9 @@ describe('General exception filter', () => {
     });
     it('should forward response code when endpoint have specific error code', async () => {
       const app = appContext.app;
-      const { body } = await createRequestAgent(app.getHttpServer())
-        .get('/test-case/418')
-        .expect(expectResponseCode({ expectedStatusCode: 418 }));
+      const { body } = await withResponseCodeCheck({
+        expectedStatusCode: 418,
+      })(createRequestAgent(app.getHttpServer()).get('/test-case/418'));
       expect(body).toStrictEqual({
         code: 'ERR_TEA_POT_IS_HOT',
         errors: ['Foobar'],

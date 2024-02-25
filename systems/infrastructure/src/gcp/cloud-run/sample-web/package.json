@@ -1,0 +1,18 @@
+{
+  "dependencies": {
+    "google-auth-library": "9.6.3"
+  },
+  "engines": {
+    "node": ">=20",
+    "yarn": "Use npm"
+  },
+  "license": "MIT",
+  "main": "simple-http-proxy.js",
+  "name": "web-sample",
+  "private": true,
+  "scripts": {
+    "start": "node simple-http-proxy.js"
+  },
+  "type": "module",
+  "version": "0.0.22"
+}

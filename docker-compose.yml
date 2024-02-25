@@ -1,15 +1,7 @@
 services:
-  localstack:
-    environment:
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
-      - AWS_DEFAULT_REGION=eu-west-2
-    image: localstack/localstack:2.3.2
+  firestore:
+    command: gcloud emulators firestore start --host-port=0.0.0.0:8080
+    image: 'gcr.io/google.com/cloudsdktool/cloud-sdk:latest'
     ports:
-      - '4566:4566'
-      - '4571:4571'
-    volumes:
-      - source: ./scripts/docker/setup-local-s3.sh
-        target: /docker-entrypoint-initaws.d/setup-local-s3.sh
-        type: bind
+      - '8080:8080'
 version: '3.7'

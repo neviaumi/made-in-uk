@@ -17,10 +17,10 @@ import { ConfigModule } from './config/config.module';
 import { BadRequestException } from './error-hanlding/bad-request.exception';
 import { ErrorCode } from './error-hanlding/error-code.constant';
 import { GeneralExceptionFilter } from './error-hanlding/general-exception.filter';
-import { GameGalleryModule } from './game-gallery/game-gallery.module';
 import { HealthModule } from './health-check/health.module';
 import { GeneralLoggingInterceptor } from './logging/general-logging.interceptor';
 import { LoggingModule } from './logging/logging.module';
+import { VisitCountModule } from './sample-counter/visit-count.module';
 import { SeederModule } from './test-helpers/seeder/seeder.module';
 
 @Module({
@@ -34,11 +34,11 @@ import { SeederModule } from './test-helpers/seeder/seeder.module';
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: async (configService: ConfigService) => {
-        const shouldGenerateSchemaFile = [AppEnvironment.DEV].includes(
+        const shouldEnablePlayground = [AppEnvironment.DEV].includes(
           configService.get('env')!,
         );
         return {
-          autoSchemaFile: !shouldGenerateSchemaFile ? true : 'schema.graphql',
+          autoSchemaFile: true,
           autoTransformHttpErrors: true,
           context: ({ req, res }: { req: any; res: any }) => ({
             req,
@@ -53,11 +53,12 @@ import { SeederModule } from './test-helpers/seeder/seeder.module';
               } as any,
             };
           },
+          playground: shouldEnablePlayground,
           sortSchema: true,
         };
       },
     }),
-    GameGalleryModule,
+    VisitCountModule,
     HealthModule,
     SeederModule,
   ],

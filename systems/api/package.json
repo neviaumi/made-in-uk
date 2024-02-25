@@ -2,9 +2,7 @@
   "author": "",
   "dependencies": {
     "@apollo/server": "4.10.0",
-    "@aws-sdk/client-dynamodb": "3.521.0",
-    "@aws-sdk/client-s3": "3.521.0",
-    "@aws-sdk/s3-request-presigner": "3.521.0",
+    "@google-cloud/firestore": "7.3.0",
     "@nestjs/apollo": "12.1.0",
     "@nestjs/common": "10.3.3",
     "@nestjs/config": "3.2.0",
@@ -12,7 +10,6 @@
     "@nestjs/graphql": "12.1.1",
     "@nestjs/platform-express": "10.3.3",
     "@nestjs/terminus": "10.2.3",
-    "@vendia/serverless-express": "4.12.6",
     "aws-lambda": "1.0.7",
     "class-transformer": "0.5.1",
     "class-validator": "0.14.1",
@@ -76,7 +73,6 @@
       "ts"
     ],
     "rootDir": "src",
-    "testEnvironment": "<rootDir>/test-helpers/jest/e2e-test-environment.js",
     "testRegex": ".*\\.spec\\.ts$",
     "testTimeout": 300000,
     "transform": {
@@ -88,13 +84,12 @@
   "private": true,
   "scripts": {
     "build": "nest build",
-    "build:lambda": "nest build --webpack -c nest-cli.lambda.json",
     "prebuild": "rimraf dist",
     "start": "nest start",
     "start:dev": "nest start --watch",
-    "start:prod": "node dist/main.http.js",
+    "start:prod": "node dist/main.js",
     "test": "API_ENV=test NODE_ENV=test jest --maxWorkers=50%",
     "test:ci": "API_ENV=test NODE_ENV=test Ci=true jest --coverage --ci --runInBand --bail"
   },
-  "version": "2023.10.29-alpha.1713"
+  "version": "2024.2.24-alpha.2329"
 }

@@ -6,14 +6,7 @@ CURRENT_BRANCH=$(git branch --show-current)
 echo "Current branch is $CURRENT_BRANCH"
 npx eslint .
 docker compose up -d
-npx lerna exec --stream \
---scope 'infrastructure' \
--- "test ! -f  scripts/dev-setup.sh || bash \
-                                scripts/dev-setup.sh"
-npx lerna exec --stream \
---scope 'infrastructure' \
--- "test ! -f  scripts/dev-deploy.sh || bash \
-                                scripts/dev-deploy.sh"
+export FIRESTORE_EMULATOR_HOST="localhost:8080"
 npx lerna exec --stream \
 --scope 'api' --scope 'web' \
 -- "test ! -f  scripts/ci/test.sh || bash \

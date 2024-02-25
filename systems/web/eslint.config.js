@@ -4,7 +4,7 @@ import eslintPluginImport from '@busybox/eslint-config/plugins/eslint-plugin-imp
 export default [
   ...busyboxEslintConfig,
   {
-    ignores: ['package-lock.json', 'dist'],
+    ignores: ['package-lock.json', 'build', '.cache', 'public/build'],
   },
   {
     languageOptions: {
@@ -21,7 +21,14 @@ export default [
     },
   },
   {
-    files: ['./tailwind.config.mjs', './vite.config.ts', './cypress.config.ts'],
+    files: ['app/entry.server.tsx'],
+    rules: {
+      'max-params': 'off',
+      'no-console': 'off',
+    },
+  },
+  {
+    files: ['tailwind.config.mjs'],
     plugins: {
       import: eslintPluginImport,
     },
@@ -31,7 +38,7 @@ export default [
   },
   {
     rules: {
-      'max-lines': 'off',
+      'react-refresh/only-export-components': 'off',
     },
   },
 ];

@@ -5,5 +5,5 @@
     "noEmit": true
   },
   "extends": "@busybox/tsconfig/tsconfig-react.json",
-  "include": ["src", "cypress/support/component.tsx"]
+  "include": ["remix.env.d.ts", "app"]
 }

@@ -1,4 +1,4 @@
-import type { Request, Response } from 'supertest';
+import type { Request, Response, Test } from 'supertest';
 
 function jsonParse(val: string) {
   try {
@@ -6,6 +6,15 @@ function jsonParse(val: string) {
   } catch (e) {
     return val;
   }
+}
+
+export function withResponseCodeCheck(params: {
+  expectedStatusCode: number;
+  message?: string;
+}) {
+  return (agent: Test) => {
+    return agent.expect(expectResponseCode(params));
+  };
 }
 
 export function expectResponseCode(params: {

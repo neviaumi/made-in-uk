@@ -29,6 +29,7 @@ COMMIT_MESSAGE="release v$RELEASE_VERSION [skip ci]"
 git switch -c "$RELEASE_BRANCH"
 git push --set-upstream origin "$RELEASE_BRANCH"
 npx lerna version --message "$COMMIT_MESSAGE" --yes $RELEASE_VERSION
+#npx lerna version --no-git-tag-version --no-push --yes $RELEASE_VERSION
 npx lerna exec --stream \
 --scope 'infrastructure' \
 -- "bash scripts/ci/deploy.sh $ENVIRONMENT"
@@ -39,12 +40,11 @@ npx lerna exec --stream \
 
 source $WORK_SPACE_ROOT/.env
 
-export DOCKER_IMAGE_REPO=$DOCKER_IMAGE_REPO
-export API_DOCKER_IMAGE=$API_DOCKER_IMAGE
-export API_LAMBDA_FUNCTION_ARN=$API_LAMBDA_FUNCTION_ARN
-export API_LAMBDA_FUNCTION_LATEST_VERSION_ALIAS_ARN=$API_LAMBDA_FUNCTION_LATEST_VERSION_ALIAS_ARN
-export AWS_DEFAULT_REGION=$AWS_DEFAULT_REGION
-export WEB_S3_BUCKET=$WEB_S3_BUCKET
+export API_CLOUD_RUN_SERVICE_NAME=$API_CLOUD_RUN_SERVICE_NAME
+export API_DATABASE_ID=$API_DATABASE_ID
+export DOCKER_REGISTRY=$DOCKER_REGISTRY
+export WEB_API_HOST=$WEB_API_HOST
+export WEB_CLOUD_RUN_SERVICE_NAME=$WEB_CLOUD_RUN_SERVICE_NAME
 
 npx lerna exec --stream \
 --scope 'api' \

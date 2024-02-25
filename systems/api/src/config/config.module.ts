@@ -4,7 +4,6 @@ import {
   ConfigService,
 } from '@nestjs/config';
 
-import { getTestConfig } from '../test-helpers/jest/jest-test-state.provider';
 import { configuration } from './configuration';
 import { getEnvFilePath } from './getEnvFilePath';
 
@@ -25,11 +24,7 @@ export class ConfigModule {
           expandVariables: true,
           load: [
             async () => {
-              return configuration({
-                database: {
-                  gameTable: getTestConfig(['db', 'gameTable']),
-                },
-              });
+              return configuration();
             },
           ],
         }),

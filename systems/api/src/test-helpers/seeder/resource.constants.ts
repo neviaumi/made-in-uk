@@ -1,3 +1,2 @@
-export enum Resource {
-  GAME = 'game',
-}
+export enum Resource {}
+// GAME = 'game',

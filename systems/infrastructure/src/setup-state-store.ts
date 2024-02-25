@@ -1,41 +1,26 @@
-/* eslint-disable no-console */
+/* eslint-disable no-console,n/no-process-exit */
 
-import {
-  CreateBucketCommand,
-  ListBucketsCommand,
-  S3Client,
-} from '@aws-sdk/client-s3';
+import { Storage } from '@google-cloud/storage';
 import { customAlphabet } from 'nanoid';
 
 const [bucketPrefix] = process.argv.slice(2);
-const isDev = process.env['APP_ENV'] === 'development';
-const region = process.env['AWS_DEFAULT_REGION'] || undefined;
-const client = new S3Client(
-  isDev
-    ? {
-        endpoint: 'http://localhost:4566',
-        forcePathStyle: true,
-        region: 'eu-west-2',
-      }
-    : { region },
-);
-
-const data = await client.send(new ListBucketsCommand({}));
-const existingBucket = data.Buckets?.find(bucket =>
-  bucket.Name?.startsWith(bucketPrefix),
+if (!bucketPrefix) {
+  console.error('Bucket prefix is required');
+  process.exit(1);
+}
+const storage = new Storage({});
+const [buckets] = await storage.getBuckets();
+const existingBucket = buckets.find(bucket =>
+  bucket?.id?.startsWith(bucketPrefix),
 );
 const isBucketExists = existingBucket !== undefined;
 if (isBucketExists) {
-  console.log(existingBucket.Name);
+  console.log(existingBucket.id);
 } else {
   const bucketSuffix = customAlphabet('abcdefghijklmnopqrstuvwxyz0123456789')(
     6,
   ).toLowerCase();
   const bucketName = `${bucketPrefix}-${bucketSuffix}`;
-  await client.send(
-    new CreateBucketCommand({
-      Bucket: bucketName,
-    }),
-  );
+  await storage.createBucket(bucketName);
   console.log(bucketName);
 }

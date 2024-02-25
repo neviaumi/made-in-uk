@@ -3,7 +3,7 @@ import type { DocumentNode, GraphQLError } from 'graphql';
 import { print } from 'graphql/language/printer';
 
 import { createRequestAgent } from './create-request-agent';
-import { expectResponseCode } from './expect-response-code';
+import { withResponseCodeCheck } from './expect-response-code';
 
 // The reason why I don't use getApolloServer from @nestjs/apollo is because
 // https://github.com/apollographql/apollo-server/issues/2277
@@ -27,13 +27,11 @@ export function getApolloServer(app: INestApplication) {
         requestChain.set(key, value);
       });
       const requestBody = { query: print(query), variables };
-      const { body } = await requestChain.send(requestBody).expect(
-        expectResponseCode({
-          expectedStatusCode: 200,
-          message: `GraphQL query should always return status code 200
+      const { body } = await withResponseCodeCheck({
+        expectedStatusCode: 200,
+        message: `GraphQL query should always return status code 200
 see https://www.apollographql.com/docs/apollo-server/data/errors/#returning-http-status-codes`,
-        }),
-      );
+      })(requestChain.send(requestBody));
       return body;
     },
   };

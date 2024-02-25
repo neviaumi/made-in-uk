@@ -3,8 +3,3 @@ export enum AppEnvironment {
   PRD = 'production',
   TEST = 'test',
 }
-
-export enum AppMode {
-  HTTP = 'http',
-  LAMBDA = 'lambda',
-}

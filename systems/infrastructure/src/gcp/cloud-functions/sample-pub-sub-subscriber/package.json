@@ -1,0 +1,19 @@
+{
+  "dependencies": {
+    "@google-cloud/firestore": "7.3.0",
+    "@google-cloud/functions-framework": "3.3.0"
+  },
+  "engines": {
+    "node": ">=20",
+    "yarn": "Use npm"
+  },
+  "license": "MIT",
+  "main": "simple-pub-sub-subscriber.js",
+  "name": "sample-pub-sub-subscriber",
+  "private": true,
+  "scripts": {
+    "start": "node simple-pub-sub-subscriber.js"
+  },
+  "type": "module",
+  "version": "0.0.21"
+}
