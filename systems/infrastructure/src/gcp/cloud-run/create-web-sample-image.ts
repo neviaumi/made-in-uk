@@ -37,9 +37,6 @@ export function createWebSampleImage({
       },
       buildOnPreview: !isImageExist,
       imageName: apiImage,
-      registry: {
-        server: repositoryUrl,
-      },
     });
     return {
       imageId: image.id,
