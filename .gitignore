@@ -36,3 +36,4 @@ systems/api/src/test/coverage/
 !.vscode/launch.json
 !.vscode/extensions.json
 .access.log
+gha-creds-*.json
