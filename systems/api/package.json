@@ -91,5 +91,5 @@
     "test": "API_ENV=test NODE_ENV=test jest --maxWorkers=50%",
     "test:ci": "API_ENV=test NODE_ENV=test Ci=true jest --coverage --ci --runInBand --bail"
   },
-  "version": "2024.2.24-alpha.2329"
+  "version": "2024.2.26-alpha.136"
 }
