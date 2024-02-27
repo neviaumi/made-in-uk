@@ -6,7 +6,6 @@ WORKDIR /app
 COPY ./package.json ./package-lock.json ./tsconfig.json ./remix.config.js ./remix.env.d.ts ./
 COPY ./app ./app
 COPY ./public ./public
-# dev-seeding is used to demo purposes only
 COPY ./scripts/docker/ ./scripts/docker/
 
 RUN sh ./scripts/docker/build.sh
