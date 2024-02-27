@@ -1,0 +1,5 @@
+encryptionsalt: v1:eu6KLsBnOdY=:v1:dqrXLbxMTJslVOrR:TpPZ8xvl1ssp7Zb3Wj/fmiyJz2NBlA==
+config:
+  gcp:credentials: /home/runner/work/made-in-uk/made-in-uk/gha-creds-79c7ecd7610cdc36.json
+  gcp:project: made-in-uk
+  gcp:region: europe-west2
