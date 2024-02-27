@@ -1,12 +1,12 @@
 import { firestore } from '@pulumi/gcp';
 
 import { createDockerRepository } from './gcp/artifactregistry/artifact-registry.ts';
-// import {
-//   createCloudRunForApi,
-//   createCloudRunForWeb,
-//   onlyAllowServiceToServiceForInvokeAPI,
-// } from './gcp/cloud-run/cloud-run.ts';
-// import { createApiSampleImage } from './gcp/cloud-run/create-api-sample-image.ts';
+import {
+  createCloudRunForApi,
+  //   createCloudRunForWeb,
+  //   onlyAllowServiceToServiceForInvokeAPI,
+} from './gcp/cloud-run/cloud-run.ts';
+import { createApiSampleImage } from './gcp/cloud-run/create-api-sample-image.ts';
 // import { createWebSampleImage } from './gcp/cloud-run/create-web-sample-image.ts';
 import { createPubSubTopics } from './gcp/pub-sub.ts';
 import { getProjectRegion } from './utils/get-project-region.ts';
@@ -23,16 +23,16 @@ const fireStoreDB = new firestore.Database(resourceName`my-database`, {
 const topic = createPubSubTopics();
 //
 const { repositoryUrl: dockerRepository } = createDockerRepository();
-// const { imageId: sampleApiImageId } = createApiSampleImage({
-//   repositoryUrl: dockerRepository,
-// });
+const { imageId: sampleApiImageId } = createApiSampleImage({
+  repositoryUrl: dockerRepository,
+});
 // const { imageId: sampleWebImageId } = createWebSampleImage({
 //   repositoryUrl: dockerRepository,
 // });
-// const { name: apiServiceName, url: apiUrl } = await createCloudRunForApi({
-//   databaseName: fireStoreDB.name,
-//   simpleApiImage: sampleApiImageId,
-// });
+const { name: apiServiceName } = await createCloudRunForApi({
+  databaseName: fireStoreDB.name,
+  simpleApiImage: sampleApiImageId,
+});
 //
 // const {
 //   name: webServiceName,
@@ -49,7 +49,7 @@ const { repositoryUrl: dockerRepository } = createDockerRepository();
 // });
 //
 export const API_DATABASE_ID = fireStoreDB.name;
-// export const API_CLOUD_RUN_SERVICE_NAME = apiServiceName;
+export const API_CLOUD_RUN_SERVICE_NAME = apiServiceName;
 // export const WEB_API_HOST = apiUrl;
 // export const WEB_CLOUD_RUN_SERVICE_NAME = webServiceName;
 // export const WEB_HOST = webUrl;
