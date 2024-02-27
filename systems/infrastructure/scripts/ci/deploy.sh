@@ -20,4 +20,5 @@ PULUMI_CONFIG_PASSPHRASE= pulumi config set gcp:region europe-west2
 #gcloud auth login --cred-file=$GOOGLE_APPLICATION_CREDENTIALS
 #gcloud config list
 gcloud auth configure-docker europe-west2-docker.pkg.dev
+gcloud auth application-default print-access-token
 PULUMI_CONFIG_PASSPHRASE= pulumi up --yes
