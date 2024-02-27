@@ -43,7 +43,6 @@ jobs:
       #        run: bash ./scripts/test.sh
       - env: 
           ENVIRONMENT: ${{ inputs.environment }}
-          GCP_SA_KEY: ${{ env.GCP_SA_KEY }}
         id: release
         name: Release to GCP
         run: |

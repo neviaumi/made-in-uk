@@ -44,19 +44,19 @@ npx lerna exec --stream \
 
 source $WORK_SPACE_ROOT/.env
 
-#export API_CLOUD_RUN_SERVICE_NAME=$API_CLOUD_RUN_SERVICE_NAME
-#export API_DATABASE_ID=$API_DATABASE_ID
-#export DOCKER_REGISTRY=$DOCKER_REGISTRY
-#export WEB_API_HOST=$WEB_API_HOST
-#export WEB_CLOUD_RUN_SERVICE_NAME=$WEB_CLOUD_RUN_SERVICE_NAME
-#
-#npx lerna exec --stream \
-#--scope 'api' \
-#-- "bash scripts/ci/deploy.sh"
-#
-#npx lerna exec --stream \
-#--scope 'web' \
-#-- "bash scripts/ci/deploy.sh"
+export API_CLOUD_RUN_SERVICE_NAME=$API_CLOUD_RUN_SERVICE_NAME
+export API_DATABASE_ID=$API_DATABASE_ID
+export DOCKER_REGISTRY=$DOCKER_REGISTRY
+export WEB_API_HOST=$WEB_API_HOST
+export WEB_CLOUD_RUN_SERVICE_NAME=$WEB_CLOUD_RUN_SERVICE_NAME
+
+npx lerna exec --stream \
+--scope 'api' \
+-- "bash scripts/ci/deploy.sh"
+
+npx lerna exec --stream \
+--scope 'web' \
+-- "bash scripts/ci/deploy.sh"
 
 git add .
 git commit -m "release v$RELEASE_VERSION [skip ci]"
