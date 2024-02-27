@@ -34,7 +34,7 @@ jobs:
       - id: auth
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ env.GCP_SA_KEY }}
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
       - name: Setup repository
@@ -43,7 +43,7 @@ jobs:
       #        run: bash ./scripts/test.sh
       - env: 
           ENVIRONMENT: ${{ inputs.environment }}
-          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          GCP_SA_KEY: ${{ env.GCP_SA_KEY }}
         id: release
         name: Release to GCP
         run: |
