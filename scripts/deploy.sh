@@ -13,6 +13,7 @@ fi
 
 echo "Running in email: $(git config user.email)"
 echo "Running in name: $(git config user.name)"
+
 # Disable the commit hook
 export HUSKY=0
 SCRIPT_LOCATION=$(dirname $(pwd)/${BASH_SOURCE[0]})
