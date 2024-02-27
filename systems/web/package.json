@@ -17,7 +17,7 @@
     "@busybox/tsconfig": "2024.1.27-alpha.131",
     "@remix-run/dev": "2.7.2",
     "@types/ramda": "0.29.10",
-    "@types/react": "18.2.20",
+    "@types/react": "18.2.60",
     "@types/react-dom": "18.2.19",
     "@typescript-eslint/eslint-plugin": "6.7.4",
     "eslint": "8.38.0",
