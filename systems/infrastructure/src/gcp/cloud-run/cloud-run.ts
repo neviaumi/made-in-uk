@@ -1,8 +1,10 @@
 import { cloudrun, cloudrunv2 } from '@pulumi/gcp';
-import type { Output } from '@pulumi/pulumi';
+import pulumi, { type Output } from '@pulumi/pulumi';
 
 import { getProjectRegion } from '../../utils/get-project-region.ts';
+import { isRunningOnLocal } from '../../utils/is-running-on-local.ts';
 import { resourceName } from '../../utils/resourceName.ts';
+import { valueNa } from '../../utils/value-na.ts';
 
 export async function createCloudRunForWeb({
   apiEndpoint,
@@ -11,6 +13,13 @@ export async function createCloudRunForWeb({
   apiEndpoint: Output<string>;
   simpleWebImage: Output<string>;
 }) {
+  if (isRunningOnLocal()) {
+    return {
+      name: valueNa,
+      serviceAccount: valueNa,
+      url: pulumi.Output.create('http://localhost:3000'),
+    };
+  }
   const cloudRunService = new cloudrunv2.Service(resourceName`web`, {
     location: getProjectRegion(),
     template: {
@@ -51,6 +60,13 @@ export async function createCloudRunForApi({
   databaseName: Output<string>;
   simpleApiImage: Output<string>;
 }) {
+  if (isRunningOnLocal()) {
+    return {
+      name: valueNa,
+      serviceAccount: valueNa,
+      url: pulumi.Output.create('http://localhost:5333'),
+    };
+  }
   const cloudRunService = new cloudrunv2.Service(resourceName`api`, {
     ingress: 'INGRESS_TRAFFIC_ALL',
     location: getProjectRegion(),
@@ -88,6 +104,9 @@ export function onlyAllowServiceToServiceForInvokeAPI({
   apiCloudRunServiceName: Output<string>;
   webCloudRunServiceAccount: Output<string>;
 }) {
+  if (isRunningOnLocal()) {
+    return;
+  }
   new cloudrun.IamBinding(resourceName`allow-service-to-service-iam-binding`, {
     members: [
       webCloudRunServiceAccount.apply(

@@ -1,9 +1,14 @@
 import { pubsub } from '@pulumi/gcp';
 import * as pulumi from '@pulumi/pulumi';
 
+import { isRunningOnLocal } from '../utils/is-running-on-local.ts';
 import { resourceName } from '../utils/resourceName.ts';
+import { valueNa } from '../utils/value-na.ts';
 
 export function createPubSubTopics() {
+  if (isRunningOnLocal()) {
+    return { topicId: valueNa, topicName: valueNa, topicUrn: valueNa };
+  }
   const eventSchema = new pubsub.Schema(resourceName`pubsub-event-schema`, {
     definition: `{
   "type" : "record",

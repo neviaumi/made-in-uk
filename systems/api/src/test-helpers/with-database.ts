@@ -27,11 +27,6 @@ export function withDatabaseCleanup(testCollectionName: string) {
   const firestore = new Firestore({
     databaseId,
   });
-  // eslint-disable-next-line no-console
-  console.log({
-    databaseId,
-    message: 'Cleaning up collection',
-  });
   beforeEach(async () => {
     await cleanupCollection(firestore, `test-${testCollectionName}`)();
   });

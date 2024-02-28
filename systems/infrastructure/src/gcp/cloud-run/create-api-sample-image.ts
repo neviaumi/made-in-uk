@@ -5,8 +5,9 @@ import path from 'node:path';
 import { getRemoteImage, Image } from '@pulumi/docker';
 import type { Output } from '@pulumi/pulumi';
 
-import { isRunningOnLocal } from '../../utils/isRunningOnLocal.ts';
+import { isRunningOnLocal } from '../../utils/is-running-on-local.ts';
 import { resourceName } from '../../utils/resourceName.ts';
+import { valueNa } from '../../utils/value-na.ts';
 import packageJson from './sample-api/package.json' with { type: 'json' };
 
 const currentDir = path.parse(new URL(import.meta.url).pathname).dir;
@@ -16,6 +17,11 @@ export function createApiSampleImage({
 }: {
   repositoryUrl: Output<string>;
 }) {
+  if (isRunningOnLocal()) {
+    return {
+      imageId: valueNa,
+    };
+  }
   return repositoryUrl.apply(async repositoryUrl => {
     const sampleApiVersion = packageJson['version'] as string;
     const apiImage = isRunningOnLocal()
@@ -38,9 +44,6 @@ export function createApiSampleImage({
       },
       buildOnPreview: !isImageExist,
       imageName: apiImage,
-      registry: {
-        server: repositoryUrl,
-      },
     });
     return {
       imageId: image.id,

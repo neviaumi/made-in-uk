@@ -1,3 +1,4 @@
+import { Content, Header, Main, Page } from '@busybox/react-components/Layout';
 import type { MetaFunction } from '@remix-run/node';
 import { json } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
@@ -37,13 +38,17 @@ export async function loader() {
 export default function Index() {
   const loaderData = useLoaderData<typeof loader>();
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', lineHeight: '1.8' }}>
-      <h1>Welcome to Remix</h1>
-      <ul>
-        <li>
-          <pre>{JSON.stringify(loaderData, null, 4)}</pre>
-        </li>
-      </ul>
-    </div>
+    <Page>
+      <Header>
+        <h1>Remix App</h1>
+      </Header>
+      <Content>
+        <Main>
+          <pre className={'tw-text-primary'}>
+            {JSON.stringify(loaderData, null, 4)}
+          </pre>
+        </Main>
+      </Content>
+    </Page>
   );
 }
