@@ -3,9 +3,7 @@ concurrency:
   group: release
 env: 
   CI: true
-  GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-  REPO_SCOPED_TOKEN: ${{ secrets.REPO_SCOPED_TOKEN }}
-jobs: 
+jobs:
   merge-back: 
     needs: release
     runs-on: ubuntu-latest
@@ -34,13 +32,13 @@ jobs:
       - id: auth
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ env.GCP_SA_KEY }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
       - name: Setup repository
         run: bash ./scripts/setup.sh
-      #      - name: Test the build
-      #        run: bash ./scripts/test.sh
+      - name: Test the build
+        run: bash ./scripts/test.sh
       - env: 
           ENVIRONMENT: ${{ inputs.environment }}
         id: release

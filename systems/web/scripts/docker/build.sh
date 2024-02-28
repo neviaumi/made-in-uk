@@ -2,5 +2,5 @@
 
 set -ex
 
-npm ci --ignore-scripts --include=optional
+npm ci --ignore-scripts
 npx remix build
