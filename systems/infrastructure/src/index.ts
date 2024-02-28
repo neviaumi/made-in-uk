@@ -9,7 +9,7 @@ import { createWebSampleImage } from './gcp/cloud-run/create-web-sample-image.ts
 import { createFireStoreDB } from './gcp/fire-store.ts';
 import { createPubSubTopics } from './gcp/pub-sub.ts';
 
-const fireStoreDB = createFireStoreDB();
+const { name: databaseName } = createFireStoreDB();
 const topic = createPubSubTopics();
 const { repositoryUrl: dockerRepository } = createDockerRepository();
 const { imageId: sampleApiImageId } = createApiSampleImage({
@@ -19,7 +19,7 @@ const { imageId: sampleWebImageId } = createWebSampleImage({
   repositoryUrl: dockerRepository,
 });
 const { name: apiServiceName, url: apiUrl } = await createCloudRunForApi({
-  databaseName: fireStoreDB.name,
+  databaseName: databaseName,
   simpleApiImage: sampleApiImageId,
 });
 
@@ -37,10 +37,10 @@ onlyAllowServiceToServiceForInvokeAPI({
   webCloudRunServiceAccount: serviceAccount,
 });
 
-export const API_DATABASE_ID = fireStoreDB.name;
+export const DATABASE_ID = databaseName;
 export const API_CLOUD_RUN_SERVICE_NAME = apiServiceName;
-export const WEB_API_HOST = apiUrl;
+export const API_HOST = apiUrl;
 export const WEB_CLOUD_RUN_SERVICE_NAME = webServiceName;
 export const WEB_HOST = webUrl;
 export const DOCKER_REGISTRY = dockerRepository;
-export const WORKER_TOPIC_ID = topic.topicId;
+export const TOPIC_ID = topic.topicId;

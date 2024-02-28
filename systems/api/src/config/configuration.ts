@@ -16,7 +16,7 @@ export function configuration() {
   });
   const env = envSchema.get('env');
   const shouldUseFirestoreEmulator =
-    [AppEnvironment.TEST as string].includes(env) &&
+    [AppEnvironment.TEST].includes(env as AppEnvironment) &&
     process.env['FIRESTORE_EMULATOR_HOST'];
   const configSchema = convict({
     database: {

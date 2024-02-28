@@ -2,6 +2,7 @@ import { cloudfunctionsv2 } from '@pulumi/gcp';
 import type { Output } from '@pulumi/pulumi';
 
 import { getProjectRegion } from '../../utils/get-project-region.ts';
+import { isRunningOnLocal } from '../../utils/is-running-on-local.ts';
 import { resourceName } from '../../utils/resourceName.ts';
 
 export function createCloudFunctions({
@@ -13,6 +14,9 @@ export function createCloudFunctions({
   source: { bucket: Output<string>; object: Output<string> };
   topic: { name: Output<string> };
 }) {
+  if (isRunningOnLocal()) {
+    return {};
+  }
   return new cloudfunctionsv2.Function(resourceName`pub-sub-subscriber`, {
     buildConfig: {
       entryPoint: 'topic-subscriber',
