@@ -7,7 +7,7 @@
     "google-auth-library": "9.6.3",
     "graphql": "16.8.1",
     "graphql-tag": "2.12.6",
-    "isbot": "4.1.0",
+    "isbot": "5.1.1",
     "ramda": "0.29.1",
     "react": "18.2.0",
     "react-dom": "18.2.0"
@@ -17,17 +17,17 @@
     "@busybox/tsconfig": "2024.1.27-alpha.131",
     "@remix-run/dev": "2.7.2",
     "@types/ramda": "0.29.10",
-    "@types/react": "18.2.20",
-    "@types/react-dom": "18.2.7",
+    "@types/react": "18.2.60",
+    "@types/react-dom": "18.2.19",
     "@typescript-eslint/eslint-plugin": "6.7.4",
     "eslint": "8.38.0",
     "eslint-import-resolver-typescript": "3.6.1",
-    "eslint-plugin-import": "2.28.1",
+    "eslint-plugin-import": "2.29.1",
     "eslint-plugin-jsx-a11y": "6.7.1",
     "eslint-plugin-react": "7.33.2",
     "eslint-plugin-react-hooks": "4.6.0",
     "gaxios": "6.3.0",
-    "typescript": "5.1.6"
+    "typescript": "5.3.3"
   },
   "engines": {
     "node": ">=20",
