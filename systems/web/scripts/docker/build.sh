@@ -2,7 +2,5 @@
 
 set -ex
 
-#s3_bucket=${WEB_S3_BUCKET}
-npm ci --ignore-scripts
+npm ci --ignore-scripts --include=optional
 npx remix build
-#aws s3 cp --recursive dist "s3://$s3_bucket/"
