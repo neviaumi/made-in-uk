@@ -12,3 +12,4 @@ pulumi login "gs://$STATE_STORE_BUCKET"
 PULUMI_CONFIG_PASSPHRASE= pulumi stack select organization/$PROJECT/$STACK
 PULUMI_CONFIG_PASSPHRASE= pulumi stack output --shell > "$WORK_SPACE_ROOT"/.env
 cat "$WORK_SPACE_ROOT"/.env.tmp >> "$WORK_SPACE_ROOT"/.env
+cat "$WORK_SPACE_ROOT"/.env

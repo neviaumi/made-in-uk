@@ -1,5 +1,3 @@
-import { firestore } from '@pulumi/gcp';
-
 import { createDockerRepository } from './gcp/artifactregistry/artifact-registry.ts';
 import {
   createCloudRunForApi,
@@ -8,16 +6,11 @@ import {
 } from './gcp/cloud-run/cloud-run.ts';
 import { createApiSampleImage } from './gcp/cloud-run/create-api-sample-image.ts';
 import { createWebSampleImage } from './gcp/cloud-run/create-web-sample-image.ts';
+import { createFireStoreDB } from './gcp/fire-store.ts';
 import { createPubSubTopics } from './gcp/pub-sub.ts';
-import { getProjectRegion } from './utils/get-project-region.ts';
-import { resourceName } from './utils/resourceName.ts';
 
-const fireStoreDB = new firestore.Database(resourceName`my-database`, {
-  locationId: getProjectRegion(),
-  type: 'FIRESTORE_NATIVE',
-});
+const fireStoreDB = createFireStoreDB();
 const topic = createPubSubTopics();
-
 const { repositoryUrl: dockerRepository } = createDockerRepository();
 const { imageId: sampleApiImageId } = createApiSampleImage({
   repositoryUrl: dockerRepository,
@@ -44,7 +37,6 @@ onlyAllowServiceToServiceForInvokeAPI({
   webCloudRunServiceAccount: serviceAccount,
 });
 
-export const INFRASTRUCTURE_CLOUD_RUN_SERVICE_ACCOUNT = serviceAccount;
 export const API_DATABASE_ID = fireStoreDB.name;
 export const API_CLOUD_RUN_SERVICE_NAME = apiServiceName;
 export const WEB_API_HOST = apiUrl;
