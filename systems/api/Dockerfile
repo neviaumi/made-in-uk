@@ -20,5 +20,6 @@ COPY --from=builder /app/package.json /app/package-lock.json ./
 COPY --from=builder /app/scripts/docker/start.sh ./scripts/docker/start.sh
 
 RUN npm ci --ignore-scripts --omit=dev
+HEALTHCHECK --interval=30s --timeout=60s --start-period=5s --retries=3 CMD [ "sh", "scripts/docker/health-check.sh" ]
 
 USER node

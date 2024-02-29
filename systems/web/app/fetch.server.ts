@@ -26,6 +26,6 @@ export function createFetchClient(preInput: string, preConfig?: RequestInit) {
       responseType: 'json',
       url: new URL(path.join(preInput, input), webApiHost).toString(),
     });
-    return Promise.resolve({ json: () => response.data });
+    return Promise.resolve({ json: <T = unknown>() => response.data as T });
   };
 }
