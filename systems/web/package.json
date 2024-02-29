@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@busybox/react-components": "2024.1.30-alpha.2323",
-    "@remix-run/css-bundle": "2.7.2",
+    "@remix-run/css-bundle": "2.8.0",
     "@remix-run/node": "2.7.2",
     "@remix-run/react": "2.7.2",
     "@remix-run/serve": "2.7.2",
