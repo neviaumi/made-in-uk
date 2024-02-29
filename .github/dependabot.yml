@@ -19,6 +19,13 @@ updates:
           - '@nestjs/common'
           - '@nestjs/platform-express'
           - '@nestjs/testing'
+      remix:
+        patterns:
+          - '@remix-run/react'
+          - '@remix-run/dev'
+          - '@remix-run/serve'
+          - '@remix-run/node'
+          - '@remix-run/css-bundle'
     ignore:
       - dependency-name: serialize-error
     package-ecosystem: npm
