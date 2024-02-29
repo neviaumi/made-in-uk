@@ -15,7 +15,7 @@
     "tailwindcss": "3.4.1"
   },
   "devDependencies": {
-    "@busybox/eslint-config": "2024.1.27-alpha.131",
+    "@busybox/eslint-config": "2024.2.29-alpha.203",
     "@busybox/tsconfig": "2024.1.27-alpha.131",
     "@remix-run/dev": "2.7.2",
     "@types/ramda": "0.29.10",
