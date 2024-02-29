@@ -1,7 +1,7 @@
 services:
   firestore:
     command: gcloud emulators firestore start --host-port=0.0.0.0:8080
-    image: 'gcr.io/google.com/cloudsdktool/cloud-sdk:latest'
+    image: 'gcr.io/google.com/cloudsdktool/cloud-sdk:466.0.0-emulators'
     ports:
       - '8080:8080'
 version: '3.7'

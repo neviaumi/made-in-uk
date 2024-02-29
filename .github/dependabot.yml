@@ -1,10 +1,6 @@
 updates:
   - directory: /
     groups:
-      aws-s3:
-        patterns:
-          - '@aws-sdk/client-s3'
-          - '@aws-sdk/s3-request-presigner'
       busybox:
         patterns:
           - '@busybox/commitlint-config'
@@ -13,6 +9,10 @@ updates:
           - '@busybox/tsconfig'
           - '@busybox/cypress'
           - '@busybox/babel-preset-typescript'
+      commitlint:
+        patterns:
+          - '@commitlint/cli'
+          - commitlint
       nest-core:
         patterns:
           - '@nestjs/core'
