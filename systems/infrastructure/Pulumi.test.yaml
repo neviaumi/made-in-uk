@@ -1,0 +1,5 @@
+
+config:
+  gcp:project: made-in-uk
+  gcp:region: europe-west2
+encryptionsalt: v1:jEJ7x16djgk=:v1:0gocAEC3QTJWaCNw:AwOIkZMQXAzIIRFwiQtegRL9IhQfTg==
