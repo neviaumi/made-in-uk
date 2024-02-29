@@ -21,7 +21,7 @@
     "@busybox/tsconfig": "2024.1.27-alpha.131",
     "@pulumi/policy": "1.10.0",
     "@types/lodash.kebabcase": "4.1.9",
-    "@types/node": "20.11.22",
+    "@types/node": "20.11.24",
     "eslint": "8.57.0",
     "typescript": "5.3.3"
   },
