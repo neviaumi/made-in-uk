@@ -19,7 +19,7 @@
     "@busybox/tsconfig": "2024.1.27-alpha.131",
     "@remix-run/dev": "2.8.1",
     "@types/ramda": "0.29.11",
-    "@types/react": "18.2.64",
+    "@types/react": "18.2.65",
     "@types/react-dom": "18.2.21",
     "eslint": "8.57.0",
     "gaxios": "6.3.0",
