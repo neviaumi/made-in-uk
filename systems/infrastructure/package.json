@@ -13,7 +13,7 @@
   "devDependencies": {
     "@babel/cli": "7.24.1",
     "@babel/core": "7.24.3",
-    "@babel/plugin-syntax-import-attributes": "7.23.3",
+    "@babel/plugin-syntax-import-attributes": "7.24.1",
     "@babel/preset-typescript": "7.24.1",
     "@busybox/babel-preset-typescript": "2024.1.27-alpha.131",
     "@busybox/eslint-config": "2024.2.29-alpha.203",
