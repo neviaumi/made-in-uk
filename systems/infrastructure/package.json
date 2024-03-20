@@ -23,7 +23,7 @@
     "@types/lodash.kebabcase": "4.1.9",
     "@types/node": "20.11.30",
     "eslint": "8.57.0",
-    "typescript": "5.4.2"
+    "typescript": "5.4.3"
   },
   "engines": {
     "node": ">=20",
