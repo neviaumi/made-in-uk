@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@google-cloud/storage": "7.9.0",
-    "@pulumi/docker": "4.5.2",
+    "@pulumi/docker": "4.5.3",
     "@pulumi/gcp": "7.15.0",
     "@pulumi/pulumi": "3.111.1",
     "@pulumi/random": "4.16.0",
