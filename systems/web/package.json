@@ -20,7 +20,7 @@
     "@remix-run/dev": "2.8.1",
     "@types/ramda": "0.29.12",
     "@types/react": "18.2.76",
-    "@types/react-dom": "18.2.24",
+    "@types/react-dom": "18.2.25",
     "eslint": "8.57.0",
     "gaxios": "6.4.0",
     "typescript": "5.4.5"
