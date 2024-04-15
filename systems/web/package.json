@@ -22,7 +22,7 @@
     "@types/react": "18.2.77",
     "@types/react-dom": "18.2.25",
     "eslint": "8.57.0",
-    "gaxios": "6.4.0",
+    "gaxios": "6.5.0",
     "typescript": "5.4.5"
   },
   "engines": {
