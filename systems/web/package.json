@@ -10,7 +10,7 @@
     "graphql-tag": "2.12.6",
     "isbot": "5.1.4",
     "ramda": "0.29.1",
-    "react": "18.2.0",
+    "react": "18.3.0",
     "react-dom": "18.2.0",
     "tailwindcss": "3.4.3"
   },
@@ -19,7 +19,7 @@
     "@busybox/tsconfig": "2024.1.27-alpha.131",
     "@remix-run/dev": "2.9.0",
     "@types/ramda": "0.29.12",
-    "@types/react": "18.2.79",
+    "@types/react": "18.3.0",
     "@types/react-dom": "18.2.25",
     "eslint": "8.57.0",
     "gaxios": "6.5.0",
