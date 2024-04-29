@@ -11,7 +11,7 @@
     "nanoid": "5.0.7"
   },
   "devDependencies": {
-    "@babel/cli": "7.24.1",
+    "@babel/cli": "7.24.5",
     "@babel/core": "7.24.4",
     "@babel/plugin-syntax-import-attributes": "7.24.1",
     "@babel/preset-typescript": "7.24.1",
