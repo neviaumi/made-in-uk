@@ -19,7 +19,7 @@
     "graphql": "16.8.1",
     "helmet": "7.1.0",
     "luxon": "3.4.4",
-    "ramda": "0.29.1",
+    "ramda": "0.30.0",
     "reflect-metadata": "0.2.2",
     "rimraf": "5.0.5",
     "rxjs": "7.8.1",
