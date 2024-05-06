@@ -3,7 +3,7 @@
     "@google-cloud/storage": "7.11.0",
     "@pulumi/docker": "4.5.3",
     "@pulumi/gcp": "7.20.0",
-    "@pulumi/pulumi": "3.115.0",
+    "@pulumi/pulumi": "3.115.2",
     "@pulumi/random": "4.16.1",
     "dotenv": "16.4.5",
     "handlebars": "4.7.8",
