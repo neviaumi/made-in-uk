@@ -2,7 +2,7 @@
   "author": "",
   "dependencies": {
     "@apollo/server": "4.10.4",
-    "@google-cloud/firestore": "7.6.0",
+    "@google-cloud/firestore": "7.7.0",
     "@nestjs/apollo": "12.1.0",
     "@nestjs/common": "10.3.8",
     "@nestjs/config": "3.2.2",
