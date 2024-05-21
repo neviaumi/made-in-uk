@@ -28,6 +28,7 @@ services:
       - WEB_ENV=development
     ports:
       - 5333:5333
+      - 3001:3001
     entrypoint: /bin/sh
     command: ./scripts/docker/watch.sh
     build:
@@ -39,3 +40,9 @@ services:
         - action: sync
           path: systems/web/app
           target: /app/app
+        - action: rebuild
+          path: systems/web/package.json
+        - action: rebuild
+          path: systems/web/package-lock.json
+        - action: rebuild
+          path: systems/web/tsconfig.json

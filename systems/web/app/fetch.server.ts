@@ -14,10 +14,14 @@ export function createFetchClient(preInput: string, preConfig?: RequestInit) {
 
   return async (input: string, init: RequestInit) => {
     if (webEnv === 'development') {
-      return fetch(new URL(path.join(preInput, input), webApiHost).toString(), {
+      const requestInit: RequestInit = {
         ...preConfig,
         ...init,
-      });
+      };
+      return fetch(
+        new URL(path.join(preInput, input), webApiHost).toString(),
+        requestInit,
+      );
     }
     const client = await auth.getIdTokenClient(webApiHost);
     const response = await client.request({
@@ -35,9 +39,7 @@ export function createFetchClient(preInput: string, preConfig?: RequestInit) {
       responseType: 'json',
       url: new URL(path.join(preInput, input), webApiHost).toString(),
     });
-    return Promise.resolve({
-      json: <T = unknown>() => response.data as T,
-      ok: response.status >= 200 && response.status < 400,
+    return Response.json(response.data, {
       status: response.status,
       statusText: response.statusText,
     });

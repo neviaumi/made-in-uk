@@ -8,6 +8,7 @@ import {
   Scripts,
   ScrollRestoration,
 } from '@remix-run/react';
+import { cacheExchange, Client, fetchExchange, Provider } from 'urql';
 
 import styles from './tailwind.css';
 
@@ -17,6 +18,10 @@ export const links: LinksFunction = () => [
 ];
 
 export default function App() {
+  const client = new Client({
+    exchanges: [cacheExchange, fetchExchange],
+    url: '/graphql',
+  });
   return (
     <html lang="en">
       <head>
@@ -26,7 +31,9 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Outlet />
+        <Provider value={client}>
+          <Outlet />
+        </Provider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />
