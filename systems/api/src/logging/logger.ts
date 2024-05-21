@@ -1,49 +1,25 @@
-import { Injectable } from '@nestjs/common';
-import type { Logform } from 'winston';
 import {
-  createLogger,
+  createLogger as createWinstonLogger,
   format,
-  Logger as WinstonLogger,
   transports,
 } from 'winston';
 
-import { AppEnvironment } from '../config/config.constants';
-import { ConfigService } from '../config/config.module';
-import { Level } from './logging.constants';
+import { AppEnvironment } from '@/config/app-env.ts';
 
-@Injectable()
-export class Logger {
-  private winstonLogger: WinstonLogger;
+import { Level } from './logging.constants.ts';
 
-  constructor(private config: ConfigService) {
-    const env = config.get('env');
-    const isDev = [AppEnvironment.DEV].includes(env);
-
-    this.winstonLogger = createLogger({
-      format: format.combine(
-        format.timestamp(),
-        ...(isDev
-          ? [
-              format((info: any) => {
-                return info.context === 'GeneralLoggingInterceptor'
-                  ? false
-                  : info;
-              })(),
-              format.prettyPrint({ colorize: true, depth: 4 }),
-            ]
-          : [format.json()]),
-      ),
-      level: isDev ? Level.debug : Level.info,
-      silent: [AppEnvironment.TEST].includes(env),
-      transports: [new transports.Console({})],
-    });
-  }
-
-  log(
-    level: Level,
-    message: string,
-    infoObj: Omit<Logform.TransformableInfo, 'message'>,
-  ) {
-    this.winstonLogger.log(level, message, infoObj);
-  }
+export type { Logger } from 'winston';
+export function createLogger(appEnv: AppEnvironment) {
+  const isDev = [AppEnvironment.DEV].includes(appEnv);
+  return createWinstonLogger({
+    format: format.combine(
+      format.timestamp(),
+      ...(isDev
+        ? [format.prettyPrint({ colorize: true, depth: 4 })]
+        : [format.json()]),
+    ),
+    level: isDev ? Level.debug : Level.info,
+    silent: [AppEnvironment.TEST].includes(appEnv),
+    transports: [new transports.Console({})],
+  });
 }
