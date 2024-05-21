@@ -5,7 +5,7 @@ import { Level } from '@/logging/logging.constants.ts';
 
 export function validateConfig(appEnv: AppEnvironment) {
   const shouldUseFirestoreEmulator =
-    [AppEnvironment.TEST].includes(appEnv) &&
+    [AppEnvironment.TEST, AppEnvironment.DEV].includes(appEnv) &&
     process.env['FIRESTORE_EMULATOR_HOST'];
   const configSchema = convict({
     database: {

@@ -2,6 +2,22 @@ services:
   firestore:
     command: gcloud emulators firestore start --host-port=0.0.0.0:8080
     image: 'gcr.io/google.com/cloudsdktool/cloud-sdk:466.0.0-emulators'
+  api:
+    environment:
+      - API_DATABASE_ID=made-in-uk-demo
+      - API_ENV=development
+      - API_PORT=3000
+      - FIRESTORE_EMULATOR_HOST=firestore:8080
     ports:
-      - '8080:8080'
-version: '3.7'
+      - 3000:3000
+    entrypoint: /bin/sh
+    command: ./scripts/docker/watch.sh
+    build:
+      context: ./systems/api
+      dockerfile: Dockerfile
+      target: base
+    develop:
+      watch:
+        - action: sync
+          path: systems/api/src
+          target: /app/src
