@@ -21,3 +21,21 @@ services:
         - action: sync
           path: systems/api/src
           target: /app/src
+  web:
+    environment:
+      - WEB_PORT=5333
+      - WEB_API_HOST=http://api:3000
+      - WEB_ENV=development
+    ports:
+      - 5333:5333
+    entrypoint: /bin/sh
+    command: ./scripts/docker/watch.sh
+    build:
+      context: ./systems/web
+      dockerfile: Dockerfile
+      target: base
+    develop:
+      watch:
+        - action: sync
+          path: systems/web/app
+          target: /app/app

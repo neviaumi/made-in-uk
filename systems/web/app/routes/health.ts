@@ -4,14 +4,22 @@ import { createFetchClient } from '../fetch.server.ts';
 
 export async function loader() {
   const fetchClient = createFetchClient('');
-  const apiHealth = await fetchClient('healthz', {
+  const apiHealth = await fetchClient('health', {
     headers: {
       'Content-Type': 'application/json',
     },
     method: 'GET',
   })
     .then(async res => {
-      return res.json();
+      if (!res.ok) {
+        throw new Error(
+          `Failed to fetch API health: ${res.status} ${res.statusText}`,
+        );
+      } else {
+        return {
+          status: 'ok',
+        };
+      }
     })
     .catch(err => ({
       details: {
