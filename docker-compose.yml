@@ -1,8 +1,16 @@
 services:
-  firestore:
-    command: gcloud emulators firestore start --host-port=0.0.0.0:8080
-    image: 'gcr.io/google.com/cloudsdktool/cloud-sdk:466.0.0-emulators'
   api:
+    build:
+      context: ./systems/api
+      dockerfile: Dockerfile
+      target: base
+    command: ./scripts/docker/watch.sh
+    develop:
+      watch:
+        - action: sync
+          path: systems/api/src
+          target: /app/src
+    entrypoint: /bin/sh
     environment:
       - API_DATABASE_ID=made-in-uk-demo
       - API_ENV=development
@@ -10,31 +18,15 @@ services:
       - FIRESTORE_EMULATOR_HOST=firestore:8080
     ports:
       - 3000:3000
-    entrypoint: /bin/sh
-    command: ./scripts/docker/watch.sh
-    build:
-      context: ./systems/api
-      dockerfile: Dockerfile
-      target: base
-    develop:
-      watch:
-        - action: sync
-          path: systems/api/src
-          target: /app/src
+  firestore:
+    command: gcloud emulators firestore start --host-port=0.0.0.0:8080
+    image: 'gcr.io/google.com/cloudsdktool/cloud-sdk:466.0.0-emulators'
   web:
-    environment:
-      - WEB_PORT=5333
-      - WEB_API_HOST=http://api:3000
-      - WEB_ENV=development
-    ports:
-      - 5333:5333
-      - 3001:3001
-    entrypoint: /bin/sh
-    command: ./scripts/docker/watch.sh
     build:
       context: ./systems/web
       dockerfile: Dockerfile
       target: base
+    command: ./scripts/docker/watch.sh
     develop:
       watch:
         - action: sync
@@ -44,5 +36,17 @@ services:
           path: systems/web/package.json
         - action: rebuild
           path: systems/web/package-lock.json
-        - action: rebuild
+        - action: sync+restart
           path: systems/web/tsconfig.json
+          target: /app/tsconfig.json
+        - action: sync+restart
+          path: systems/web/tailwind.config.mjs
+          target: /app/tailwind.config.mjs
+    entrypoint: /bin/sh
+    environment:
+      - WEB_PORT=5333
+      - WEB_API_HOST=http://api:3000
+      - WEB_ENV=development
+    ports:
+      - 5333:5333
+      - 3001:3001

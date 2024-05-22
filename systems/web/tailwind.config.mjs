@@ -4,10 +4,8 @@ import { withSpacing } from '@busybox/tailwindcss-config/themes/spacing';
 
 /** @type {import('tailwindcss').Config} */
 const config = {
-  content: [
-    './src/**/*.{ts,tsx}',
-  ],
-  presets: [withSpacing(withColors(tailwindCssConfig))]
+  content: ['./app/**/*.{ts,tsx}'],
+  presets: [withSpacing(withColors(tailwindCssConfig))],
 };
 
 export default config;

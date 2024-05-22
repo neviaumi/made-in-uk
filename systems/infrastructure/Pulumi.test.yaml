@@ -1,4 +1,3 @@
-
 config:
   gcp:project: made-in-uk
   gcp:region: europe-west2
