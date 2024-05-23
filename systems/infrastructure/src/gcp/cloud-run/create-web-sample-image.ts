@@ -28,9 +28,7 @@ export function createWebSampleImage({
   }
   return repositoryUrl.apply(async repositoryUrl => {
     const sampleApiVersion = packageJson['version'] as string;
-    const apiImage = isRunningOnLocal()
-      ? `${repositoryUrl}/sample-web:${sampleApiVersion}`
-      : `${repositoryUrl}/sample-web:0.0.0`;
+    const apiImage = `${repositoryUrl}/sample-web:${sampleApiVersion}`;
     const remoteImage:
       | {
           exist: true;
