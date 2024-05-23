@@ -2,4 +2,4 @@
 
 set -e
 npm ci
-npm run build
+npx vite build

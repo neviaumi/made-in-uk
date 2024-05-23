@@ -2,7 +2,11 @@
 
 import path from 'node:path';
 
-import { getRemoteImage, Image } from '@pulumi/docker';
+import {
+  getRemoteImage,
+  type GetRemoteImageResult,
+  Image,
+} from '@pulumi/docker';
 import type { Output } from '@pulumi/pulumi';
 
 import { isRunningOnLocal } from '../../utils/is-running-on-local.ts';
@@ -24,24 +28,33 @@ export function createWebSampleImage({
   }
   return repositoryUrl.apply(async repositoryUrl => {
     const sampleApiVersion = packageJson['version'] as string;
-    const apiImage = isRunningOnLocal()
-      ? `${repositoryUrl}/sample-web:${sampleApiVersion}`
-      : `${repositoryUrl}/sample-web:0.0.0`;
-    const { exist: isImageExist } = await getRemoteImage({
+    const apiImage = `${repositoryUrl}/sample-web:${sampleApiVersion}`;
+    const remoteImage:
+      | {
+          exist: true;
+          image: GetRemoteImageResult;
+        }
+      | {
+          exist: false;
+        } = await getRemoteImage({
       name: apiImage,
     })
-      .then(() => ({
+      .then(image => ({
         exist: true,
+        image,
       }))
       .catch(() => ({
         exist: false,
       }));
+    if (remoteImage.exist) {
+      return { imageId: remoteImage.image.id };
+    }
     const image = new Image(resourceName`sample-web-image`, {
       build: {
         context: path.join(currentDir, 'sample-web'),
         platform: 'linux/amd64',
       },
-      buildOnPreview: !isImageExist,
+      buildOnPreview: !remoteImage.exist,
       imageName: apiImage,
     });
     return {

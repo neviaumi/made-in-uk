@@ -1,3 +1,3 @@
 #!/bin/bash
 
-npx nest build
+npx vite build

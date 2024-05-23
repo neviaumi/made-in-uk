@@ -1,7 +1,52 @@
 services:
+  api:
+    build:
+      context: ./systems/api
+      dockerfile: Dockerfile
+      target: base
+    command: ./scripts/docker/watch.sh
+    develop:
+      watch:
+        - action: sync
+          path: systems/api/src
+          target: /app/src
+    entrypoint: /bin/sh
+    environment:
+      - API_DATABASE_ID=made-in-uk-demo
+      - API_ENV=development
+      - API_PORT=3000
+      - FIRESTORE_EMULATOR_HOST=firestore:8080
+    ports:
+      - 3000:3000
   firestore:
     command: gcloud emulators firestore start --host-port=0.0.0.0:8080
     image: 'gcr.io/google.com/cloudsdktool/cloud-sdk:466.0.0-emulators'
+  web:
+    build:
+      context: ./systems/web
+      dockerfile: Dockerfile
+      target: base
+    command: ./scripts/docker/watch.sh
+    develop:
+      watch:
+        - action: sync
+          path: systems/web/app
+          target: /app/app
+        - action: rebuild
+          path: systems/web/package.json
+        - action: rebuild
+          path: systems/web/package-lock.json
+        - action: sync+restart
+          path: systems/web/tsconfig.json
+          target: /app/tsconfig.json
+        - action: sync+restart
+          path: systems/web/tailwind.config.mjs
+          target: /app/tailwind.config.mjs
+    entrypoint: /bin/sh
+    environment:
+      - WEB_PORT=5333
+      - WEB_API_HOST=http://api:3000
+      - WEB_ENV=development
     ports:
-      - '8080:8080'
-version: '3.7'
+      - 5333:5333
+      - 3001:3001

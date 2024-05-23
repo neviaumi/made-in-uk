@@ -1,6 +1,3 @@
 export default {
-  '*.{ts,tsx,js,json,md,yml,yaml}': [
-    'npx eslint --fix',
-    'npx prettier --write',
-  ],
+  '*.{ts,tsx,js,json,md,yml,yaml}': ['npx eslint --fix'],
 };

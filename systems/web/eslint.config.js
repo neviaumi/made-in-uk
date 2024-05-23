@@ -38,6 +38,7 @@ export default [
   },
   {
     rules: {
+      'import/prefer-default-export': 'off',
       'react-refresh/only-export-components': 'off',
     },
   },

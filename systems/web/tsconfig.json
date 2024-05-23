@@ -2,7 +2,10 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
     "emitDeclarationOnly": false,
-    "noEmit": true
+    "noEmit": true,
+    "paths": {
+      "@/*": ["./app/*"],
+    }
   },
   "extends": "@busybox/tsconfig/tsconfig-react.json",
   "include": ["remix.env.d.ts", "app"]
