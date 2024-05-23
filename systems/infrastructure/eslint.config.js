@@ -10,7 +10,7 @@ export default [
     },
   },
   {
-    ignores: ['package-lock.json', 'bin/'],
+    ignores: ['package-lock.json', 'bin/', 'Pulumi.*.yml'],
   },
   {
     files: ['src/aws-guard/**/*'],
