@@ -17,9 +17,11 @@ export function createFetchClient() {
 
   return async (path: string, init: RequestInit) => {
     const requestPath = new URL(path, webApiHost).toString();
+    const initHeaders = Object.fromEntries(headerInitToEntries(init.headers));
+    let authHeaders = {};
     if (webEnv !== 'development') {
       const idTokenClient = await auth.getIdTokenClient(webApiHost);
-      const authHeaders = await idTokenClient.getRequestHeaders(requestPath);
+      authHeaders = await idTokenClient.getRequestHeaders(requestPath);
       init.headers = Object.assign(
         Object.fromEntries(headerInitToEntries(init.headers)),
         authHeaders,
@@ -27,8 +29,9 @@ export function createFetchClient() {
     }
     // eslint-disable-next-line no-console
     console.log({
-      headers: init.headers,
-      init,
+      authHeaders,
+      initHeaders,
+      mergeHeaders: init.headers,
       message: 'before fetch',
       requestPath,
     });
