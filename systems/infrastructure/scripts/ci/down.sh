@@ -12,3 +12,5 @@ PULUMI_CONFIG_PASSPHRASE= pulumi stack init organization/$PROJECT/$STACK
 set -e
 PULUMI_CONFIG_PASSPHRASE= pulumi stack select organization/$PROJECT/$STACK
 PULUMI_CONFIG_PASSPHRASE= pulumi down --yes
+PULUMI_CONFIG_PASSPHRASE= pulumi config set app:web-image us-docker.pkg.dev/cloudrun/container/hello
+PULUMI_CONFIG_PASSPHRASE= pulumi config set app:api-image us-docker.pkg.dev/cloudrun/container/hello
