@@ -5,9 +5,7 @@ import { createFetchClient } from '../fetch.server.ts';
 export async function action({ request }: ActionFunctionArgs) {
   // eslint-disable-next-line no-console
   console.log({
-    body: request.body,
-    headers: Object.fromEntries(request.headers.entries()),
-    message: '/graphql',
+    message: 'proxy of /graphql',
   });
   const fetchClient = createFetchClient();
   const gqlResponse = await fetchClient('/graphql', {

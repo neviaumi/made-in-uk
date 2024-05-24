@@ -17,15 +17,16 @@ export function createFetchClient() {
 
   return async (path: string, init: RequestInit) => {
     const requestPath = new URL(path, webApiHost).toString();
-    const initHeaders = Object.fromEntries(headerInitToEntries(init.headers));
+    const initHeaders = Array.from(headerInitToEntries(init.headers)).filter(
+      ([key]) => !['authorization', 'host'].includes(key.toLowerCase()),
+    );
     let authHeaders = {};
     if (webEnv !== 'development') {
       const idTokenClient = await auth.getIdTokenClient(webApiHost);
       authHeaders = await idTokenClient.getRequestHeaders(requestPath);
-      init.headers = Object.assign(
-        Object.fromEntries(headerInitToEntries(init.headers)),
-        authHeaders,
-      );
+      init.headers = initHeaders.concat(Object.entries(authHeaders));
+    } else {
+      init.headers = initHeaders;
     }
     // eslint-disable-next-line no-console
     console.log({
