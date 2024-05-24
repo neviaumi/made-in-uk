@@ -36,6 +36,10 @@ export async function createCloudRunForWeb({
                 name: 'WEB_PORT',
                 value: '8080',
               },
+              {
+                name: 'WEB_ENV',
+                value: 'production',
+              },
             ],
             image: webImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
           },
@@ -91,6 +95,10 @@ export async function createCloudRunForApi({
               {
                 name: 'API_PORT',
                 value: '8080',
+              },
+              {
+                name: 'API_ENV',
+                value: 'production',
               },
             ],
             image: apiImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
