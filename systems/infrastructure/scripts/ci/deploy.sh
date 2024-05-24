@@ -6,7 +6,7 @@ TYPE=$1
 STACK=$2
 VERSION=$3
 
-if [ "$TYPE" != "container" ] || [ "$TYPE" != "infrastructure" ]; then
+if [ "$TYPE" != "container" ] && [ "$TYPE" != "infrastructure" ]; then
   echo "Invalid argument: $TYPE"
   exit 1
 fi
