@@ -1,7 +1,7 @@
 encryptionsalt: v1:eu6KLsBnOdY=:v1:dqrXLbxMTJslVOrR:TpPZ8xvl1ssp7Zb3Wj/fmiyJz2NBlA==
 config:
-  app:api-image: europe-west2-docker.pkg.dev/made-in-uk/docker-divine-impala/api:2024.5.24-alpha.2107
-  app:web-image: europe-west2-docker.pkg.dev/made-in-uk/docker-divine-impala/web:2024.5.24-alpha.2107
-  gcp:credentials: /home/runner/work/made-in-uk/made-in-uk/gha-creds-49d514935eeb685f.json
+  app:api-image: europe-west2-docker.pkg.dev/made-in-uk/docker-divine-impala/api:2024.5.24-alpha.2228
+  app:web-image: europe-west2-docker.pkg.dev/made-in-uk/docker-divine-impala/web:2024.5.24-alpha.2228
+  gcp:credentials: /home/runner/work/made-in-uk/made-in-uk/gha-creds-31a85eae35008b35.json
   gcp:project: made-in-uk
   gcp:region: europe-west2
