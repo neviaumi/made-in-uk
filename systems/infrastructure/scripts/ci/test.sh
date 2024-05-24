@@ -13,4 +13,4 @@ set -e
 PULUMI_CONFIG_PASSPHRASE= pulumi stack select organization/$PROJECT/$STACK
 PULUMI_CONFIG_PASSPHRASE= pulumi config set gcp:project made-in-uk
 PULUMI_CONFIG_PASSPHRASE= pulumi config set gcp:region europe-west2
-PULUMI_CONFIG_PASSPHRASE= pulumi up --yes
+PULUMI_CONFIG_PASSPHRASE= pulumi preview --yes
