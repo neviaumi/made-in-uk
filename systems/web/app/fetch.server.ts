@@ -16,13 +16,15 @@ export function createFetchClient() {
   const auth = new GoogleAuth();
 
   return async (path: string, init: RequestInit) => {
+    const requestPath = new URL(path, webApiHost).toString();
     if (webEnv !== 'development') {
-      const authHeaders = await auth.getRequestHeaders(webApiHost);
+      const idTokenClient = await auth.getIdTokenClient(webApiHost);
+      const authHeaders = await idTokenClient.getRequestHeaders(requestPath);
       init.headers = Object.assign(
         Object.fromEntries(headerInitToEntries(init.headers)),
         authHeaders,
       );
     }
-    return fetch(new URL(path, webApiHost).toString(), init);
+    return fetch(requestPath, init);
   };
 }
