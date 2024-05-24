@@ -21,7 +21,8 @@ WORKDIR /app
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json /app/package-lock.json /app/remix.config.js ./
-COPY --from=builder /app/scripts/docker/start.sh ./scripts/docker/start.sh
+COPY --from=builder /app/scripts/docker/ ./scripts/docker/
+
 RUN sh ./scripts/docker/setup.sh --prod
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 CMD [ "sh", "scripts/docker/health-check.sh" ]
 USER node
