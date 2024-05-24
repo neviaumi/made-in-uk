@@ -3,7 +3,7 @@ import { json } from '@remix-run/node';
 import { createFetchClient } from '../fetch.server.ts';
 
 export async function loader() {
-  const fetchClient = createFetchClient('');
+  const fetchClient = createFetchClient();
   const apiHealth = await fetchClient('health', {
     headers: {
       'Content-Type': 'application/json',
