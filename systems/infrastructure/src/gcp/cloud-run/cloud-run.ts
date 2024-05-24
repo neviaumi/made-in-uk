@@ -6,12 +6,12 @@ import { isRunningOnLocal } from '../../utils/is-running-on-local.ts';
 import { resourceName } from '../../utils/resourceName.ts';
 import { valueNa } from '../../utils/value-na.ts';
 
+const appConfig = new pulumi.Config('app');
+
 export async function createCloudRunForWeb({
   apiEndpoint,
-  simpleWebImage,
 }: {
   apiEndpoint: Output<string>;
-  simpleWebImage: Output<string>;
 }) {
   if (isRunningOnLocal()) {
     return {
@@ -20,23 +20,32 @@ export async function createCloudRunForWeb({
       url: pulumi.Output.create('http://localhost:3000'),
     };
   }
+  const webImage = appConfig.get('web-image');
   const cloudRunService = new cloudrunv2.Service(resourceName`web`, {
     location: getProjectRegion(),
     template: {
       containers: [
-        {
-          envs: [
-            {
-              name: 'WEB_API_HOST',
-              value: apiEndpoint,
-            },
-            {
-              name: 'WEB_PORT',
-              value: '8080',
-            },
-          ],
-          image: simpleWebImage,
-        },
+        Object.assign(
+          {
+            envs: [
+              {
+                name: 'WEB_API_HOST',
+                value: apiEndpoint,
+              },
+              {
+                name: 'WEB_PORT',
+                value: '8080',
+              },
+            ],
+            image: webImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
+          },
+          webImage
+            ? {
+                args: ['./scripts/docker/start.sh'],
+                commands: ['sh'],
+              }
+            : {},
+        ),
       ],
     },
   });
@@ -55,10 +64,8 @@ export async function createCloudRunForWeb({
 
 export async function createCloudRunForApi({
   databaseName,
-  simpleApiImage,
 }: {
   databaseName: Output<string>;
-  simpleApiImage: Output<string>;
 }) {
   if (isRunningOnLocal()) {
     return {
@@ -67,25 +74,34 @@ export async function createCloudRunForApi({
       url: pulumi.Output.create('http://localhost:5333'),
     };
   }
+  const apiImage = appConfig.get('api-image');
   const cloudRunService = new cloudrunv2.Service(resourceName`api`, {
     ingress: 'INGRESS_TRAFFIC_ALL',
     location: getProjectRegion(),
 
     template: {
       containers: [
-        {
-          envs: [
-            {
-              name: 'API_DATABASE_ID',
-              value: databaseName,
-            },
-            {
-              name: 'API_PORT',
-              value: '8080',
-            },
-          ],
-          image: simpleApiImage,
-        },
+        Object.assign(
+          {
+            envs: [
+              {
+                name: 'API_DATABASE_ID',
+                value: databaseName,
+              },
+              {
+                name: 'API_PORT',
+                value: '8080',
+              },
+            ],
+            image: apiImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
+          },
+          apiImage
+            ? {
+                args: ['./scripts/docker/start.sh'],
+                commands: ['sh'],
+              }
+            : {},
+        ),
       ],
     },
   });

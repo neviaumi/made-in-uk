@@ -4,23 +4,15 @@ import {
   createCloudRunForWeb,
   onlyAllowServiceToServiceForInvokeAPI,
 } from './gcp/cloud-run/cloud-run.ts';
-import { createApiSampleImage } from './gcp/cloud-run/create-api-sample-image.ts';
-import { createWebSampleImage } from './gcp/cloud-run/create-web-sample-image.ts';
 import { createFireStoreDB } from './gcp/fire-store.ts';
 import { createPubSubTopics } from './gcp/pub-sub.ts';
 
 const { name: databaseName } = createFireStoreDB();
 const topic = createPubSubTopics();
 const { repositoryUrl: dockerRepository } = createDockerRepository();
-const { imageId: sampleApiImageId } = createApiSampleImage({
-  repositoryUrl: dockerRepository,
-});
-const { imageId: sampleWebImageId } = createWebSampleImage({
-  repositoryUrl: dockerRepository,
-});
+
 const { name: apiServiceName, url: apiUrl } = await createCloudRunForApi({
   databaseName: databaseName,
-  simpleApiImage: sampleApiImageId,
 });
 
 const {
@@ -29,7 +21,6 @@ const {
   url: webUrl,
 } = await createCloudRunForWeb({
   apiEndpoint: apiUrl,
-  simpleWebImage: sampleWebImageId,
 });
 
 onlyAllowServiceToServiceForInvokeAPI({

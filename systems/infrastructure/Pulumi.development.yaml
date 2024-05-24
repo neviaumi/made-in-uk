@@ -1,6 +1,6 @@
-
+encryptionsalt: v1:eu6KLsBnOdY=:v1:dqrXLbxMTJslVOrR:TpPZ8xvl1ssp7Zb3Wj/fmiyJz2NBlA==
 config:
-  gcp:credentials: /home/runner/work/made-in-uk/made-in-uk/gha-creds-41e5b8122190ed7e.json
+  app:api-image: us-docker.pkg.dev/cloudrun/container/hello
+  app:web-image: us-docker.pkg.dev/cloudrun/container/hello
   gcp:project: made-in-uk
   gcp:region: europe-west2
-encryptionsalt: v1:eu6KLsBnOdY=:v1:dqrXLbxMTJslVOrR:TpPZ8xvl1ssp7Zb3Wj/fmiyJz2NBlA==
