@@ -1,6 +1,4 @@
 encryptionsalt: v1:eu6KLsBnOdY=:v1:dqrXLbxMTJslVOrR:TpPZ8xvl1ssp7Zb3Wj/fmiyJz2NBlA==
 config:
-  app:api-image: us-docker.pkg.dev/cloudrun/container/hello
-  app:web-image: us-docker.pkg.dev/cloudrun/container/hello
   gcp:project: made-in-uk
   gcp:region: europe-west2
