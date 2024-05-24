@@ -25,6 +25,13 @@ export function createFetchClient() {
         authHeaders,
       );
     }
+    // eslint-disable-next-line no-console
+    console.log({
+      headers: init.headers,
+      init,
+      message: 'before fetch',
+      requestPath,
+    });
     return fetch(requestPath, init);
   };
 }
