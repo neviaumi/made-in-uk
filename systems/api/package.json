@@ -8,7 +8,7 @@
     "dotenv-expand": "11.0.6",
     "graphql": "16.8.1",
     "graphql-yoga": "5.3.1",
-    "playwright": "1.42.1",
+    "playwright": "1.44.1",
     "ramda": "0.30.0",
     "winston": "3.13.0"
   },
