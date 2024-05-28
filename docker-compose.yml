@@ -16,6 +16,7 @@ services:
       - API_ENV=development
       - API_PORT=3000
       - FIRESTORE_EMULATOR_HOST=firestore:8080
+      - GCLOUD_PROJECT=made-in-uk
     ports:
       - 3000:3000
   firestore:

@@ -3,7 +3,7 @@ import convict from 'convict';
 import { AppEnvironment } from '@/config/app-env.ts';
 import { Level } from '@/logging/logging.constants.ts';
 
-export function validateConfig(appEnv: AppEnvironment) {
+export function loadConfig(appEnv: AppEnvironment) {
   const shouldUseFirestoreEmulator =
     [AppEnvironment.TEST, AppEnvironment.DEV].includes(appEnv) &&
     process.env['FIRESTORE_EMULATOR_HOST'];
@@ -36,7 +36,5 @@ export function validateConfig(appEnv: AppEnvironment) {
   });
   return configSchema;
 }
-
-export const loadConfig = validateConfig;
 
 export type Config = ReturnType<typeof loadConfig>;
