@@ -1,8 +1,13 @@
 import playwright from 'playwright';
 
+import { APP_ENV } from '@/config/app-env.ts';
 import { mapToGenerator, SKIP } from '@/functions/map-to-generators.ts';
+import { createLogger, type Logger } from '@/logging/logger.ts';
+
+import type { Product } from './types';
 
 const baseUrl = 'https://www.ocado.com';
+const defaultLogger = createLogger(APP_ENV);
 
 export function createChromiumBrowser(
   browserLaunchOptions?: playwright.LaunchOptions,
@@ -25,11 +30,21 @@ export function closePage(page: playwright.Page) {
   return page.close();
 }
 
-export function createProductsSearchHandler(page: playwright.Page) {
+export function createProductsSearchHandler(
+  page: playwright.Page,
+  options?: {
+    logger: Logger;
+  },
+) {
+  const logger = options?.logger ?? defaultLogger;
   return async function searchProducts(keyword: string) {
-    await page.goto(new URL(`/search?entry=${keyword}`, baseUrl).toString());
+    const searchUrl = new URL(`/search?entry=${keyword}`, baseUrl);
+    logger.info(`Searching products that match ${keyword} ...`, {
+      searchUrl: searchUrl.toString(),
+    });
+    await page.goto(searchUrl.toString());
     const matchProductUrls = await page
-      .locator('[data-sku]')
+      .locator('.main-column [data-sku]')
       .getByRole('link')
       .evaluateAll(elements =>
         elements.map(element => element.getAttribute('href')),
@@ -42,17 +57,7 @@ export function createProductsSearchHandler(page: playwright.Page) {
 
 export function createProductDetailsHandler(page: playwright.Page) {
   return function getProductDetails(productUrls: string[]) {
-    return mapToGenerator<
-      {
-        countryOfOrigin: string;
-        id: string;
-        image: string;
-        title: string;
-        type: string;
-        url: string;
-      },
-      string
-    >(async (productUrl: string) => {
+    return mapToGenerator<Product, string>(async (productUrl: string) => {
       await page.goto(new URL(productUrl, baseUrl).toString());
       const countryOfOriginHeading = page.getByRole('heading', {
         name: 'Country of Origin',

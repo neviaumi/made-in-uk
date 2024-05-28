@@ -9,7 +9,7 @@ export function createFireStoreDB() {
   if (isRunningOnLocal()) {
     return { name: pulumi.Output.create('unused') };
   }
-  const dbRef = new firestore.Database(resourceName`my-database`, {
+  const dbRef = new firestore.Database(resourceName`db`, {
     locationId: getProjectRegion(),
     type: 'FIRESTORE_NATIVE',
   });
