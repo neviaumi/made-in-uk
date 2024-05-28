@@ -50,6 +50,7 @@ export const searchProductQuery: ResolverFunction<
         await push(productDetails);
       } catch (e) {
         logger.error('streaming product details error', e);
+        stop(e);
         break;
       }
     }
