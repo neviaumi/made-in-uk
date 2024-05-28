@@ -102,6 +102,11 @@ export async function createCloudRunForApi({
               },
             ],
             image: apiImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
+            resources: {
+              limits: {
+                memory: '2048Mi',
+              },
+            },
           },
           apiImage
             ? {
