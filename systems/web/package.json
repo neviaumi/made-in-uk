@@ -6,10 +6,10 @@
     "@remix-run/node": "2.9.2",
     "@remix-run/react": "2.9.2",
     "@remix-run/serve": "2.9.2",
-    "google-auth-library": "9.7.0",
+    "google-auth-library": "9.10.0",
     "graphql": "16.8.1",
     "isbot": "5.1.7",
-    "ramda": "0.29.1",
+    "ramda": "0.30.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "tailwindcss": "3.4.3",
@@ -25,7 +25,7 @@
     "@types/react-dom": "18.3.0",
     "eslint": "8.57.0",
     "typescript": "5.4.3",
-    "vite": "5.2.11"
+    "vite": "5.2.12"
   },
   "engines": {
     "node": ">=20",
