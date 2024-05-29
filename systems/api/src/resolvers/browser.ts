@@ -1,6 +1,6 @@
 import playwright from 'playwright';
 
-import { APP_ENV } from '@/config/app-env.ts';
+import { APP_ENV } from '@/config.ts';
 import { mapToGenerator, SKIP } from '@/functions/map-to-generators.ts';
 import { createLogger, type Logger } from '@/logging/logger.ts';
 

@@ -3,8 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { useDeferStream } from '@graphql-yoga/plugin-defer-stream';
 import { createSchema, createYoga } from 'graphql-yoga';
 
-import { loadConfig } from '@/config.ts';
-import { APP_ENV } from '@/config/app-env.ts';
+import { APP_ENV, loadConfig } from '@/config.ts';
 import { createLogger } from '@/logging/logger.ts';
 import { searchProductQuery } from '@/resolvers/search-product.query.ts';
 import type { GraphqlContext } from '@/types/utilities';
@@ -39,10 +38,10 @@ export const schema = {
 export const yoga = createYoga<GraphqlContext>({
   context: async ({ params, request }) => {
     const requestId = request.headers.get('request-id') ?? randomUUID();
-    const { operationName, query } = params;
+    const { operationName } = params;
     return {
       config,
-      logger: logger.child({ operationName, query, requestId }),
+      logger: logger.child({ operationName, requestId }),
       requestId,
     };
   },

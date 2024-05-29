@@ -1,15 +1,12 @@
 import { createServer } from 'node:http';
 
-import { loadConfig } from '@/config.ts';
+import { APP_ENV, loadConfig } from '@/config.ts';
 import { createLogger } from '@/logging/logger.ts';
 
-import { APP_ENV, loadEnvFileByAppEnv } from './config/app-env.ts';
 import { yoga } from './yoga.ts';
 
-const appEnv = loadEnvFileByAppEnv(APP_ENV);
-
-const config = loadConfig(appEnv);
-const logger = createLogger(appEnv);
+const config = loadConfig(APP_ENV);
+const logger = createLogger(APP_ENV);
 
 const server = createServer(yoga);
 

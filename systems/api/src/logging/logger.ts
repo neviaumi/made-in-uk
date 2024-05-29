@@ -4,7 +4,7 @@ import {
   transports,
 } from 'winston';
 
-import { AppEnvironment } from '@/config/app-env.ts';
+import { AppEnvironment } from '@/config.ts';
 
 import { Level } from './logging.constants.ts';
 

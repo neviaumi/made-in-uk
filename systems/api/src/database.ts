@@ -1,7 +1,6 @@
 import { Firestore, type Settings } from '@google-cloud/firestore';
 
-import { loadConfig } from '@/config.ts';
-import { APP_ENV } from '@/config/app-env.ts';
+import { APP_ENV, loadConfig } from '@/config.ts';
 
 const config = loadConfig(APP_ENV);
 
