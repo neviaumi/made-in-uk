@@ -30,9 +30,6 @@ export const searchProductQuery: ResolverFunction<
   });
   const database = createDatabaseConnection();
   const pubsub = createPubSubClient();
-  logger.info(`Searching products that match ${search} ...`, {
-    argument,
-  });
   await getProductSearchTopic(pubsub).publishMessage({
     attributes: {
       requestId: context.requestId,
@@ -44,7 +41,6 @@ export const searchProductQuery: ResolverFunction<
         },
       }),
     ),
-    messageId: context.requestId,
   });
   const saveProduct = createProductSaver(database, {
     logger: logger,

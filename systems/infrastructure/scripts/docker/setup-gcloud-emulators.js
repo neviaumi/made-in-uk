@@ -6,19 +6,30 @@ import { PubSub } from '@google-cloud/pubsub';
 const pubsubLocalEmulatorEnabled = process.env.PUBSUB_EMULATOR_HOST;
 
 if (!pubsubLocalEmulatorEnabled) {
-  throw new Error('PUBSUB_EMULATOR_HOST is not set. Exiting...');
+  throw new Error('PUBSUB_EMULATOR_HOST is not set.');
 }
 
 const productSearchSubscriptionPushEndpoint =
   process.env.EMULATOR_PRODUCT_SEARCH_ENDPOINT;
-const productionProductSearchTopic = process.env.EMULATOR_PRODUCT_SEARCH_TOPIC;
+const productSearchTopic = process.env.EMULATOR_PRODUCT_SEARCH_TOPIC;
 
-if (!productSearchSubscriptionPushEndpoint || !productionProductSearchTopic) {
+if (!productSearchSubscriptionPushEndpoint || !productSearchTopic) {
   throw new Error(
     'EMULATOR_PRODUCT_SEARCH_ENDPOINT or EMULATOR_PRODUCT_SEARCH_TOPIC is not set.',
   );
 }
 
+const { productDetailSubscriptionPushEndpoint, productDetailTopic } = {
+  productDetailSubscriptionPushEndpoint:
+    process.env.EMULATOR_PRODUCT_DETAIL_ENDPOINT,
+  productDetailTopic: process.env.EMULATOR_PRODUCT_DETAIL_TOPIC,
+};
+
+if (!productDetailSubscriptionPushEndpoint || !productDetailTopic) {
+  throw new Error(
+    'EMULATOR_PRODUCT_DETAIL_ENDPOINT or EMULATOR_PRODUCT_DETAIL_TOPIC is not set.',
+  );
+}
 function topicCreator(pubsub) {
   return async function createTopic(topicName) {
     console.log(`Looking for topic: ${topicName}`);
@@ -59,8 +70,14 @@ function subscriptionCreatorOnTopic(topic) {
 
 const pubsubClient = new PubSub({});
 const createTopic = topicCreator(pubsubClient);
-const topic = await createTopic(productionProductSearchTopic);
+await createTopic(productSearchTopic).then(topic =>
+  subscriptionCreatorOnTopic(topic)('product-search-subscription', {
+    pushEndpoint: productSearchSubscriptionPushEndpoint,
+  }),
+);
 
-await subscriptionCreatorOnTopic(topic)('product-search-subscription', {
-  pushEndpoint: productSearchSubscriptionPushEndpoint,
-});
+await createTopic(productDetailTopic).then(topic =>
+  subscriptionCreatorOnTopic(topic)('product-detail-subscription', {
+    pushEndpoint: productDetailSubscriptionPushEndpoint,
+  }),
+);

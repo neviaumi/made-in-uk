@@ -26,6 +26,25 @@ services:
       - GCLOUD_PROJECT=made-in-uk
     ports:
       - 3000:3000
+  bg-product-detail:
+    build:
+      context: systems/background-product-detail
+      dockerfile: Dockerfile
+      target: base
+    command: ./scripts/docker/watch.sh
+    develop:
+      watch:
+        - action: sync
+          path: systems/background-product-detail/src
+          target: /app/src
+    entrypoint: /bin/sh
+    environment:
+      - BG_PRODUCT_DETAIL_DATABASE_ID=made-in-uk-demo
+      - BG_PRODUCT_DETAIL_ENV=development
+      - BG_PRODUCT_DETAIL_PORT=3000
+      - FIRESTORE_EMULATOR_HOST=firestore:8080
+      - PUBSUB_EMULATOR_HOST=pubsub:8080
+      - GCLOUD_PROJECT=made-in-uk
   bg-product-search:
     build:
       context: systems/background-product-search
@@ -43,6 +62,7 @@ services:
       - BG_PRODUCT_SEARCH_ENV=development
       - BG_PRODUCT_SEARCH_PORT=3000
       - FIRESTORE_EMULATOR_HOST=firestore:8080
+      - BG_PRODUCT_DETAIL_TOPIC=product-detail
       - PUBSUB_EMULATOR_HOST=pubsub:8080
       - GCLOUD_PROJECT=made-in-uk
   firestore:
@@ -68,6 +88,8 @@ services:
       - GCLOUD_PROJECT=made-in-uk
       - EMULATOR_PRODUCT_SEARCH_ENDPOINT=http://bg-product-search:3000
       - EMULATOR_PRODUCT_SEARCH_TOPIC=product-search
+      - EMULATOR_PRODUCT_DETAIL_ENDPOINT=http://bg-product-detail:3000
+      - EMULATOR_PRODUCT_DETAIL_TOPIC=product-detail
   pubsub:
     command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8080 --project=made-in-uk
     environment:

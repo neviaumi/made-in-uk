@@ -9,7 +9,7 @@ export enum AppEnvironment {
 }
 
 export const APP_ENV: AppEnvironment = process.env[
-  'BG_PRODUCT_SEARCH_ENV'
+  'BG_PRODUCT_DETAIL_ENV'
 ]! as AppEnvironment;
 
 if (
@@ -23,7 +23,7 @@ if (
   })(APP_ENV)
 ) {
   throw new Error(`
-        Invalid BG_PRODUCT_SEARCH_ENV value: ${APP_ENV}
+        Invalid BG_PRODUCT_DETAIL_ENV value: ${APP_ENV}
         possible values: ${Object.values<string>(AppEnvironment).join('/ ')}
     `);
 }
@@ -38,7 +38,7 @@ export function loadConfig(appEnv: AppEnvironment) {
         default: shouldUseFirestoreEmulator ? 'unused' : null,
         env: shouldUseFirestoreEmulator
           ? 'UNUSED'
-          : 'BG_PRODUCT_SEARCH_DATABASE_ID',
+          : 'BG_PRODUCT_DETAIL_DATABASE_ID',
         format: String,
       },
     },
@@ -48,23 +48,14 @@ export function loadConfig(appEnv: AppEnvironment) {
     log: {
       level: {
         default: Level.info,
-        env: 'BG_PRODUCT_SEARCH_LOG_LEVEL',
+        env: 'BG_PRODUCT_DETAIL_LOG_LEVEL',
         format: Object.values(Level),
       },
     },
     port: {
       default: 5333,
-      env: 'BG_PRODUCT_SEARCH_PORT',
+      env: 'BG_PRODUCT_DETAIL_PORT',
       format: 'port',
-    },
-    pubsub: {
-      topics: {
-        productDetail: {
-          default: null,
-          env: 'BG_PRODUCT_DETAIL_TOPIC',
-          format: String,
-        },
-      },
     },
   });
   configSchema.validate({

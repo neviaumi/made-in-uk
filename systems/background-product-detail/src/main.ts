@@ -5,11 +5,10 @@ import {
   closePage,
   createBrowserPage,
   createChromiumBrowser,
-  createProductsSearchHandler,
+  createProductDetailsHandler,
 } from '@/browser.ts';
 import { APP_ENV, loadConfig } from '@/config.ts';
 import { createLogger } from '@/logging/logger.ts';
-import { createPubSubClient, getProductDetailTopic } from '@/pubsub.ts';
 
 const config = loadConfig(APP_ENV);
 const logger = createLogger(APP_ENV);
@@ -29,36 +28,20 @@ const server = createServer(async (req, res) => {
   const browser = await createChromiumBrowser();
   const page = await createBrowserPage(browser)();
 
-  const searchProducts = await createProductsSearchHandler(page, {
+  const productInfo = await createProductDetailsHandler(page, {
     logger: loggerWithRequestId,
-  })(jsonMessageBody.search.keyword).finally(async () => {
+  })(jsonMessageBody.productUrl).finally(async () => {
     await closePage(page);
     await closeBrowser(browser);
   });
-
-  const pubsub = createPubSubClient();
-  const productDetailTopic = getProductDetailTopic(pubsub)({
-    batching: {
-      maxMessages: 512,
-      maxMilliseconds: Math.max(searchProducts.length * 1000, 1000),
-    },
+  if (!productInfo) {
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
+  loggerWithRequestId.info('Product details', {
+    product: productInfo,
   });
-  await Promise.all(
-    searchProducts.map(productUrl => {
-      productDetailTopic.publishMessage({
-        attributes: {
-          requestId: pubSubPushMessage.message.attributes['requestId'],
-        },
-        data: Buffer.from(
-          JSON.stringify({
-            productUrl: productUrl,
-            source: 'ocado',
-          }),
-        ),
-      });
-    }),
-  );
-
   res.statusCode = 204;
   res.end();
 });
