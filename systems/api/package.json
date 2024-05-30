@@ -18,7 +18,7 @@
     "@busybox/prettier-config": "2024.2.29-alpha.203",
     "@busybox/tsconfig": "2024.2.29-alpha.203",
     "@types/convict": "6.1.6",
-    "@types/node": "20.12.12",
+    "@types/node": "20.12.13",
     "@types/ramda": "0.30.0",
     "eslint": "8.57.0",
     "graphql-tag": "2.12.6",
