@@ -8,7 +8,12 @@ import {
   createProductDetailsHandler,
 } from '@/browser.ts';
 import { APP_ENV, loadConfig } from '@/config.ts';
-import { createLogger } from '@/logging/logger.ts';
+import {
+  createDatabaseConnection,
+  createReplyStreamOnDatabase,
+} from '@/database.ts';
+import { createLogger } from '@/logger.ts';
+import { REPLY_DATA_TYPE } from '@/types.ts';
 
 const config = loadConfig(APP_ENV);
 const logger = createLogger(APP_ENV);
@@ -20,9 +25,13 @@ const server = createServer(async (req, res) => {
     res.end(verifiedPubSubPushMessage.error.message);
     return;
   }
+  const requestId =
+    verifiedPubSubPushMessage.data.message.attributes['requestId'];
   const loggerWithRequestId = logger.child({
-    requestId: verifiedPubSubPushMessage.data.message.attributes['requestId'],
+    requestId,
   });
+  const database = createDatabaseConnection();
+  const writeToReplyStream = createReplyStreamOnDatabase(database);
   const pubSubPushMessage = verifiedPubSubPushMessage.data;
   const jsonMessageBody = JSON.parse(pubSubPushMessage.message.data);
   const browser = await createChromiumBrowser();
@@ -30,17 +39,31 @@ const server = createServer(async (req, res) => {
 
   const productInfo = await createProductDetailsHandler(page, {
     logger: loggerWithRequestId,
-  })(jsonMessageBody.productUrl).finally(async () => {
-    await closePage(page);
-    await closeBrowser(browser);
-  });
-  if (!productInfo) {
+  })(jsonMessageBody.productUrl)
+    .catch(e => ({
+      error: {
+        code: 'ERR_UNHANDLED_EXCEPTION',
+        message: e.message,
+        meta: { message: jsonMessageBody },
+      },
+      ok: false as const,
+    }))
+    .finally(async () => {
+      await closePage(page);
+      await closeBrowser(browser);
+    });
+  if (!productInfo.ok) {
+    await writeToReplyStream(requestId, {
+      error: productInfo.error,
+      type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE,
+    });
     res.statusCode = 204;
     res.end();
     return;
   }
-  loggerWithRequestId.info('Product details', {
-    product: productInfo,
+  await writeToReplyStream(requestId, {
+    data: productInfo.data,
+    type: REPLY_DATA_TYPE.PRODUCT_DETAIL,
   });
   res.statusCode = 204;
   res.end();

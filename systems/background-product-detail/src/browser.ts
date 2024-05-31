@@ -1,9 +1,9 @@
 import playwright from 'playwright';
 
 import { APP_ENV } from '@/config.ts';
-import { createLogger, type Logger } from '@/logging/logger.ts';
+import { createLogger, type Logger } from '@/logger.ts';
 
-import type { Product } from './types';
+import type { Product } from './types.ts';
 
 const baseUrl = 'https://www.ocado.com';
 
@@ -35,9 +35,13 @@ export function createProductDetailsHandler(
   },
 ) {
   const logger = options?.logger ?? createLogger(APP_ENV);
-  return async function getProductDetails(
-    productUrl: string,
-  ): Promise<null | Product> {
+  return async function getProductDetails(productUrl: string): Promise<
+    | {
+        error: { code: string; message: string; meta: Record<string, unknown> };
+        ok: false;
+      }
+    | { data: Product; ok: true }
+  > {
     const fullUrl = new URL(productUrl, baseUrl).toString();
     await page.goto(fullUrl);
     const countryOfOriginHeading = page.getByRole('heading', {
@@ -47,10 +51,14 @@ export function createProductDetailsHandler(
       .locator('.gn-content.bop-info__field')
       .filter({ has: countryOfOriginHeading });
     if (!(await parent.isVisible())) {
-      logger.warn('Country of origin not found', {
-        url: fullUrl,
-      });
-      return null;
+      return {
+        error: {
+          code: 'ERR_ELEMENT_NOT_FOUND',
+          message: 'Country of origin not found',
+          meta: { url: fullUrl },
+        },
+        ok: false,
+      };
     }
     const countryOfOrigin = await parent
       .locator('.bop-info__content')
@@ -58,10 +66,14 @@ export function createProductDetailsHandler(
       .textContent()
       .then(text => text?.trim());
     if (!countryOfOrigin) {
-      logger.warn('Country of origin is undefined', {
-        url: fullUrl,
-      });
-      return null;
+      return {
+        error: {
+          code: 'ERR_ELEMENT_NOT_FOUND',
+          message: 'Country of origin not found',
+          meta: { url: fullUrl },
+        },
+        ok: false,
+      };
     }
     const productOpenGraphMeta: {
       'og:image': string;
@@ -86,15 +98,25 @@ export function createProductDetailsHandler(
         productOpenGraphMeta,
         url: fullUrl,
       });
-      return null;
+      return {
+        error: {
+          code: 'ERR_ELEMENT_NOT_FOUND',
+          message: 'Country of origin not found',
+          meta: { ogMeta: productOpenGraphMeta, url: fullUrl },
+        },
+        ok: false,
+      };
     }
     return {
-      countryOfOrigin,
-      id: productId,
-      image: new URL(productOpenGraphMeta['og:image'], baseUrl).toString(),
-      title: productOpenGraphMeta['og:title'],
-      type: productOpenGraphMeta['og:type'],
-      url: new URL(productOpenGraphMeta['og:url'], baseUrl).toString(),
+      data: {
+        countryOfOrigin,
+        id: productId,
+        image: new URL(productOpenGraphMeta['og:image'], baseUrl).toString(),
+        title: productOpenGraphMeta['og:title'],
+        type: productOpenGraphMeta['og:type'],
+        url: new URL(productOpenGraphMeta['og:url'], baseUrl).toString(),
+      },
+      ok: true,
     };
   };
 }

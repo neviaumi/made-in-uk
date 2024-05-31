@@ -1,5 +1,14 @@
 import type { Config } from '@/config.ts';
-import type { Logger } from '@/logging/logger.ts';
+import type { Logger } from '@/logger.ts';
+
+export type Product = {
+  countryOfOrigin: string;
+  id: string;
+  image: string;
+  title: string;
+  type: string;
+  url: string;
+};
 
 export type GraphqlContext = {
   config: Config;

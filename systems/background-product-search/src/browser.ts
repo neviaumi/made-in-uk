@@ -1,7 +1,7 @@
 import playwright from 'playwright';
 
 import { APP_ENV } from '@/config.ts';
-import { createLogger, type Logger } from '@/logging/logger.ts';
+import { createLogger, type Logger } from '@/logger.ts';
 
 const baseUrl = 'https://www.ocado.com';
 const defaultLogger = createLogger(APP_ENV);
@@ -34,7 +34,10 @@ export function createProductsSearchHandler(
   },
 ) {
   const logger = options?.logger ?? defaultLogger;
-  return async function searchProducts(keyword: string) {
+  return async function searchProducts(keyword: string): Promise<{
+    data: string[];
+    ok: true;
+  }> {
     const searchUrl = new URL(`/search?entry=${keyword}`, baseUrl);
     logger.info(`Searching products that match ${keyword} ...`, {
       searchUrl: searchUrl.toString(),
@@ -46,12 +49,15 @@ export function createProductsSearchHandler(
       .evaluateAll(elements =>
         elements.map(element => element.getAttribute('href')),
       );
-    return Array.from(
-      new Set(
-        matchProductUrls.filter(url =>
-          url?.startsWith('/products/'),
-        ) as string[],
+    return {
+      data: Array.from(
+        new Set(
+          matchProductUrls.filter(url =>
+            url?.startsWith('/products/'),
+          ) as string[],
+        ),
       ),
-    );
+      ok: true,
+    };
   };
 }

@@ -28,14 +28,6 @@ export function createFetchClient() {
     } else {
       init.headers = initHeaders;
     }
-    // eslint-disable-next-line no-console
-    console.log({
-      authHeaders,
-      initHeaders,
-      mergeHeaders: init.headers,
-      message: 'before fetch',
-      requestPath,
-    });
     return fetch(requestPath, init);
   };
 }

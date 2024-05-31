@@ -4,9 +4,9 @@ import { useDeferStream } from '@graphql-yoga/plugin-defer-stream';
 import { createSchema, createYoga } from 'graphql-yoga';
 
 import { APP_ENV, loadConfig } from '@/config.ts';
-import { createLogger } from '@/logging/logger.ts';
-import { searchProductQuery } from '@/resolvers/search-product.query.ts';
-import type { GraphqlContext } from '@/types/utilities';
+import { createLogger } from '@/logger.ts';
+import { searchProductQuery } from '@/search-product.query.ts';
+import type { GraphqlContext } from '@/types.ts';
 
 const config = loadConfig(APP_ENV);
 const logger = createLogger(APP_ENV);

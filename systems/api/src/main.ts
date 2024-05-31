@@ -1,7 +1,7 @@
 import { createServer } from 'node:http';
 
 import { APP_ENV, loadConfig } from '@/config.ts';
-import { createLogger } from '@/logging/logger.ts';
+import { createLogger } from '@/logger.ts';
 
 import { yoga } from './yoga.ts';
 

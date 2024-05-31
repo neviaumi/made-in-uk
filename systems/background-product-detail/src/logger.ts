@@ -5,10 +5,10 @@ import {
 } from 'winston';
 
 import { AppEnvironment } from '@/config.ts';
-
-import { Level } from './logging.constants.ts';
+import { Level } from '@/logger.types.ts';
 
 export type { Logger } from 'winston';
+
 export function createLogger(appEnv: AppEnvironment) {
   const isDev = [AppEnvironment.DEV].includes(appEnv);
   return createWinstonLogger({

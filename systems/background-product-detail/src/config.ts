@@ -1,6 +1,6 @@
 import convict from 'convict';
 
-import { Level } from '@/logging/logging.constants.ts';
+import { Level } from '@/logger.types.ts';
 
 export enum AppEnvironment {
   DEV = 'development',
