@@ -6,6 +6,7 @@ import { useCallback, useRef, useState } from 'react';
 import { gql, useQuery } from 'urql';
 
 import { Page } from '@/components/Layout.tsx';
+import { Loader } from '@/components/Loader.tsx';
 
 export const meta: MetaFunction = () => {
   return [
@@ -17,12 +18,15 @@ export const meta: MetaFunction = () => {
 const SearchProducts = gql`
   query searchProducts($input: SearchProductInput!) {
     searchProduct(input: $input) @stream {
-      id
-      image
-      title
       type
-      countryOfOrigin
-      url
+      data {
+        id
+        image
+        title
+        type
+        countryOfOrigin
+        url
+      }
     }
   }
 `;
@@ -38,12 +42,15 @@ export default function Index() {
   const [matchingResults] = useQuery<
     {
       searchProduct: Array<{
-        countryOfOrigin: string;
-        id: string;
-        image: string;
-        title: string;
+        data: {
+          countryOfOrigin: string;
+          id: string;
+          image: string;
+          title: string;
+          type: string;
+          url: string;
+        };
         type: string;
-        url: string;
       }>;
     },
     { input: typeof matchingFilters }
@@ -54,7 +61,9 @@ export default function Index() {
       input: matchingFilters,
     },
   });
-  const { data, fetching, stale } = matchingResults;
+  const { data, fetching } = matchingResults;
+  // @ts-expect-error type error
+  const isEndOfStream = !fetching && matchingResults['hasNext'] === false;
 
   return (
     <Page className={'tw-mx-auto tw-p-2'}>
@@ -105,44 +114,53 @@ export default function Index() {
         </form>
       </Page.Header>
       <Page.Main className={'tw-pt-2'}>
-        {fetching && <span>Loading...</span>}
-        {data && (
-          <article>
-            <ul
-              className={
-                'tw-grid tw-grid-cols-2 tw-gap-1 md:tw-grid-cols-3 xl:tw-grid-cols-4'
-              }
-            >
-              {data.searchProduct.map(product => (
-                <li key={product.id}>
-                  <a
-                    className={
-                      'tw-box-border tw-flex tw-flex-col tw-items-center tw-border tw-border-solid tw-border-transparent hover:tw-border-primary-user-action'
-                    }
-                    href={product.url}
-                    rel="noreferrer"
-                    target={'_blank'}
-                  >
-                    <img
-                      alt={product.title}
-                      className={'tw-h-16 tw-object-contain'}
-                      src={product.image}
-                    />
-                    <h1
-                      className={'tw-text-center tw-text-xl tw-font-semibold'}
-                    >
-                      {product.title}
-                    </h1>
-                    <p className={'tw-text-lg tw-font-medium'}>
-                      {product.countryOfOrigin}
-                    </p>
-                  </a>
-                </li>
+        <article>
+          <ul
+            className={
+              'tw-grid tw-grid-cols-1 tw-gap-1 sm:tw-grid-cols-2 lg:tw-grid-cols-4 2xl:tw-grid-cols-8'
+            }
+          >
+            {fetching &&
+              Array.from({ length: 8 }).map((_, index) => (
+                <Loader className={'tw-h-16 '} key={index} />
               ))}
-              {stale && <span>More coming</span>}
-            </ul>
-          </article>
-        )}
+            {!fetching &&
+              data &&
+              data.searchProduct
+                .filter(({ type }) => type === 'FETCH_PRODUCT_DETAIL')
+                .map(({ data: product }) => (
+                  <li key={product.id}>
+                    <a
+                      className={
+                        'tw-box-border tw-flex tw-flex-col tw-items-center tw-border tw-border-solid tw-border-transparent hover:tw-border-primary-user-action'
+                      }
+                      href={product.url}
+                      rel="noreferrer"
+                      target={'_blank'}
+                    >
+                      <img
+                        alt={product.title}
+                        className={'tw-h-16 tw-object-contain'}
+                        src={product.image}
+                      />
+                      <h1
+                        className={'tw-text-center tw-text-xl tw-font-semibold'}
+                      >
+                        {product.title}
+                      </h1>
+                      <p className={'tw-text-lg tw-font-medium'}>
+                        {product.countryOfOrigin}
+                      </p>
+                    </a>
+                  </li>
+                ))}
+            {!isEndOfStream &&
+              data !== undefined &&
+              Array.from({ length: 8 }).map((_, index) => (
+                <Loader className={'tw-h-16'} key={index} />
+              ))}
+          </ul>
+        </article>
       </Page.Main>
     </Page>
   );

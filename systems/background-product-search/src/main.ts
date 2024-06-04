@@ -9,11 +9,13 @@ import {
 } from '@/browser.ts';
 import { APP_ENV, loadConfig } from '@/config.ts';
 import {
+  checkRequestStreamOnDatabase,
   connectReplyStreamOnDatabase,
   createDatabaseConnection,
 } from '@/database.ts';
 import { createLogger } from '@/logger.ts';
 import { createPubSubClient, getProductDetailTopic } from '@/pubsub.ts';
+import { REPLY_DATA_TYPE } from '@/types.ts';
 
 const config = loadConfig(APP_ENV);
 const logger = createLogger(APP_ENV);
@@ -31,8 +33,20 @@ const server = createServer(async (req, res) => {
     requestId: requestId,
   });
   const database = createDatabaseConnection();
+  const writeToReplyStream = connectReplyStreamOnDatabase(database, {
+    logger: loggerWithRequestId,
+  });
+  if (await checkRequestStreamOnDatabase(database)(requestId)) {
+    loggerWithRequestId.info('Request already processed');
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
   const pubSubPushMessage = verifiedPubSubPushMessage.data;
   const jsonMessageBody = JSON.parse(pubSubPushMessage.message.data);
+  await writeToReplyStream(requestId, {
+    type: REPLY_DATA_TYPE.PRODUCT_SEARCH_LOCK,
+  });
   const browser = await createChromiumBrowser();
   const page = await createBrowserPage(browser)();
 
@@ -51,41 +65,44 @@ const server = createServer(async (req, res) => {
       await closeBrowser(browser);
     });
   if (!matchProducts.ok) {
-    await connectReplyStreamOnDatabase(database, {
-      logger: loggerWithRequestId,
-    })(requestId, {
+    await writeToReplyStream(requestId, {
       error: {
         code: matchProducts.error.code,
         message: matchProducts.error.message,
       },
       search: jsonMessageBody.search,
-      total: 0,
+      type: REPLY_DATA_TYPE.PRODUCT_SEARCH_ERROR,
     });
     res.statusCode = 500;
     res.end(matchProducts.error.message);
     return;
   }
-  await connectReplyStreamOnDatabase(database, {
-    logger: loggerWithRequestId,
-  })(requestId, {
+  const numberOfProducts = Object.keys(matchProducts.data).length;
+  await writeToReplyStream(requestId, {
+    data: { total: numberOfProducts },
     search: jsonMessageBody.search,
-    total: matchProducts.data.length,
+    type: REPLY_DATA_TYPE.PRODUCT_SEARCH,
   });
   const pubsub = createPubSubClient();
   const productDetailTopic = getProductDetailTopic(pubsub)({
     batching: {
       maxMessages: 512,
-      maxMilliseconds: Math.max(matchProducts.data.length * 1000, 1000),
+      maxMilliseconds: Math.max(numberOfProducts * 1000, 1000),
     },
   });
   await Promise.all(
-    matchProducts.data.map(productUrl => {
-      productDetailTopic.publishMessage({
+    Object.entries(matchProducts.data).map(([productId, productUrl]) => {
+      loggerWithRequestId.info('Publishing product detail request', {
+        productId,
+        productUrl,
+      });
+      return productDetailTopic.publishMessage({
         attributes: {
           requestId: requestId,
         },
         data: Buffer.from(
           JSON.stringify({
+            productId,
             productUrl: productUrl,
             source: 'ocado',
           }),

@@ -27,6 +27,30 @@ export function closePage(page: playwright.Page) {
   return page.close();
 }
 
+function loopUntilAllProductsLoaded(
+  page: playwright.Page,
+  options: {
+    logger: Logger;
+  },
+) {
+  const logger = options.logger;
+  return async function loopUntilNoMoreProductsLoaded() {
+    const productsLocator = page.locator('.main-column [data-sku] a[href]');
+    const beforeScrollingCount = await productsLocator.count();
+    await productsLocator.last().scrollIntoViewIfNeeded();
+    await page.waitForTimeout(3000);
+    const afterScrollingCount = await productsLocator.count();
+    logger.info('Loop until no more product', {
+      afterScrollingCount,
+      beforeScrollingCount,
+    });
+    if (afterScrollingCount > beforeScrollingCount) {
+      return loopUntilNoMoreProductsLoaded();
+    }
+    return;
+  };
+}
+
 export function createProductsSearchHandler(
   page: playwright.Page,
   options?: {
@@ -34,30 +58,54 @@ export function createProductsSearchHandler(
   },
 ) {
   const logger = options?.logger ?? defaultLogger;
-  return async function searchProducts(keyword: string): Promise<{
-    data: string[];
-    ok: true;
-  }> {
+  return async function searchProducts(keyword: string): Promise<
+    | {
+        data: {
+          [productId: string]: string;
+        };
+        ok: true;
+      }
+    | {
+        error: {
+          code: string;
+          message: string;
+        };
+        ok: false;
+      }
+  > {
     const searchUrl = new URL(`/search?entry=${keyword}`, baseUrl);
     logger.info(`Searching products that match ${keyword} ...`, {
       searchUrl: searchUrl.toString(),
     });
-    await page.goto(searchUrl.toString());
+    await page.goto(searchUrl.toString(), {
+      waitUntil: 'networkidle',
+    });
+    await page
+      .getByRole('button', {
+        name: 'Accept',
+      })
+      .click();
+    await loopUntilAllProductsLoaded(page, {
+      logger,
+    })();
+
     const matchProductUrls = await page
       .locator('.main-column [data-sku]')
-      .getByRole('link')
-      .evaluateAll(elements =>
-        elements.map(element => element.getAttribute('href')),
-      );
+      .evaluateAll(elements => {
+        return elements.map(element => {
+          const anchor = element.querySelector('a[href]');
+          if (!anchor) {
+            return null;
+          }
+          const productId = element.getAttribute('data-sku')!;
+          return [productId, anchor.getAttribute('href')!];
+        });
+      })
+      .then(links => links.filter((link): link is string[] => link !== null));
+
     return {
-      data: Array.from(
-        new Set(
-          matchProductUrls.filter(url =>
-            url?.startsWith('/products/'),
-          ) as string[],
-        ),
-      ),
-      ok: true,
+      data: Object.fromEntries(matchProductUrls),
+      ok: true as const,
     };
   };
 }

@@ -9,6 +9,7 @@ import {
 } from '@/browser.ts';
 import { APP_ENV, loadConfig } from '@/config.ts';
 import {
+  checkRequestStreamOnDatabase,
   createDatabaseConnection,
   createReplyStreamOnDatabase,
 } from '@/database.ts';
@@ -34,12 +35,34 @@ const server = createServer(async (req, res) => {
   const writeToReplyStream = createReplyStreamOnDatabase(database);
   const pubSubPushMessage = verifiedPubSubPushMessage.data;
   const jsonMessageBody = JSON.parse(pubSubPushMessage.message.data);
+  const { productId, productUrl } = jsonMessageBody;
+  if (!productId || !productUrl) {
+    loggerWithRequestId.error('Invalid message body', {
+      message: jsonMessageBody,
+    });
+    res.statusCode = 400;
+    res.end('Bad request');
+    return;
+  }
+  if (await checkRequestStreamOnDatabase(database)(requestId, productId)) {
+    loggerWithRequestId.info('Request already exist', {
+      productId,
+      productUrl,
+      requestId,
+    });
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
+  await writeToReplyStream(requestId, productId, {
+    type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_LOCK,
+  });
   const browser = await createChromiumBrowser();
   const page = await createBrowserPage(browser)();
 
   const productInfo = await createProductDetailsHandler(page, {
     logger: loggerWithRequestId,
-  })(jsonMessageBody.productUrl)
+  })(productUrl)
     .catch(e => ({
       error: {
         code: 'ERR_UNHANDLED_EXCEPTION',
@@ -53,7 +76,7 @@ const server = createServer(async (req, res) => {
       await closeBrowser(browser);
     });
   if (!productInfo.ok) {
-    await writeToReplyStream(requestId, {
+    await writeToReplyStream(requestId, productId, {
       error: productInfo.error,
       type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE,
     });
@@ -61,9 +84,9 @@ const server = createServer(async (req, res) => {
     res.end();
     return;
   }
-  await writeToReplyStream(requestId, {
+  await writeToReplyStream(requestId, productId, {
     data: productInfo.data,
-    type: REPLY_DATA_TYPE.PRODUCT_DETAIL,
+    type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
   });
   res.statusCode = 204;
   res.end();

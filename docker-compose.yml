@@ -67,7 +67,7 @@ services:
       - GCLOUD_PROJECT=made-in-uk
   firestore:
     command: gcloud emulators firestore start --host-port=0.0.0.0:8080
-    image: 'gcr.io/google.com/cloudsdktool/cloud-sdk:466.0.0-emulators'
+    image: 'gcr.io/google.com/cloudsdktool/cloud-sdk:emulators'
   infrastructure:
     build:
       context: ./systems/infrastructure
@@ -94,7 +94,7 @@ services:
     command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8080 --project=made-in-uk
     environment:
       - GCLOUD_PROJECT=made-in-uk
-    image: 'gcr.io/google.com/cloudsdktool/cloud-sdk:466.0.0-emulators'
+    image: 'gcr.io/google.com/cloudsdktool/cloud-sdk:emulators'
   web:
     build:
       context: ./systems/web

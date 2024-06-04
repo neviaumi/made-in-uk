@@ -29,8 +29,16 @@ export const schema = {
       type: String
       url: String
     }
+    enum ProductStreamType {
+      FETCH_PRODUCT_DETAIL_EOS
+      FETCH_PRODUCT_DETAIL
+    }
+    type ProductStream {
+      type: ProductStreamType!
+      data: Product
+    }
     type Query {
-      searchProduct(input: SearchProductInput!): [Product!]!
+      searchProduct(input: SearchProductInput!): [ProductStream!]!
     }
   `,
 };

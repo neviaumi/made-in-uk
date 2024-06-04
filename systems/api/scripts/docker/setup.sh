@@ -12,4 +12,3 @@ else
   echo "Invalid argument: $IS_DEV"
   exit 1
 fi
-npx playwright install chromium

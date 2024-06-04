@@ -34,19 +34,25 @@ export const searchProductQuery: ResolverFunction<
       }),
     ),
   });
-  const productDetailsGenerator = createListenerToReplyStreamData(database, {
-    logger,
-  });
+  const connectMatchProductStream = createListenerToReplyStreamData(database);
   return new Repeater(async (push, stop) => {
-    for await (const productDetail of productDetailsGenerator(requestId)) {
-      try {
-        await push(productDetail);
-      } catch (e) {
-        logger.error('streaming product details error', e);
-        stop(e);
-        break;
-      }
+    try {
+      await connectMatchProductStream(requestId).forEach(productDetail => {
+        if (productDetail.type === 'FETCH_PRODUCT_DETAIL_FAILURE') {
+          return;
+        }
+        push(productDetail);
+      });
+      await push({
+        type: 'FETCH_PRODUCT_DETAIL_EOS',
+      });
+      stop();
+    } catch (e) {
+      logger.error('streaming product details error', { error: e });
+      await push({
+        type: 'FETCH_PRODUCT_DETAIL_EOS',
+      });
+      stop(e);
     }
-    stop();
   });
 };

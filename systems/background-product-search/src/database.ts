@@ -15,6 +15,17 @@ export function createDatabaseConnection(settings?: Settings) {
   return new Firestore(storeConfig);
 }
 
+export function checkRequestStreamOnDatabase(database: Firestore) {
+  return async function checkRequestAlreadyExist(requestId: string) {
+    const collectionPath = `replies.${requestId}`;
+    const headers = await database
+      .collection(collectionPath)
+      .doc('headers')
+      .get();
+    return headers.exists;
+  };
+}
+
 export function connectReplyStreamOnDatabase(
   database: Firestore,
   options: {
@@ -22,7 +33,30 @@ export function connectReplyStreamOnDatabase(
   },
 ) {
   const logger = options?.logger ?? defaultLogger;
-  return function writeToRepliesStreamHeader(requestId: string, headers: {}) {
+  return function writeToRepliesStreamHeader(
+    requestId: string,
+    headers:
+      | {
+          type: REPLY_DATA_TYPE.PRODUCT_SEARCH_LOCK;
+        }
+      | {
+          error?: {
+            code: string;
+            message: string;
+          };
+          search: {
+            keyword: string;
+          };
+          type: REPLY_DATA_TYPE.PRODUCT_SEARCH_ERROR;
+        }
+      | {
+          data: { total: number };
+          search: {
+            keyword: string;
+          };
+          type: REPLY_DATA_TYPE.PRODUCT_SEARCH;
+        },
+  ) {
     const collectionPath = `replies.${requestId}`;
     logger.info(`Set header to ${collectionPath}`, {
       headers,
