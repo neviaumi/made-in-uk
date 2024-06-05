@@ -12,15 +12,62 @@ import {
   checkRequestStreamOnDatabase,
   connectReplyStreamOnDatabase,
   createDatabaseConnection,
+  databaseHealthCheck,
 } from '@/database.ts';
 import { createLogger } from '@/logger.ts';
-import { createPubSubClient, getProductDetailTopic } from '@/pubsub.ts';
+import {
+  createPubSubClient,
+  getProductDetailTopic,
+  pubsubHealthCheck,
+} from '@/pubsub.ts';
 import { REPLY_DATA_TYPE } from '@/types.ts';
 
 const config = loadConfig(APP_ENV);
 const logger = createLogger(APP_ENV);
 
+async function handleHealthCheck(res: Parameters<RequestListener>[1]) {
+  const pubsub = createPubSubClient();
+  const database = createDatabaseConnection();
+  const [pubsubHealthCheckResult, databaseHealthCheckResult] =
+    await Promise.all([
+      pubsubHealthCheck(pubsub)(),
+      databaseHealthCheck(database)(),
+    ]);
+  const info = [
+    ['pubsub', pubsubHealthCheckResult.ok ? { ok: true } : null],
+    ['database', databaseHealthCheckResult.ok ? { ok: true } : null],
+  ].filter(([, result]) => result);
+  const errors = [
+    [
+      'pubsub',
+      pubsubHealthCheckResult.ok ? null : pubsubHealthCheckResult.error,
+    ],
+    [
+      'database',
+      databaseHealthCheckResult.ok ? null : databaseHealthCheckResult.error,
+    ],
+  ].filter(([, error]) => error);
+  const ok = errors.length === 0;
+  const healthCheckResult = {
+    errors: Object.fromEntries(errors),
+    info: Object.fromEntries(info),
+    ok,
+  };
+  if (!healthCheckResult.ok) {
+    res.statusCode = 503;
+    res.end(JSON.stringify(healthCheckResult));
+    return;
+  }
+  res.statusCode = 200;
+  res.end();
+}
+
 const server = createServer(async (req, res) => {
+  const pubsub = createPubSubClient();
+  if (req.method === 'GET' && req.url === '/health') {
+    await handleHealthCheck(res);
+    return;
+  }
   const verifiedPubSubPushMessage = await validatePubSubPushMessage(req);
   if (!verifiedPubSubPushMessage.ok) {
     res.statusCode = Number(verifiedPubSubPushMessage.error.code);
@@ -77,7 +124,6 @@ const server = createServer(async (req, res) => {
     res.end(matchProducts.error.message);
     return;
   }
-  const pubsub = createPubSubClient();
   const productToSearchDetails =
     APP_ENV === AppEnvironment.DEV
       ? Object.entries(matchProducts.data).slice(0, 10)

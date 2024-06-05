@@ -7,6 +7,34 @@ import { REPLY_DATA_TYPE } from '@/types.ts';
 const config = loadConfig(APP_ENV);
 const defaultLogger = createLogger(APP_ENV);
 
+export function databaseHealthCheck(database: Firestore) {
+  return async function healthCheckByGetCollectionInfo(): Promise<
+    | {
+        ok: true;
+      }
+    | {
+        error: {
+          code: string;
+          message: string;
+        };
+        ok: false;
+      }
+  > {
+    return database
+      .listCollections()
+      .then(() => ({
+        ok: true as const,
+      }))
+      .catch(e => ({
+        error: {
+          code: 'ERR_DATABASE_HEALTH_CHECK_FAILED',
+          message: e.message,
+        },
+        ok: false,
+      }));
+  };
+}
+
 export function createDatabaseConnection(settings?: Settings) {
   const storeConfig = {
     databaseId: config.get('database.id'),

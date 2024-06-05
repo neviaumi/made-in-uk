@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 
 set -ex
-API_PORT="${PORT:-$API_PORT}"
-curl "http://localhost:${API_PORT}/health"
+BG_PRODUCT_DETAIL_PORT="${PORT:-$BG_PRODUCT_DETAIL_PORT}"
+curl --fail-with-body "http://localhost:${BG_PRODUCT_DETAIL_PORT}/health"
