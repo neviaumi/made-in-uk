@@ -7,7 +7,7 @@ import {
   createChromiumBrowser,
   createProductsSearchHandler,
 } from '@/browser.ts';
-import { APP_ENV, loadConfig } from '@/config.ts';
+import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
 import {
   checkRequestStreamOnDatabase,
   connectReplyStreamOnDatabase,
@@ -77,25 +77,27 @@ const server = createServer(async (req, res) => {
     res.end(matchProducts.error.message);
     return;
   }
-  const numberOfProducts = Object.keys(matchProducts.data).length;
-  await writeToReplyStream(requestId, {
-    data: { total: numberOfProducts },
-    search: jsonMessageBody.search,
-    type: REPLY_DATA_TYPE.PRODUCT_SEARCH,
-  });
   const pubsub = createPubSubClient();
+  const productToSearchDetails =
+    APP_ENV === AppEnvironment.DEV
+      ? Object.entries(matchProducts.data).slice(0, 10)
+      : Object.entries(matchProducts.data);
+  const numberOfProducts = productToSearchDetails.length;
+
   const productDetailTopic = getProductDetailTopic(pubsub)({
     batching: {
       maxMessages: 512,
       maxMilliseconds: Math.max(numberOfProducts * 1000, 1000),
     },
   });
+
+  await writeToReplyStream(requestId, {
+    data: { total: numberOfProducts },
+    search: jsonMessageBody.search,
+    type: REPLY_DATA_TYPE.PRODUCT_SEARCH,
+  });
   await Promise.all(
-    Object.entries(matchProducts.data).map(([productId, productUrl]) => {
-      loggerWithRequestId.info('Publishing product detail request', {
-        productId,
-        productUrl,
-      });
+    productToSearchDetails.map(([productId, productUrl]) => {
       return productDetailTopic.publishMessage({
         attributes: {
           requestId: requestId,
@@ -110,7 +112,9 @@ const server = createServer(async (req, res) => {
       });
     }),
   );
-
+  loggerWithRequestId.info('Product search completed', {
+    numberOfProducts,
+  });
   res.statusCode = 204;
   res.end();
 });

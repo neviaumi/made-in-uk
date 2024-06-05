@@ -27,23 +27,13 @@ export function closePage(page: playwright.Page) {
   return page.close();
 }
 
-function loopUntilAllProductsLoaded(
-  page: playwright.Page,
-  options: {
-    logger: Logger;
-  },
-) {
-  const logger = options.logger;
+function loopUntilAllProductsLoaded(page: playwright.Page) {
   return async function loopUntilNoMoreProductsLoaded() {
     const productsLocator = page.locator('.main-column [data-sku] a[href]');
     const beforeScrollingCount = await productsLocator.count();
     await productsLocator.last().scrollIntoViewIfNeeded();
     await page.waitForTimeout(3000);
     const afterScrollingCount = await productsLocator.count();
-    logger.info('Loop until no more product', {
-      afterScrollingCount,
-      beforeScrollingCount,
-    });
     if (afterScrollingCount > beforeScrollingCount) {
       return loopUntilNoMoreProductsLoaded();
     }
@@ -85,9 +75,7 @@ export function createProductsSearchHandler(
         name: 'Accept',
       })
       .click();
-    await loopUntilAllProductsLoaded(page, {
-      logger,
-    })();
+    await loopUntilAllProductsLoaded(page)();
 
     const matchProductUrls = await page
       .locator('.main-column [data-sku]')

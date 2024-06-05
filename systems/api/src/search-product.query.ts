@@ -1,6 +1,7 @@
 import { Repeater } from 'graphql-yoga';
 
 import {
+  closeReplyStream,
   createDatabaseConnection,
   createListenerToReplyStreamData,
 } from '@/database.ts';
@@ -34,8 +35,15 @@ export const searchProductQuery: ResolverFunction<
       }),
     ),
   });
-  const connectMatchProductStream = createListenerToReplyStreamData(database);
+  const connectMatchProductStream = createListenerToReplyStreamData(database, {
+    logger: logger,
+  });
   return new Repeater(async (push, stop) => {
+    stop.then(() =>
+      closeReplyStream(database, {
+        logger: logger,
+      })(requestId),
+    );
     try {
       await connectMatchProductStream(requestId).forEach(productDetail => {
         if (productDetail.type === 'FETCH_PRODUCT_DETAIL_FAILURE') {
@@ -43,15 +51,9 @@ export const searchProductQuery: ResolverFunction<
         }
         push(productDetail);
       });
-      await push({
-        type: 'FETCH_PRODUCT_DETAIL_EOS',
-      });
       stop();
     } catch (e) {
       logger.error('streaming product details error', { error: e });
-      await push({
-        type: 'FETCH_PRODUCT_DETAIL_EOS',
-      });
       stop(e);
     }
   });

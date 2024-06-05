@@ -3,6 +3,7 @@ import { Duplex, Readable } from 'node:stream';
 import { Firestore, type Settings } from '@google-cloud/firestore';
 
 import { APP_ENV, loadConfig } from '@/config.ts';
+import { createLogger, type Logger } from '@/logger.ts';
 
 const config = loadConfig(APP_ENV);
 
@@ -26,7 +27,7 @@ export function handleStreamHeader(stream: Duplex) {
       stream.end();
       throw new Error(content.error.message);
     }
-    const total: number = content['data']['total'];
+    const total: number = content['total'];
     const hasNoData = total === 0;
     if (hasNoData) {
       stream.end();
@@ -35,7 +36,28 @@ export function handleStreamHeader(stream: Duplex) {
   };
 }
 
-export function createListenerToReplyStreamData(database: Firestore) {
+export function closeReplyStream(
+  database: Firestore,
+  options?: {
+    logger?: Logger;
+  },
+) {
+  const logger = options?.logger ?? createLogger(APP_ENV);
+
+  return async function closeStream(requestId: string) {
+    const collectionPath = `replies.${requestId}`;
+    await database.recursiveDelete(database.collection(collectionPath));
+    logger.info(`Close reply stream ${requestId}`);
+  };
+}
+
+export function createListenerToReplyStreamData(
+  database: Firestore,
+  options?: {
+    logger?: Logger;
+  },
+) {
+  const logger = options?.logger ?? createLogger(APP_ENV);
   return function listenToReplyStreamData(requestId: string) {
     const collectionPath = `replies.${requestId}`;
     const duplexStream = new Duplex({
@@ -56,6 +78,10 @@ export function createListenerToReplyStreamData(database: Firestore) {
           if (isHeader) {
             const headerTotal = handleStreamHeader(duplexStream)(change);
             if (headerTotal !== null) {
+              logger.info(
+                `Update total from ${totalDocsExpected} to ${headerTotal}`,
+                { headerTotal, totalDocsExpected },
+              );
               totalDocsExpected = headerTotal;
             }
             return;
