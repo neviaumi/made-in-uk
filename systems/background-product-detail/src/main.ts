@@ -12,6 +12,7 @@ import {
   checkRequestStreamOnDatabase,
   createDatabaseConnection,
   createReplyStreamOnDatabase,
+  databaseHealthCheck,
 } from '@/database.ts';
 import { createLogger } from '@/logger.ts';
 import { REPLY_DATA_TYPE } from '@/types.ts';
@@ -19,7 +20,40 @@ import { REPLY_DATA_TYPE } from '@/types.ts';
 const config = loadConfig(APP_ENV);
 const logger = createLogger(APP_ENV);
 
+async function handleHealthCheck(res: Parameters<RequestListener>[1]) {
+  const database = createDatabaseConnection();
+  const [databaseHealthCheckResult] = await Promise.all([
+    databaseHealthCheck(database)(),
+  ]);
+  const info = [
+    ['database', databaseHealthCheckResult.ok ? { ok: true } : null],
+  ].filter(([, result]) => result);
+  const errors = [
+    [
+      'database',
+      databaseHealthCheckResult.ok ? null : databaseHealthCheckResult.error,
+    ],
+  ].filter(([, error]) => error);
+  const ok = errors.length === 0;
+  const healthCheckResult = {
+    errors: Object.fromEntries(errors),
+    info: Object.fromEntries(info),
+    ok,
+  };
+  if (!healthCheckResult.ok) {
+    res.statusCode = 503;
+    res.end(JSON.stringify(healthCheckResult));
+    return;
+  }
+  res.statusCode = 200;
+  res.end();
+}
+
 const server = createServer(async (req, res) => {
+  if (req.method === 'GET' && req.url === '/health') {
+    await handleHealthCheck(res);
+    return;
+  }
   const verifiedPubSubPushMessage = await validatePubSubPushMessage(req);
   if (!verifiedPubSubPushMessage.ok) {
     res.statusCode = Number(verifiedPubSubPushMessage.error.code);
