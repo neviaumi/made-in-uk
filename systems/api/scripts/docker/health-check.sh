@@ -2,4 +2,4 @@
 
 set -ex
 API_PORT="${PORT:-$API_PORT}"
-curl --fail-with-body "http://localhost:${API_PORT}/health"
+curl --fail-with-body "http://localhost:${API_PORT}/ready"
