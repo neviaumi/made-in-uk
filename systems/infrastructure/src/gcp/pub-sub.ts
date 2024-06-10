@@ -1,47 +1,99 @@
-import { pubsub } from '@pulumi/gcp';
+import { projects, pubsub, serviceaccount } from '@pulumi/gcp';
 import * as pulumi from '@pulumi/pulumi';
 
-import { isRunningOnLocal } from '../utils/is-running-on-local.ts';
+import { getProjectId } from '../utils/get-gcp-config.ts';
 import { resourceName } from '../utils/resourceName.ts';
-import { valueNa } from '../utils/value-na.ts';
 
-export function createPubSubTopics() {
-  if (isRunningOnLocal()) {
-    return { topicId: valueNa, topicName: valueNa, topicUrn: valueNa };
-  }
-  const eventSchema = new pubsub.Schema(resourceName`pubsub-event-schema`, {
-    definition: `{
-  "type" : "record",
-  "name" : "Avro",
-  "fields" : [
-    {
-      "name" : "requestId",
-      "type" : "string"
-    },
-    {
-      "name" : "data",
-      "type" : "string"
-    }
-  ]
+export function createPubSubProductSearchTopic() {
+  const productSearchTopic = new pubsub.Topic(resourceName`product-search`);
+  return {
+    topicId: productSearchTopic.id,
+    topicName: productSearchTopic.name,
+    topicUrn: productSearchTopic.urn,
+  };
 }
-`,
-    type: 'AVRO',
-  });
-  const exampleTopic = new pubsub.Topic(
-    resourceName`example-topic`,
+
+export function createProductSearchServiceAccount() {
+  const serviceAccount = new serviceaccount.Account(
+    resourceName`product-search`,
     {
-      schemaSettings: {
-        encoding: 'JSON',
-        schema: pulumi.interpolate`projects/${eventSchema.project}/schemas/${eventSchema.name}`,
-      },
+      accountId: 'product-search',
     },
+  );
+  new projects.IAMBinding(
+    resourceName`allow-product-search-service-account-create-token`,
     {
-      dependsOn: [eventSchema],
+      members: [serviceAccount.email.apply(email => `serviceAccount:${email}`)],
+      project: getProjectId(),
+      role: 'roles/iam.serviceAccountTokenCreator',
     },
   );
   return {
-    topicId: exampleTopic.id,
-    topicName: exampleTopic.name,
-    topicUrn: exampleTopic.urn,
+    email: serviceAccount.email,
+    id: serviceAccount.id,
+    name: serviceAccount.name,
   };
+}
+
+export function createProductDetailServiceAccount() {
+  const serviceAccount = new serviceaccount.Account(
+    resourceName`product-detail`,
+    {
+      accountId: 'product-detail',
+    },
+  );
+  return {
+    email: serviceAccount.email,
+    id: serviceAccount.id,
+    name: serviceAccount.name,
+  };
+}
+
+export function createPubSubProductDetailTopic() {
+  const productSearchTopic = new pubsub.Topic(resourceName`product-detail`);
+  return {
+    topicId: productSearchTopic.id,
+    topicName: productSearchTopic.name,
+    topicUrn: productSearchTopic.urn,
+  };
+}
+
+export function createPubSubProductSearchSubscription({
+  backgroundProductSearchEndpoint,
+  productSearchServiceAccountEmail,
+  productSearchTopicId,
+}: {
+  backgroundProductSearchEndpoint: pulumi.Output<string>;
+  productSearchServiceAccountEmail: pulumi.Output<string>;
+  productSearchTopicId: pulumi.Output<string>;
+}) {
+  new pubsub.Subscription(resourceName`product-search`, {
+    pushConfig: {
+      oidcToken: {
+        serviceAccountEmail: productSearchServiceAccountEmail,
+      },
+      pushEndpoint: backgroundProductSearchEndpoint,
+    },
+    topic: productSearchTopicId,
+  });
+}
+
+export function createPubSubProductDetailSubscription({
+  backgroundProductDetailEndpoint,
+  productDetailServiceAccountEmail,
+  productDetailTopicId,
+}: {
+  backgroundProductDetailEndpoint: pulumi.Output<string>;
+  productDetailServiceAccountEmail: pulumi.Output<string>;
+  productDetailTopicId: pulumi.Output<string>;
+}) {
+  new pubsub.Subscription(resourceName`product-detail`, {
+    pushConfig: {
+      oidcToken: {
+        serviceAccountEmail: productDetailServiceAccountEmail,
+      },
+      pushEndpoint: backgroundProductDetailEndpoint,
+    },
+    topic: productDetailTopicId,
+  });
 }

@@ -1,10 +1,8 @@
 import { cloudrun, cloudrunv2 } from '@pulumi/gcp';
 import pulumi, { type Output } from '@pulumi/pulumi';
 
-import { getProjectRegion } from '../../utils/get-project-region.ts';
-import { isRunningOnLocal } from '../../utils/is-running-on-local.ts';
+import { getGcpConfig } from '../../utils/get-gcp-config.ts';
 import { resourceName } from '../../utils/resourceName.ts';
-import { valueNa } from '../../utils/value-na.ts';
 
 const appConfig = new pulumi.Config('app');
 
@@ -13,16 +11,9 @@ export async function createCloudRunForWeb({
 }: {
   apiEndpoint: Output<string>;
 }) {
-  if (isRunningOnLocal()) {
-    return {
-      name: valueNa,
-      serviceAccount: valueNa,
-      url: pulumi.Output.create('http://localhost:3000'),
-    };
-  }
   const webImage = appConfig.get('web-image');
   const cloudRunService = new cloudrunv2.Service(resourceName`web`, {
-    location: getProjectRegion(),
+    location: getGcpConfig(),
     template: {
       containers: [
         Object.assign(
@@ -68,20 +59,131 @@ export async function createCloudRunForWeb({
 
 export async function createCloudRunForApi({
   databaseName,
+  projectSearchTopicId,
 }: {
   databaseName: Output<string>;
+  projectSearchTopicId: Output<string>;
 }) {
-  if (isRunningOnLocal()) {
-    return {
-      name: valueNa,
-      serviceAccount: valueNa,
-      url: pulumi.Output.create('http://localhost:5333'),
-    };
-  }
   const apiImage = appConfig.get('api-image');
   const cloudRunService = new cloudrunv2.Service(resourceName`api`, {
     ingress: 'INGRESS_TRAFFIC_ALL',
-    location: getProjectRegion(),
+    location: getGcpConfig(),
+
+    template: {
+      containers: [
+        Object.assign(
+          {
+            envs: [
+              {
+                name: 'API_DATABASE_ID',
+                value: databaseName,
+              },
+              {
+                name: 'API_PORT',
+                value: '8080',
+              },
+              {
+                name: 'API_ENV',
+                value: 'production',
+              },
+              {
+                name: 'API_PROJECT_SEARCH_TOPIC',
+                value: projectSearchTopicId,
+              },
+            ],
+            image: apiImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
+            resources: {
+              limits: {
+                memory: '2048Mi',
+              },
+            },
+          },
+          apiImage
+            ? {
+                args: ['./scripts/docker/start.sh'],
+                commands: ['sh'],
+              }
+            : {},
+        ),
+      ],
+    },
+  });
+
+  return {
+    name: cloudRunService.name,
+    serviceAccount: cloudRunService.template.serviceAccount,
+    url: cloudRunService.uri,
+  };
+}
+
+export async function createCloudRunForBackgroundProductSearch({
+  databaseName,
+  projectDetailTopicId,
+}: {
+  databaseName: Output<string>;
+  projectDetailTopicId: Output<string>;
+}) {
+  const apiImage = appConfig.get('api-image');
+  const cloudRunService = new cloudrunv2.Service(resourceName`api`, {
+    ingress: 'INGRESS_TRAFFIC_ALL',
+    location: getGcpConfig(),
+
+    template: {
+      containers: [
+        Object.assign(
+          {
+            envs: [
+              {
+                name: 'BG_PRODUCT_SEARCH_DATABASE_ID',
+                value: databaseName,
+              },
+              {
+                name: 'BG_PRODUCT_SEARCH_PORT',
+                value: '8080',
+              },
+              {
+                name: 'BG_PRODUCT_SEARCH_ENV',
+                value: 'production',
+              },
+              {
+                name: 'BG_PRODUCT_DETAIL_TOPIC',
+                value: projectDetailTopicId,
+              },
+            ],
+            image: apiImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
+            resources: {
+              limits: {
+                memory: '2048Mi',
+              },
+            },
+          },
+          apiImage
+            ? {
+                args: ['./scripts/docker/start.sh'],
+                commands: ['sh'],
+              }
+            : {},
+        ),
+      ],
+    },
+  });
+
+  return {
+    name: cloudRunService.name,
+    serviceAccount: cloudRunService.template.serviceAccount,
+    url: cloudRunService.uri,
+  };
+}
+
+export async function createCloudRunForBackgroundProductDetail({
+  databaseName,
+}: {
+  databaseName: Output<string>;
+}) {
+  const apiImage = appConfig.get('api-image');
+  const cloudRunService = new cloudrunv2.Service(resourceName`api`, {
+    ingress: 'INGRESS_TRAFFIC_ALL',
+    location: getGcpConfig(),
 
     template: {
       containers: [
@@ -133,9 +235,6 @@ export function onlyAllowServiceToServiceForInvokeAPI({
   apiCloudRunServiceName: Output<string>;
   webCloudRunServiceAccount: Output<string>;
 }) {
-  if (isRunningOnLocal()) {
-    return;
-  }
   new cloudrun.IamBinding(resourceName`allow-service-to-service-iam-binding`, {
     members: [
       webCloudRunServiceAccount.apply(
@@ -145,4 +244,46 @@ export function onlyAllowServiceToServiceForInvokeAPI({
     role: 'roles/run.invoker',
     service: apiCloudRunServiceName,
   });
+}
+
+export function allowServiceAccountToCallBackgroundProductSearch({
+  backgroundProductSearchCloudRunServiceName,
+  serviceAccountEmail,
+}: {
+  backgroundProductSearchCloudRunServiceName: Output<string>;
+  serviceAccountEmail: Output<string>;
+}) {
+  new cloudrun.IamBinding(
+    resourceName`allow-service-account-to-call-product-search`,
+    {
+      members: [
+        serviceAccountEmail.apply(
+          serviceAccount => `serviceAccount:${serviceAccount}`,
+        ),
+      ],
+      role: 'roles/run.invoker',
+      service: backgroundProductSearchCloudRunServiceName,
+    },
+  );
+}
+
+export function allowServiceAccountToCallBackgroundProductDetail({
+  backgroundProductDetailCloudRunServiceName,
+  serviceAccountEmail,
+}: {
+  backgroundProductDetailCloudRunServiceName: Output<string>;
+  serviceAccountEmail: Output<string>;
+}) {
+  new cloudrun.IamBinding(
+    resourceName`allow-service-account-to-call-product-search`,
+    {
+      members: [
+        serviceAccountEmail.apply(
+          serviceAccount => `serviceAccount:${serviceAccount}`,
+        ),
+      ],
+      role: 'roles/run.invoker',
+      service: backgroundProductDetailCloudRunServiceName,
+    },
+  );
 }
