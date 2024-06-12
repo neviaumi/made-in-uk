@@ -6,7 +6,7 @@
     "@remix-run/node": "2.9.2",
     "@remix-run/react": "2.9.2",
     "@remix-run/serve": "2.9.2",
-    "google-auth-library": "9.10.0",
+    "google-auth-library": "9.11.0",
     "graphql": "16.8.1",
     "isbot": "5.1.9",
     "ramda": "0.30.1",
