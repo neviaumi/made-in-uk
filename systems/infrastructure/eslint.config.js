@@ -13,9 +13,9 @@ export default [
     ignores: ['package-lock.json', 'bin/', 'Pulumi.*.yml', 'Pulumi.*.yaml'],
   },
   {
-    files: ['src/aws-guard/**/*'],
+    files: ['scripts/**/*'],
     rules: {
-      'n/no-extraneous-require': 'off',
+      'no-console': 'off',
     },
   },
   {

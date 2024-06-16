@@ -1,13 +1,15 @@
 import { randomUUID } from 'node:crypto';
 
 import { useDeferStream } from '@graphql-yoga/plugin-defer-stream';
-import { createSchema, createYoga } from 'graphql-yoga';
+import { createSchema, createYoga, useReadinessCheck } from 'graphql-yoga';
 
-import { loadConfig } from '@/config.ts';
-import { APP_ENV } from '@/config/app-env.ts';
-import { createLogger } from '@/logging/logger.ts';
-import { searchProductQuery } from '@/resolvers/search-product.query.ts';
-import type { GraphqlContext } from '@/types/utilities';
+import { APP_ENV, loadConfig } from '@/config.ts';
+import { createLogger } from '@/logger.ts';
+import { searchProductQuery } from '@/search-product.query.ts';
+import type { GraphqlContext } from '@/types.ts';
+
+import { createDatabaseConnection, databaseHealthCheck } from './database.ts';
+import { createPubSubClient, pubsubHealthCheck } from './pubsub.ts';
 
 const config = loadConfig(APP_ENV);
 const logger = createLogger(APP_ENV);
@@ -30,8 +32,16 @@ export const schema = {
       type: String
       url: String
     }
+    enum ProductStreamType {
+      FETCH_PRODUCT_DETAIL_EOS
+      FETCH_PRODUCT_DETAIL
+    }
+    type ProductStream {
+      type: ProductStreamType!
+      data: Product
+    }
     type Query {
-      searchProduct(input: SearchProductInput!): [Product!]!
+      searchProduct(input: SearchProductInput!): [ProductStream!]!
     }
   `,
 };
@@ -39,13 +49,47 @@ export const schema = {
 export const yoga = createYoga<GraphqlContext>({
   context: async ({ params, request }) => {
     const requestId = request.headers.get('request-id') ?? randomUUID();
-    const { operationName, query } = params;
+    const { operationName } = params;
     return {
       config,
-      logger: logger.child({ operationName, query, requestId }),
+      logger: logger.child({ operationName, requestId }),
       requestId,
     };
   },
-  plugins: [useDeferStream()],
+  plugins: [
+    useDeferStream(),
+    useReadinessCheck({
+      check: async () => {
+        const [pubsubHealthCheckResult, databaseHealthCheckResult] =
+          await Promise.all([
+            pubsubHealthCheck(createPubSubClient())(),
+            databaseHealthCheck(createDatabaseConnection())(),
+          ]);
+        const info = [
+          ['pubsub', pubsubHealthCheckResult.ok ? { ok: true } : null],
+          ['database', databaseHealthCheckResult.ok ? { ok: true } : null],
+        ].filter(([, result]) => result);
+        const errors = [
+          [
+            'pubsub',
+            pubsubHealthCheckResult.ok ? null : pubsubHealthCheckResult.error,
+          ],
+          [
+            'database',
+            databaseHealthCheckResult.ok
+              ? null
+              : databaseHealthCheckResult.error,
+          ],
+        ].filter(
+          (error): error is [string, { code: string; message: string }] =>
+            error[1] !== null,
+        );
+        if (errors.length > 0) {
+          throw new Error(JSON.stringify({ errors, info, ok: false }));
+        }
+        return true;
+      },
+    }),
+  ],
   schema: createSchema<GraphqlContext>(schema),
 });

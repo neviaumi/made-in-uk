@@ -1,9 +1,41 @@
-import { Readable } from 'node:stream';
+import { Duplex, Readable } from 'node:stream';
 import { isNativeError } from 'node:util/types';
 
 import { describe, expect, it, vi } from 'vitest';
 
 describe('node:stream', () => {
+  describe('Duplex', () => {
+    it('should create stream that able to stream and write', async () => {
+      const duplexStream = new Duplex({
+        final() {
+          this.push(null);
+        },
+        objectMode: true,
+        read() {},
+      });
+      duplexStream.push('hello');
+      duplexStream.push('streams');
+      duplexStream.end();
+      expect(await duplexStream.toArray()).toStrictEqual(['hello', 'streams']);
+    });
+
+    it('stream.on(end) should be trigger when write stream done', async () => {
+      const duplexStream = new Duplex({
+        final() {
+          this.push(null);
+        },
+        objectMode: true,
+        read() {},
+      });
+      const streamEndHandler = vi.fn();
+      duplexStream.push('hello');
+      duplexStream.push('streams');
+      duplexStream.end();
+      duplexStream.on('end', streamEndHandler);
+      expect(await duplexStream.toArray()).toStrictEqual(['hello', 'streams']);
+      expect(streamEndHandler).toHaveBeenCalled();
+    });
+  });
   describe('Readable.from', () => {
     it('create stream from generator and it should iterable', async () => {
       async function* generate() {

@@ -2,13 +2,13 @@
   "author": "",
   "dependencies": {
     "@google-cloud/firestore": "7.8.0",
+    "@google-cloud/pubsub": "4.4.0",
     "@graphql-yoga/plugin-defer-stream": "3.3.1",
     "convict": "6.2.4",
     "dotenv": "16.4.5",
     "dotenv-expand": "11.0.6",
     "graphql": "16.8.2",
     "graphql-yoga": "5.3.1",
-    "playwright": "1.44.1",
     "ramda": "0.30.1",
     "winston": "3.13.0"
   },

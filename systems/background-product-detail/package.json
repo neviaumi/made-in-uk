@@ -1,0 +1,38 @@
+{
+  "author": "",
+  "dependencies": {
+    "@google-cloud/firestore": "7.7.0",
+    "@google-cloud/pubsub": "4.4.0",
+    "convict": "6.2.4",
+    "playwright": "1.44.1",
+    "ramda": "0.30.0",
+    "winston": "3.13.0"
+  },
+  "description": "",
+  "devDependencies": {
+    "@busybox/eslint-config": "2024.2.29-alpha.203",
+    "@busybox/prettier-config": "2024.2.29-alpha.203",
+    "@busybox/tsconfig": "2024.2.29-alpha.203",
+    "@types/convict": "6.1.6",
+    "@types/node": "20.12.12",
+    "@types/ramda": "0.30.0",
+    "eslint": "8.57.0",
+    "magic-string": "0.30.10",
+    "rollup-plugin-node-externals": "7.1.2",
+    "typescript": "5.4.5",
+    "vite": "5.2.12",
+    "vite-node": "1.6.0",
+    "vitest": "1.6.0"
+  },
+  "engines": {
+    "node": ">=20",
+    "yarn": "Use npm"
+  },
+  "license": "UNLICENSED",
+  "name": "background-product-detail",
+  "private": true,
+  "scripts": {
+  },
+  "type": "module",
+  "version": "2024.5.28-alpha.2220"
+}
