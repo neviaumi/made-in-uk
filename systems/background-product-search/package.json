@@ -31,8 +31,7 @@
   "license": "UNLICENSED",
   "name": "background-product-search",
   "private": true,
-  "scripts": {
-  },
+  "scripts": {},
   "type": "module",
-  "version": "2024.5.28-alpha.2220"
+  "version": "2024.6.16-alpha.2135"
 }
