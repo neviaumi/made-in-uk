@@ -42,6 +42,14 @@ export function createProductDetailServiceAccount() {
       accountId: 'product-detail',
     },
   );
+  new projects.IAMBinding(
+    resourceName`allow-product-detail-service-account-create-token`,
+    {
+      members: [serviceAccount.email.apply(email => `serviceAccount:${email}`)],
+      project: getProjectId(),
+      role: 'roles/iam.serviceAccountTokenCreator',
+    },
+  );
   return {
     email: serviceAccount.email,
     id: serviceAccount.id,

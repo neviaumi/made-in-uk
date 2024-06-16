@@ -31,30 +31,36 @@ const { name: apiServiceName, url: apiUrl } = await createCloudRunForApi({
   databaseName: databaseName,
   projectSearchTopicId: productSearchTopic,
 });
-const { url: productSearchUrl } =
-  await createCloudRunForBackgroundProductSearch({
-    databaseName: databaseName,
-    projectDetailTopicId: productDetailTopic,
-  });
-const { url: productDetailUrl } =
-  await createCloudRunForBackgroundProductDetail({
-    databaseName: databaseName,
-  });
+const {
+  name: backgroundProductSearchServiceName,
+  url: backgroundProductSearchUrl,
+} = await createCloudRunForBackgroundProductSearch({
+  databaseName: databaseName,
+  projectDetailTopicId: productDetailTopic,
+});
+const {
+  name: backgroundProductDetailServiceName,
+  url: backgroundProductDetailUrl,
+} = await createCloudRunForBackgroundProductDetail({
+  databaseName: databaseName,
+});
 allowServiceAccountToCallBackgroundProductDetail({
-  backgroundProductDetailCloudRunServiceName: productDetailUrl,
+  backgroundProductDetailCloudRunServiceName:
+    backgroundProductDetailServiceName,
   serviceAccountEmail: productDetailServiceAccountEmail,
 });
 allowServiceAccountToCallBackgroundProductSearch({
-  backgroundProductSearchCloudRunServiceName: productSearchUrl,
+  backgroundProductSearchCloudRunServiceName:
+    backgroundProductSearchServiceName,
   serviceAccountEmail: productSearchServiceAccountEmail,
 });
 createPubSubProductSearchSubscription({
-  backgroundProductSearchEndpoint: productSearchUrl,
+  backgroundProductSearchEndpoint: backgroundProductSearchUrl,
   productSearchServiceAccountEmail,
   productSearchTopicId: productSearchTopic,
 });
 createPubSubProductDetailSubscription({
-  backgroundProductDetailEndpoint: productDetailUrl,
+  backgroundProductDetailEndpoint: backgroundProductDetailUrl,
   productDetailServiceAccountEmail,
   productDetailTopicId: productDetailTopic,
 });

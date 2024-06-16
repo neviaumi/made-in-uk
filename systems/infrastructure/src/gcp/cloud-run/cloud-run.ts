@@ -123,50 +123,55 @@ export async function createCloudRunForBackgroundProductSearch({
   databaseName: Output<string>;
   projectDetailTopicId: Output<string>;
 }) {
-  const apiImage = appConfig.get('api-image');
-  const cloudRunService = new cloudrunv2.Service(resourceName`api`, {
-    ingress: 'INGRESS_TRAFFIC_ALL',
-    location: getGcpConfig(),
+  const bgProductSearchImage = appConfig.get('bg-product-search-image');
+  const cloudRunService = new cloudrunv2.Service(
+    resourceName`bg-product-search`,
+    {
+      ingress: 'INGRESS_TRAFFIC_ALL',
+      location: getGcpConfig(),
 
-    template: {
-      containers: [
-        Object.assign(
-          {
-            envs: [
-              {
-                name: 'BG_PRODUCT_SEARCH_DATABASE_ID',
-                value: databaseName,
-              },
-              {
-                name: 'BG_PRODUCT_SEARCH_PORT',
-                value: '8080',
-              },
-              {
-                name: 'BG_PRODUCT_SEARCH_ENV',
-                value: 'production',
-              },
-              {
-                name: 'BG_PRODUCT_DETAIL_TOPIC',
-                value: projectDetailTopicId,
-              },
-            ],
-            image: apiImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
-            resources: {
-              limits: {
-                memory: '2048Mi',
+      template: {
+        containers: [
+          Object.assign(
+            {
+              envs: [
+                {
+                  name: 'BG_PRODUCT_SEARCH_DATABASE_ID',
+                  value: databaseName,
+                },
+                {
+                  name: 'BG_PRODUCT_SEARCH_PORT',
+                  value: '8080',
+                },
+                {
+                  name: 'BG_PRODUCT_SEARCH_ENV',
+                  value: 'production',
+                },
+                {
+                  name: 'BG_PRODUCT_DETAIL_TOPIC',
+                  value: projectDetailTopicId,
+                },
+              ],
+              image:
+                bgProductSearchImage ??
+                'us-docker.pkg.dev/cloudrun/container/hello',
+              resources: {
+                limits: {
+                  memory: '2048Mi',
+                },
               },
             },
-          },
-          apiImage
-            ? {
-                args: ['./scripts/docker/start.sh'],
-                commands: ['sh'],
-              }
-            : {},
-        ),
-      ],
+            bgProductSearchImage
+              ? {
+                  args: ['./scripts/docker/start.sh'],
+                  commands: ['sh'],
+                }
+              : {},
+          ),
+        ],
+      },
     },
-  });
+  );
 
   return {
     name: cloudRunService.name,
@@ -180,46 +185,51 @@ export async function createCloudRunForBackgroundProductDetail({
 }: {
   databaseName: Output<string>;
 }) {
-  const apiImage = appConfig.get('api-image');
-  const cloudRunService = new cloudrunv2.Service(resourceName`api`, {
-    ingress: 'INGRESS_TRAFFIC_ALL',
-    location: getGcpConfig(),
+  const bgProductDetailImage = appConfig.get('bg-product-detail-image');
+  const cloudRunService = new cloudrunv2.Service(
+    resourceName`bg-product-detail`,
+    {
+      ingress: 'INGRESS_TRAFFIC_ALL',
+      location: getGcpConfig(),
 
-    template: {
-      containers: [
-        Object.assign(
-          {
-            envs: [
-              {
-                name: 'API_DATABASE_ID',
-                value: databaseName,
-              },
-              {
-                name: 'API_PORT',
-                value: '8080',
-              },
-              {
-                name: 'API_ENV',
-                value: 'production',
-              },
-            ],
-            image: apiImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
-            resources: {
-              limits: {
-                memory: '2048Mi',
+      template: {
+        containers: [
+          Object.assign(
+            {
+              envs: [
+                {
+                  name: 'BG_PRODUCT_DETAIL_DATABASE_ID',
+                  value: databaseName,
+                },
+                {
+                  name: 'BG_PRODUCT_DETAIL_PORT',
+                  value: '8080',
+                },
+                {
+                  name: 'BG_PRODUCT_DETAIL_ENV',
+                  value: 'production',
+                },
+              ],
+              image:
+                bgProductDetailImage ??
+                'us-docker.pkg.dev/cloudrun/container/hello',
+              resources: {
+                limits: {
+                  memory: '2048Mi',
+                },
               },
             },
-          },
-          apiImage
-            ? {
-                args: ['./scripts/docker/start.sh'],
-                commands: ['sh'],
-              }
-            : {},
-        ),
-      ],
+            bgProductDetailImage
+              ? {
+                  args: ['./scripts/docker/start.sh'],
+                  commands: ['sh'],
+                }
+              : {},
+          ),
+        ],
+      },
     },
-  });
+  );
 
   return {
     name: cloudRunService.name,
@@ -275,7 +285,7 @@ export function allowServiceAccountToCallBackgroundProductDetail({
   serviceAccountEmail: Output<string>;
 }) {
   new cloudrun.IamBinding(
-    resourceName`allow-service-account-to-call-product-search`,
+    resourceName`allow-service-account-to-call-product-detail`,
     {
       members: [
         serviceAccountEmail.apply(

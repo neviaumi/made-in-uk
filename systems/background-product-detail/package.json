@@ -29,13 +29,9 @@
     "yarn": "Use npm"
   },
   "license": "UNLICENSED",
-  "name": "background-product-search",
+  "name": "background-product-detail",
   "private": true,
   "scripts": {
-    "start": "FIRESTORE_EMULATOR_HOST=localhost:8080 BG_PRODUCT_DETAIL_ENV=development vite-node src/main.ts",
-    "start:dev": "FIRESTORE_EMULATOR_HOST=localhost:8080 BG_PRODUCT_DETAIL_ENV=development vite-node --watch src/main.ts",
-    "test": "API_ENV=test NODE_ENV=test vitest run",
-    "test:ci": "API_ENV=test NODE_ENV=test Ci=true vitest run --no-file-parallelism"
   },
   "type": "module",
   "version": "2024.5.28-alpha.2220"

@@ -1,5 +1,7 @@
 updates:
-  - directory: /
+  - allow:
+      - dependency-name: disabled
+    directory: /
     groups:
       busybox:
         patterns:
@@ -13,12 +15,6 @@ updates:
         patterns:
           - '@commitlint/cli'
           - commitlint
-      nest-core:
-        patterns:
-          - '@nestjs/core'
-          - '@nestjs/common'
-          - '@nestjs/platform-express'
-          - '@nestjs/testing'
       remix:
         patterns:
           - '@remix-run/react'
@@ -26,8 +22,6 @@ updates:
           - '@remix-run/serve'
           - '@remix-run/node'
           - '@remix-run/css-bundle'
-    ignore:
-      - dependency-name: serialize-error
     package-ecosystem: npm
     schedule:
       interval: daily

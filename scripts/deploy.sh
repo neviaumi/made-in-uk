@@ -48,10 +48,9 @@ export DOCKER_REGISTRY=$DOCKER_REGISTRY
 
 npx lerna exec --stream \
 --scope 'api' \
--- "bash scripts/ci/deploy.sh"
-
-npx lerna exec --stream \
 --scope 'web' \
+--scope 'background-product-search' \
+--scope 'background-product-detail' \
 -- "bash scripts/ci/deploy.sh"
 
 npx lerna exec --stream \
