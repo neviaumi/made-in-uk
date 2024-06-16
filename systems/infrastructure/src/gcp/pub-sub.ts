@@ -76,6 +76,7 @@ export function createPubSubProductSearchSubscription({
   productSearchTopicId: pulumi.Output<string>;
 }) {
   new pubsub.Subscription(resourceName`product-search`, {
+    ackDeadlineSeconds: 600,
     pushConfig: {
       oidcToken: {
         serviceAccountEmail: productSearchServiceAccountEmail,
@@ -96,6 +97,7 @@ export function createPubSubProductDetailSubscription({
   productDetailTopicId: pulumi.Output<string>;
 }) {
   new pubsub.Subscription(resourceName`product-detail`, {
+    ackDeadlineSeconds: 600,
     pushConfig: {
       oidcToken: {
         serviceAccountEmail: productDetailServiceAccountEmail,
