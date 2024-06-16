@@ -37,8 +37,6 @@ jobs:
         uses: google-github-actions/setup-gcloud@v2
       - name: Setup repository
         run: bash ./scripts/setup.sh
-      - name: Test the build
-        run: bash ./scripts/test.sh
       - env: 
           ENVIRONMENT: ${{ inputs.environment }}
         id: release

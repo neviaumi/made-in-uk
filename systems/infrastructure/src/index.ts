@@ -1,4 +1,4 @@
-import { createDockerRepository } from './gcp/artifactregistry/artifact-registry.ts';
+import { createDockerRepository } from './gcp/artifact-registry.ts';
 import {
   allowServiceAccountToCallBackgroundProductDetail,
   allowServiceAccountToCallBackgroundProductSearch,
@@ -7,7 +7,7 @@ import {
   createCloudRunForBackgroundProductSearch,
   createCloudRunForWeb,
   onlyAllowServiceToServiceForInvokeAPI,
-} from './gcp/cloud-run/cloud-run.ts';
+} from './gcp/cloud-run.ts';
 import { createFireStoreDB } from './gcp/fire-store.ts';
 import {
   createProductDetailServiceAccount,
