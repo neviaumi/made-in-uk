@@ -1,10 +1,10 @@
 {
   "dependencies": {
     "@google-cloud/pubsub": "4.4.0",
-    "@google-cloud/storage": "7.11.1",
+    "@google-cloud/storage": "7.11.2",
     "@pulumi/docker": "4.5.4",
-    "@pulumi/gcp": "7.24.0",
-    "@pulumi/pulumi": "3.117.0",
+    "@pulumi/gcp": "7.27.0",
+    "@pulumi/pulumi": "3.120.0",
     "@pulumi/random": "4.16.2",
     "dotenv": "16.4.5",
     "handlebars": "4.7.8",
@@ -12,17 +12,17 @@
     "nanoid": "5.0.7"
   },
   "devDependencies": {
-    "@babel/cli": "7.24.5",
-    "@babel/core": "7.24.6",
-    "@babel/plugin-syntax-import-attributes": "7.24.6",
-    "@babel/preset-typescript": "7.24.6",
+    "@babel/cli": "7.24.7",
+    "@babel/core": "7.24.7",
+    "@babel/plugin-syntax-import-attributes": "7.24.7",
+    "@babel/preset-typescript": "7.24.7",
     "@busybox/babel-preset-typescript": "2024.1.27-alpha.131",
     "@busybox/eslint-config": "2024.2.29-alpha.203",
     "@busybox/prettier-config": "2024.2.29-alpha.203",
     "@busybox/tsconfig": "2024.2.29-alpha.203",
     "@pulumi/policy": "1.11.0",
     "@types/lodash.kebabcase": "4.1.9",
-    "@types/node": "20.12.12",
+    "@types/node": "20.14.2",
     "eslint": "8.57.0",
     "typescript": "5.4.5"
   },
