@@ -10,8 +10,8 @@ import { Loader } from '@/components/Loader.tsx';
 
 export const meta: MetaFunction = () => {
   return [
-    { title: 'New Remix App' },
-    { content: 'Welcome to Remix!', name: 'description' },
+    { title: 'Made In UK' },
+    { content: 'Search product that made in UK', name: 'description' },
   ];
 };
 
@@ -61,7 +61,7 @@ export default function Index() {
       input: matchingFilters,
     },
   });
-  const { data, fetching } = matchingResults;
+  const { data, error, fetching } = matchingResults;
   // @ts-expect-error type error
   const isEndOfStream = !fetching && matchingResults['hasNext'] === false;
 
@@ -124,6 +124,9 @@ export default function Index() {
               Array.from({ length: 8 }).map((_, index) => (
                 <Loader className={'tw-h-16 '} key={index} />
               ))}
+            {error && !fetching && isEndOfStream && (
+              <pre>{JSON.stringify(matchingResults, null, 4)}</pre>
+            )}
             {!fetching &&
               data &&
               data.searchProduct

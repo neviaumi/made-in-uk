@@ -137,11 +137,6 @@ const server = createServer(async (req, res) => {
     },
   });
 
-  await writeToReplyStream(requestId, {
-    data: { total: numberOfProducts },
-    search: jsonMessageBody.search,
-    type: REPLY_DATA_TYPE.PRODUCT_SEARCH,
-  });
   await Promise.all(
     productToSearchDetails.map(([productId, productUrl]) => {
       return productDetailTopic.publishMessage({
@@ -158,6 +153,11 @@ const server = createServer(async (req, res) => {
       });
     }),
   );
+  await writeToReplyStream(requestId, {
+    data: { total: numberOfProducts },
+    search: jsonMessageBody.search,
+    type: REPLY_DATA_TYPE.PRODUCT_SEARCH,
+  });
   loggerWithRequestId.info('Product search completed', {
     numberOfProducts,
   });
