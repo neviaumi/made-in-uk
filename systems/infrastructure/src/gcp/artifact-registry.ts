@@ -1,7 +1,7 @@
 import { artifactregistry } from '@pulumi/gcp';
 import { RandomPet } from '@pulumi/random';
 
-import { resourceName } from '../../utils/resourceName.ts';
+import { resourceName } from '../utils/resourceName.ts';
 
 export function createDockerRepository() {
   const repositoryId = new RandomPet(resourceName`docker-repository-id`, {

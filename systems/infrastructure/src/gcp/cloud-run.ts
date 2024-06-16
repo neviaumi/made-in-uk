@@ -1,8 +1,8 @@
 import { cloudrun, cloudrunv2 } from '@pulumi/gcp';
 import pulumi, { type Output } from '@pulumi/pulumi';
 
-import { getGcpConfig } from '../../utils/get-gcp-config.ts';
-import { resourceName } from '../../utils/resourceName.ts';
+import { getGcpConfig } from '../utils/get-gcp-config.ts';
+import { resourceName } from '../utils/resourceName.ts';
 
 const appConfig = new pulumi.Config('app');
 
@@ -87,7 +87,7 @@ export async function createCloudRunForApi({
                 value: 'production',
               },
               {
-                name: 'API_PROJECT_SEARCH_TOPIC',
+                name: 'API_PRODUCT_SEARCH_TOPIC',
                 value: projectSearchTopicId,
               },
             ],
