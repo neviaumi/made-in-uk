@@ -124,10 +124,12 @@ const server = createServer(async (req, res) => {
     res.end(matchProducts.error.message);
     return;
   }
-  const productToSearchDetails =
-    APP_ENV === AppEnvironment.DEV
-      ? Object.entries(matchProducts.data).slice(0, 10)
-      : Object.entries(matchProducts.data);
+  const productToSearchDetails = [
+    AppEnvironment.DEV,
+    AppEnvironment.PRD,
+  ].includes(APP_ENV)
+    ? Object.entries(matchProducts.data).slice(0, 10)
+    : Object.entries(matchProducts.data);
   const numberOfProducts = productToSearchDetails.length;
 
   const productDetailTopic = getProductDetailTopic(pubsub)({
