@@ -1,5 +1,7 @@
 import { createServer, type RequestListener } from 'node:http';
 
+import pMap from 'p-map';
+
 import {
   closeBrowser,
   closePage,
@@ -7,6 +9,10 @@ import {
   createChromiumBrowser,
   createProductsSearchHandler,
 } from '@/browser.ts';
+import {
+  createCloudTaskClient,
+  createProductDetailScheduler,
+} from '@/cloud-task.ts';
 import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
 import {
   checkRequestStreamOnDatabase,
@@ -15,33 +21,20 @@ import {
   databaseHealthCheck,
 } from '@/database.ts';
 import { createLogger } from '@/logger.ts';
-import {
-  createPubSubClient,
-  getProductDetailTopic,
-  pubsubHealthCheck,
-} from '@/pubsub.ts';
 import { REPLY_DATA_TYPE } from '@/types.ts';
 
 const config = loadConfig(APP_ENV);
 const logger = createLogger(APP_ENV);
 
 async function handleHealthCheck(res: Parameters<RequestListener>[1]) {
-  const pubsub = createPubSubClient();
   const database = createDatabaseConnection();
-  const [pubsubHealthCheckResult, databaseHealthCheckResult] =
-    await Promise.all([
-      pubsubHealthCheck(pubsub)(),
-      databaseHealthCheck(database)(),
-    ]);
+  const [databaseHealthCheckResult] = await Promise.all([
+    databaseHealthCheck(database)(),
+  ]);
   const info = [
-    ['pubsub', pubsubHealthCheckResult.ok ? { ok: true } : null],
     ['database', databaseHealthCheckResult.ok ? { ok: true } : null],
   ].filter(([, result]) => result);
   const errors = [
-    [
-      'pubsub',
-      pubsubHealthCheckResult.ok ? null : pubsubHealthCheckResult.error,
-    ],
     [
       'database',
       databaseHealthCheckResult.ok ? null : databaseHealthCheckResult.error,
@@ -63,19 +56,19 @@ async function handleHealthCheck(res: Parameters<RequestListener>[1]) {
 }
 
 const server = createServer(async (req, res) => {
-  const pubsub = createPubSubClient();
   if (req.method === 'GET' && req.url === '/health') {
     await handleHealthCheck(res);
     return;
   }
-  const verifiedPubSubPushMessage = await validatePubSubPushMessage(req);
-  if (!verifiedPubSubPushMessage.ok) {
-    res.statusCode = Number(verifiedPubSubPushMessage.error.code);
-    res.end(verifiedPubSubPushMessage.error.message);
+  const verifiedIncomingMessage = await validateIncomingMessage(req);
+  if (!verifiedIncomingMessage.ok) {
+    res.statusCode = Number(verifiedIncomingMessage.error.code);
+    res.end(verifiedIncomingMessage.error.message);
     return;
   }
-  const requestId =
-    verifiedPubSubPushMessage.data.message.attributes['requestId'];
+  const cloudTask = createCloudTaskClient();
+
+  const requestId = verifiedIncomingMessage.requestId;
   const loggerWithRequestId = logger.child({
     requestId: requestId,
   });
@@ -89,17 +82,17 @@ const server = createServer(async (req, res) => {
     res.end();
     return;
   }
-  const pubSubPushMessage = verifiedPubSubPushMessage.data;
-  const jsonMessageBody = JSON.parse(pubSubPushMessage.message.data);
+  const payload = verifiedIncomingMessage.data;
   await writeToReplyStream(requestId, {
     type: REPLY_DATA_TYPE.PRODUCT_SEARCH_LOCK,
   });
   const browser = await createChromiumBrowser();
   const page = await createBrowserPage(browser)();
+  const search = payload['search'] as { keyword: string };
 
   const matchProducts = await createProductsSearchHandler(page, {
     logger: loggerWithRequestId,
-  })(jsonMessageBody.search.keyword)
+  })(search.keyword)
     .catch(e => ({
       error: {
         code: 'ERR_UNEXPECTED_ERROR',
@@ -117,7 +110,7 @@ const server = createServer(async (req, res) => {
         code: matchProducts.error.code,
         message: matchProducts.error.message,
       },
-      search: jsonMessageBody.search,
+      search: search,
       type: REPLY_DATA_TYPE.PRODUCT_SEARCH_ERROR,
     });
     res.statusCode = 500;
@@ -132,32 +125,26 @@ const server = createServer(async (req, res) => {
     : Object.entries(matchProducts.data);
   const numberOfProducts = productToSearchDetails.length;
 
-  const productDetailTopic = getProductDetailTopic(pubsub)({
-    batching: {
-      maxMessages: 512,
-      maxMilliseconds: Math.max(numberOfProducts * 1000, 1000),
-    },
-  });
-
-  await Promise.all(
-    productToSearchDetails.map(([productId, productUrl]) => {
-      return productDetailTopic.publishMessage({
-        attributes: {
-          requestId: requestId,
+  const scheduleProductDetailTask = createProductDetailScheduler(cloudTask);
+  await pMap(
+    productToSearchDetails,
+    ([productId, productUrl]) => {
+      scheduleProductDetailTask({
+        product: {
+          productId,
+          productUrl,
+          source: 'ocado',
         },
-        data: Buffer.from(
-          JSON.stringify({
-            productId,
-            productUrl: productUrl,
-            source: 'ocado',
-          }),
-        ),
+        requestId: requestId,
       });
-    }),
+    },
+    {
+      concurrency: 8,
+    },
   );
   await writeToReplyStream(requestId, {
     data: { total: numberOfProducts },
-    search: jsonMessageBody.search,
+    search: search,
     type: REPLY_DATA_TYPE.PRODUCT_SEARCH,
   });
   loggerWithRequestId.info('Product search completed', {
@@ -188,7 +175,7 @@ server.listen(config.get('port'), () => {
   }
 });
 
-async function validatePubSubPushMessage(
+async function validateIncomingMessage(
   req: Parameters<RequestListener>[0],
 ): Promise<
   | {
@@ -199,17 +186,26 @@ async function validatePubSubPushMessage(
       ok: false;
     }
   | {
-      data: {
-        message: {
-          attributes: Record<string, string>;
-          data: string;
-        };
-      };
+      data: Record<string, unknown>;
       ok: true;
+      requestId: string;
     }
 > {
+  const requestId = String(req.headers['request-id']);
+  if (!requestId) {
+    logger.debug('Request without request-id header');
+    return {
+      error: {
+        code: '400',
+        message: 'Bad request',
+      },
+      ok: false,
+    };
+  }
+
   const body = (await req.toArray()).join('');
   if (!body) {
+    logger.debug('Empty body');
     return {
       error: {
         code: '400',
@@ -228,6 +224,9 @@ async function validatePubSubPushMessage(
       }
     })(body)
   ) {
+    logger.debug('Non JSON body', {
+      body,
+    });
     return {
       error: {
         code: '400',
@@ -237,23 +236,12 @@ async function validatePubSubPushMessage(
     };
   }
   const jsonBody = JSON.parse(body);
-  if (!jsonBody.message) {
-    return {
-      error: {
-        code: '400',
-        message: 'Bad request',
-      },
-      ok: false,
-    };
-  }
+  logger.debug('JSON body', {
+    body: jsonBody,
+  });
   return {
-    data: {
-      ...jsonBody,
-      message: {
-        ...jsonBody.message,
-        data: Buffer.from(jsonBody.message.data, 'base64').toString('utf-8'),
-      },
-    },
+    data: jsonBody,
     ok: true,
+    requestId,
   };
 }
