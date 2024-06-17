@@ -1,11 +1,14 @@
 import { Repeater } from 'graphql-yoga';
 
 import {
+  createCloudTaskClient,
+  createProductSearchScheduler,
+} from '@/cloud-task.ts';
+import {
   closeReplyStream,
   createDatabaseConnection,
   createListenerToReplyStreamData,
 } from '@/database.ts';
-import { createPubSubClient, getProductSearchTopic } from '@/pubsub.ts';
 import type { ResolverFunction } from '@/types.ts';
 
 type SearchProductQueryArgument = {
@@ -22,18 +25,12 @@ export const searchProductQuery: ResolverFunction<
     argument,
   });
   const database = createDatabaseConnection();
-  const pubsub = createPubSubClient();
-  await getProductSearchTopic(pubsub).publishMessage({
-    attributes: {
-      requestId: requestId,
+  const cloudTask = createCloudTaskClient();
+  await createProductSearchScheduler(cloudTask)({
+    requestId: requestId,
+    search: {
+      keyword: search,
     },
-    data: Buffer.from(
-      JSON.stringify({
-        search: {
-          keyword: search,
-        },
-      }),
-    ),
   });
   const connectMatchProductStream = createListenerToReplyStreamData(database, {
     logger: logger,

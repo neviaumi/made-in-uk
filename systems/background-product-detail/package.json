@@ -2,7 +2,6 @@
   "author": "",
   "dependencies": {
     "@google-cloud/firestore": "7.7.0",
-    "@google-cloud/pubsub": "4.4.0",
     "convict": "6.2.4",
     "playwright": "1.44.1",
     "ramda": "0.30.0",

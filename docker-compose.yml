@@ -20,9 +20,10 @@ services:
       - API_ENV=development
       - API_PORT=3000
       - API_PRODUCT_SEARCH_TOPIC=product-search
+      - API_PRODUCT_SEARCH_ENDPOINT=http://bg-product-search:3000
+      - API_PRODUCT_SEARCH_QUEUE=projects/made-in-uk/locations/localhost/queues/emulator
       - FIRESTORE_EMULATOR_HOST=firestore:8080
-      - PUBSUB_PROJECT_ID=made-in-uk
-      - PUBSUB_EMULATOR_HOST=pubsub:8080
+      - CLOUD_TASKS_EMULATOR_HOST=cloud-tasks:8080
       - GCLOUD_PROJECT=made-in-uk
     ports:
       - 3000:3000
@@ -43,7 +44,6 @@ services:
       - BG_PRODUCT_DETAIL_ENV=development
       - BG_PRODUCT_DETAIL_PORT=3000
       - FIRESTORE_EMULATOR_HOST=firestore:8080
-      - PUBSUB_EMULATOR_HOST=pubsub:8080
       - GCLOUD_PROJECT=made-in-uk
   bg-product-search:
     build:
@@ -58,13 +58,17 @@ services:
           target: /app/src
     entrypoint: /bin/sh
     environment:
+      - BG_PRODUCT_SEARCH_PRODUCT_DETAIL_QUEUE=projects/made-in-uk/locations/localhost/queues/emulator
       - BG_PRODUCT_SEARCH_DATABASE_ID=made-in-uk-demo
       - BG_PRODUCT_SEARCH_ENV=development
       - BG_PRODUCT_SEARCH_PORT=3000
+      - BG_PRODUCT_SEARCH_PRODUCT_DETAIL_ENDPOINT=http://bg-product-detail:3000
       - FIRESTORE_EMULATOR_HOST=firestore:8080
-      - BG_PRODUCT_DETAIL_TOPIC=product-detail
-      - PUBSUB_EMULATOR_HOST=pubsub:8080
+      - CLOUD_TASKS_EMULATOR_HOST=cloud-tasks:8080
       - GCLOUD_PROJECT=made-in-uk
+  cloud-tasks:
+    command: -host 0.0.0.0 -port 8080 -queue "projects/made-in-uk/locations/localhost/queues/emulator"
+    image: ghcr.io/aertje/cloud-tasks-emulator:latest
   firestore:
     command: gcloud emulators firestore start --host-port=0.0.0.0:8080
     image: 'gcr.io/google.com/cloudsdktool/cloud-sdk:emulators'
@@ -75,7 +79,6 @@ services:
     command: ./scripts/docker/setup-gcloud-emulators.js
     depends_on:
       - firestore
-      - pubsub
     develop:
       watch:
         - action: sync+restart
@@ -83,18 +86,11 @@ services:
           target: /app/scripts/docker/
     entrypoint: node
     environment:
-      - PUBSUB_PROJECT_ID=made-in-uk
-      - PUBSUB_EMULATOR_HOST=pubsub:8080
       - GCLOUD_PROJECT=made-in-uk
       - EMULATOR_PRODUCT_SEARCH_ENDPOINT=http://bg-product-search:3000
       - EMULATOR_PRODUCT_SEARCH_TOPIC=product-search
       - EMULATOR_PRODUCT_DETAIL_ENDPOINT=http://bg-product-detail:3000
       - EMULATOR_PRODUCT_DETAIL_TOPIC=product-detail
-  pubsub:
-    command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8080 --project=made-in-uk
-    environment:
-      - GCLOUD_PROJECT=made-in-uk
-    image: 'gcr.io/google.com/cloudsdktool/cloud-sdk:emulators'
   web:
     build:
       context: ./systems/web

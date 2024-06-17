@@ -54,25 +54,26 @@ const server = createServer(async (req, res) => {
     await handleHealthCheck(res);
     return;
   }
-  const verifiedPubSubPushMessage = await validatePubSubPushMessage(req);
-  if (!verifiedPubSubPushMessage.ok) {
-    res.statusCode = Number(verifiedPubSubPushMessage.error.code);
-    res.end(verifiedPubSubPushMessage.error.message);
+  const verifiedIncomingMessage = await validateIncomingMessage(req);
+  if (!verifiedIncomingMessage.ok) {
+    res.statusCode = Number(verifiedIncomingMessage.error.code);
+    res.end(verifiedIncomingMessage.error.message);
     return;
   }
-  const requestId =
-    verifiedPubSubPushMessage.data.message.attributes['requestId'];
+  const requestId = verifiedIncomingMessage.requestId;
   const loggerWithRequestId = logger.child({
     requestId,
   });
   const database = createDatabaseConnection();
   const writeToReplyStream = createReplyStreamOnDatabase(database);
-  const pubSubPushMessage = verifiedPubSubPushMessage.data;
-  const jsonMessageBody = JSON.parse(pubSubPushMessage.message.data);
-  const { productId, productUrl } = jsonMessageBody;
+  const payload = verifiedIncomingMessage.data;
+  const { productId, productUrl } = payload as {
+    productId: string;
+    productUrl: string;
+  };
   if (!productId || !productUrl) {
     loggerWithRequestId.error('Invalid message body', {
-      message: jsonMessageBody,
+      message: payload,
     });
     res.statusCode = 400;
     res.end('Bad request');
@@ -101,7 +102,7 @@ const server = createServer(async (req, res) => {
       error: {
         code: 'ERR_UNHANDLED_EXCEPTION',
         message: e.message,
-        meta: { message: jsonMessageBody },
+        meta: { payload },
       },
       ok: false as const,
     }))
@@ -147,7 +148,7 @@ server.listen(config.get('port'), () => {
   }
 });
 
-async function validatePubSubPushMessage(
+async function validateIncomingMessage(
   req: Parameters<RequestListener>[0],
 ): Promise<
   | {
@@ -158,15 +159,21 @@ async function validatePubSubPushMessage(
       ok: false;
     }
   | {
-      data: {
-        message: {
-          attributes: Record<string, string>;
-          data: string;
-        };
-      };
+      data: Record<string, unknown>;
       ok: true;
+      requestId: string;
     }
 > {
+  const requestId = String(req.headers['request-id']);
+  if (!requestId) {
+    return {
+      error: {
+        code: '400',
+        message: 'Bad request',
+      },
+      ok: false,
+    };
+  }
   const body = (await req.toArray()).join('');
   if (!body) {
     return {
@@ -196,23 +203,9 @@ async function validatePubSubPushMessage(
     };
   }
   const jsonBody = JSON.parse(body);
-  if (!jsonBody.message) {
-    return {
-      error: {
-        code: '400',
-        message: 'Bad request',
-      },
-      ok: false,
-    };
-  }
   return {
-    data: {
-      ...jsonBody,
-      message: {
-        ...jsonBody.message,
-        data: Buffer.from(jsonBody.message.data, 'base64').toString('utf-8'),
-      },
-    },
+    data: jsonBody,
     ok: true,
+    requestId,
   };
 }

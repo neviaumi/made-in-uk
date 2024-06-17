@@ -30,8 +30,29 @@ if (
 export function loadConfig(appEnv: AppEnvironment) {
   const shouldUseFirestoreEmulator =
     [AppEnvironment.TEST, AppEnvironment.DEV].includes(appEnv) &&
-    process.env['FIRESTORE_EMULATOR_HOST'];
+    process.env['FIRESTORE_EMULATOR_HOST'] !== undefined;
+  const shouldUseCloudTasksEmulator =
+    [AppEnvironment.TEST, AppEnvironment.DEV].includes(appEnv) &&
+    process.env['CLOUD_TASKS_EMULATOR_HOST'] !== undefined;
   const configSchema = convict({
+    cloudTasks: {
+      emulatorHost: {
+        default: shouldUseCloudTasksEmulator ? null : '',
+        env: shouldUseCloudTasksEmulator
+          ? 'CLOUD_TASKS_EMULATOR_HOST'
+          : 'UNUSED',
+        format: String,
+      },
+      productSearchQueue: {
+        default: null,
+        env: 'API_PRODUCT_SEARCH_QUEUE',
+        format: String,
+      },
+      useEmulator: {
+        default: shouldUseCloudTasksEmulator,
+        format: Boolean,
+      },
+    },
     database: {
       id: {
         default: shouldUseFirestoreEmulator ? 'unused' : null,
@@ -53,6 +74,13 @@ export function loadConfig(appEnv: AppEnvironment) {
       default: 5333,
       env: 'API_PORT',
       format: 'port',
+    },
+    productSearch: {
+      endpoint: {
+        default: null,
+        env: 'API_PRODUCT_SEARCH_ENDPOINT',
+        format: String,
+      },
     },
     pubsub: {
       topics: {

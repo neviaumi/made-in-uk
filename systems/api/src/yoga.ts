@@ -9,7 +9,6 @@ import { searchProductQuery } from '@/search-product.query.ts';
 import type { GraphqlContext } from '@/types.ts';
 
 import { createDatabaseConnection, databaseHealthCheck } from './database.ts';
-import { createPubSubClient, pubsubHealthCheck } from './pubsub.ts';
 
 const config = loadConfig(APP_ENV);
 const logger = createLogger(APP_ENV);
@@ -60,20 +59,13 @@ export const yoga = createYoga<GraphqlContext>({
     useDeferStream(),
     useReadinessCheck({
       check: async () => {
-        const [pubsubHealthCheckResult, databaseHealthCheckResult] =
-          await Promise.all([
-            pubsubHealthCheck(createPubSubClient())(),
-            databaseHealthCheck(createDatabaseConnection())(),
-          ]);
+        const [databaseHealthCheckResult] = await Promise.all([
+          databaseHealthCheck(createDatabaseConnection())(),
+        ]);
         const info = [
-          ['pubsub', pubsubHealthCheckResult.ok ? { ok: true } : null],
           ['database', databaseHealthCheckResult.ok ? { ok: true } : null],
         ].filter(([, result]) => result);
         const errors = [
-          [
-            'pubsub',
-            pubsubHealthCheckResult.ok ? null : pubsubHealthCheckResult.error,
-          ],
           [
             'database',
             databaseHealthCheckResult.ok
