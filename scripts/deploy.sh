@@ -30,6 +30,8 @@ fi
 export RELEASE_BRANCH="release-$RELEASE_VERSION"
 export RELEASE_VERSION=$RELEASE_VERSION
 export CURRENT_BRANCH=$CURRENT_BRANCH
+
+
 COMMIT_MESSAGE="release candidate v$RELEASE_VERSION [skip ci]"
 git switch -c "$RELEASE_BRANCH"
 git push --set-upstream origin "$RELEASE_BRANCH"
@@ -42,6 +44,7 @@ npx lerna exec --stream \
 source $WORK_SPACE_ROOT/.env
 
 export DOCKER_REGISTRY=$DOCKER_REGISTRY
+gcloud auth configure-docker europe-west2-docker.pkg.dev
 
 npx lerna exec --stream \
 --scope 'api' \
