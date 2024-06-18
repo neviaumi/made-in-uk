@@ -1,19 +1,19 @@
 import { cloudrun, cloudrunv2 } from '@pulumi/gcp';
 import pulumi, { type Output } from '@pulumi/pulumi';
 
-import { getGcpConfig } from '../utils/get-gcp-config.ts';
+import { getLocation } from '../utils/get-gcp-config.ts';
 import { resourceName } from '../utils/resourceName.ts';
 
 const appConfig = new pulumi.Config('app');
 
-export async function createCloudRunForWeb({
+export function createCloudRunForWeb({
   apiEndpoint,
 }: {
   apiEndpoint: Output<string>;
 }) {
   const webImage = appConfig.get('web-image');
   const cloudRunService = new cloudrunv2.Service(resourceName`web`, {
-    location: getGcpConfig(),
+    location: getLocation(),
     template: {
       containers: [
         Object.assign(
@@ -57,17 +57,19 @@ export async function createCloudRunForWeb({
   };
 }
 
-export async function createCloudRunForApi({
+export function createCloudRunForApi({
   databaseName,
-  projectSearchTopicId,
+  productSearchEndpoint,
+  productSearchTaskQueue,
 }: {
   databaseName: Output<string>;
-  projectSearchTopicId: Output<string>;
+  productSearchEndpoint: Output<string>;
+  productSearchTaskQueue: Output<string>;
 }) {
   const apiImage = appConfig.get('api-image');
   const cloudRunService = new cloudrunv2.Service(resourceName`api`, {
     ingress: 'INGRESS_TRAFFIC_ALL',
-    location: getGcpConfig(),
+    location: getLocation(),
 
     template: {
       containers: [
@@ -87,8 +89,12 @@ export async function createCloudRunForApi({
                 value: 'production',
               },
               {
-                name: 'API_PRODUCT_SEARCH_TOPIC',
-                value: projectSearchTopicId,
+                name: 'API_PRODUCT_SEARCH_ENDPOINT',
+                value: productSearchEndpoint,
+              },
+              {
+                name: 'API_PRODUCT_SEARCH_QUEUE',
+                value: productSearchTaskQueue,
               },
             ],
             image: apiImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
@@ -116,19 +122,21 @@ export async function createCloudRunForApi({
   };
 }
 
-export async function createCloudRunForBackgroundProductSearch({
+export function createCloudRunForBackgroundProductSearch({
   databaseName,
-  projectDetailTopicId,
+  productDetailEndpoint,
+  productDetailTaskQueue,
 }: {
   databaseName: Output<string>;
-  projectDetailTopicId: Output<string>;
+  productDetailEndpoint: Output<string>;
+  productDetailTaskQueue: Output<string>;
 }) {
   const bgProductSearchImage = appConfig.get('bg-product-search-image');
   const cloudRunService = new cloudrunv2.Service(
     resourceName`bg-product-search`,
     {
       ingress: 'INGRESS_TRAFFIC_ALL',
-      location: getGcpConfig(),
+      location: getLocation(),
 
       template: {
         containers: [
@@ -148,8 +156,12 @@ export async function createCloudRunForBackgroundProductSearch({
                   value: 'production',
                 },
                 {
-                  name: 'BG_PRODUCT_DETAIL_TOPIC',
-                  value: projectDetailTopicId,
+                  name: 'BG_PRODUCT_SEARCH_PRODUCT_DETAIL_ENDPOINT',
+                  value: productDetailEndpoint,
+                },
+                {
+                  name: 'BG_PRODUCT_SEARCH_PRODUCT_DETAIL_QUEUE',
+                  value: productDetailTaskQueue,
                 },
               ],
               image:
@@ -180,7 +192,7 @@ export async function createCloudRunForBackgroundProductSearch({
   };
 }
 
-export async function createCloudRunForBackgroundProductDetail({
+export function createCloudRunForBackgroundProductDetail({
   databaseName,
 }: {
   databaseName: Output<string>;
@@ -190,7 +202,7 @@ export async function createCloudRunForBackgroundProductDetail({
     resourceName`bg-product-detail`,
     {
       ingress: 'INGRESS_TRAFFIC_ALL',
-      location: getGcpConfig(),
+      location: getLocation(),
 
       template: {
         containers: [
@@ -256,39 +268,36 @@ export function onlyAllowServiceToServiceForInvokeAPI({
   });
 }
 
-export function allowServiceAccountToCallBackgroundProductSearch({
+export function allowAPIToCallBackgroundProductSearch({
+  apiCloudRunServiceAccount,
   backgroundProductSearchCloudRunServiceName,
-  serviceAccountEmail,
 }: {
+  apiCloudRunServiceAccount: Output<string>;
   backgroundProductSearchCloudRunServiceName: Output<string>;
-  serviceAccountEmail: Output<string>;
 }) {
-  new cloudrun.IamBinding(
-    resourceName`allow-service-account-to-call-product-search`,
-    {
-      members: [
-        serviceAccountEmail.apply(
-          serviceAccount => `serviceAccount:${serviceAccount}`,
-        ),
-      ],
-      role: 'roles/run.invoker',
-      service: backgroundProductSearchCloudRunServiceName,
-    },
-  );
+  new cloudrun.IamBinding(resourceName`allow-api-to-call-product-search`, {
+    members: [
+      apiCloudRunServiceAccount.apply(
+        serviceAccount => `serviceAccount:${serviceAccount}`,
+      ),
+    ],
+    role: 'roles/run.invoker',
+    service: backgroundProductSearchCloudRunServiceName,
+  });
 }
 
-export function allowServiceAccountToCallBackgroundProductDetail({
+export function allowProductSearchToCallBackgroundProductDetail({
   backgroundProductDetailCloudRunServiceName,
-  serviceAccountEmail,
+  productSearchCloudRunServiceAccount,
 }: {
   backgroundProductDetailCloudRunServiceName: Output<string>;
-  serviceAccountEmail: Output<string>;
+  productSearchCloudRunServiceAccount: Output<string>;
 }) {
   new cloudrun.IamBinding(
     resourceName`allow-service-account-to-call-product-detail`,
     {
       members: [
-        serviceAccountEmail.apply(
+        productSearchCloudRunServiceAccount.apply(
           serviceAccount => `serviceAccount:${serviceAccount}`,
         ),
       ],

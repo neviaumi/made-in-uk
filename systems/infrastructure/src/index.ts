@@ -1,77 +1,69 @@
 import { createDockerRepository } from './gcp/artifact-registry.ts';
 import {
-  allowServiceAccountToCallBackgroundProductDetail,
-  allowServiceAccountToCallBackgroundProductSearch,
+  allowAPIToCallBackgroundProductSearch,
+  allowProductSearchToCallBackgroundProductDetail,
   createCloudRunForApi,
   createCloudRunForBackgroundProductDetail,
   createCloudRunForBackgroundProductSearch,
   createCloudRunForWeb,
   onlyAllowServiceToServiceForInvokeAPI,
 } from './gcp/cloud-run.ts';
-import { createFireStoreDB } from './gcp/fire-store.ts';
 import {
-  createProductDetailServiceAccount,
-  createProductSearchServiceAccount,
-  createPubSubProductDetailSubscription,
-  createPubSubProductDetailTopic,
-  createPubSubProductSearchSubscription,
-  createPubSubProductSearchTopic,
-} from './gcp/pub-sub.ts';
+  createProductDetailTaskQueue,
+  createProductSearchTaskQueue,
+} from './gcp/cloud-tasks.ts';
+import { createFireStoreDB } from './gcp/fire-store.ts';
 
 const { name: databaseName } = createFireStoreDB();
-const { topicId: productSearchTopic } = createPubSubProductSearchTopic();
-const { topicId: productDetailTopic } = createPubSubProductDetailTopic();
-const { email: productSearchServiceAccountEmail } =
-  createProductSearchServiceAccount();
-const { email: productDetailServiceAccountEmail } =
-  createProductDetailServiceAccount();
 const { repositoryUrl: dockerRepository } = createDockerRepository();
+const { name: productSearchQueueName } = createProductSearchTaskQueue();
+const { name: productDetailQueueName } = createProductDetailTaskQueue();
 
-const { name: apiServiceName, url: apiUrl } = await createCloudRunForApi({
-  databaseName: databaseName,
-  projectSearchTopicId: productSearchTopic,
-});
-const {
-  name: backgroundProductSearchServiceName,
-  url: backgroundProductSearchUrl,
-} = await createCloudRunForBackgroundProductSearch({
-  databaseName: databaseName,
-  projectDetailTopicId: productDetailTopic,
-});
 const {
   name: backgroundProductDetailServiceName,
   url: backgroundProductDetailUrl,
-} = await createCloudRunForBackgroundProductDetail({
+} = createCloudRunForBackgroundProductDetail({
   databaseName: databaseName,
 });
-allowServiceAccountToCallBackgroundProductDetail({
-  backgroundProductDetailCloudRunServiceName:
-    backgroundProductDetailServiceName,
-  serviceAccountEmail: productDetailServiceAccountEmail,
+
+const {
+  name: backgroundProductSearchServiceName,
+  serviceAccount: productSearchCloudRunServiceAccount,
+  url: backgroundProductSearchUrl,
+} = createCloudRunForBackgroundProductSearch({
+  databaseName: databaseName,
+  productDetailEndpoint: backgroundProductDetailUrl,
+  productDetailTaskQueue: productDetailQueueName,
 });
-allowServiceAccountToCallBackgroundProductSearch({
-  backgroundProductSearchCloudRunServiceName:
-    backgroundProductSearchServiceName,
-  serviceAccountEmail: productSearchServiceAccountEmail,
-});
-createPubSubProductSearchSubscription({
-  backgroundProductSearchEndpoint: backgroundProductSearchUrl,
-  productSearchServiceAccountEmail,
-  productSearchTopicId: productSearchTopic,
-});
-createPubSubProductDetailSubscription({
-  backgroundProductDetailEndpoint: backgroundProductDetailUrl,
-  productDetailServiceAccountEmail,
-  productDetailTopicId: productDetailTopic,
+const {
+  name: apiServiceName,
+  serviceAccount: apiCloudRunServiceAccount,
+  url: apiUrl,
+} = createCloudRunForApi({
+  databaseName: databaseName,
+  productSearchEndpoint: backgroundProductSearchUrl,
+  productSearchTaskQueue: productSearchQueueName,
 });
 
-const { serviceAccount, url: webUrl } = await createCloudRunForWeb({
-  apiEndpoint: apiUrl,
+allowAPIToCallBackgroundProductSearch({
+  apiCloudRunServiceAccount: apiCloudRunServiceAccount,
+  backgroundProductSearchCloudRunServiceName:
+    backgroundProductSearchServiceName,
 });
+allowProductSearchToCallBackgroundProductDetail({
+  backgroundProductDetailCloudRunServiceName:
+    backgroundProductDetailServiceName,
+  productSearchCloudRunServiceAccount: productSearchCloudRunServiceAccount,
+});
+
+const { serviceAccount: webCloudRunServiceAccount, url: webUrl } =
+  createCloudRunForWeb({
+    apiEndpoint: apiUrl,
+  });
 
 onlyAllowServiceToServiceForInvokeAPI({
   apiCloudRunServiceName: apiServiceName,
-  webCloudRunServiceAccount: serviceAccount,
+  webCloudRunServiceAccount: webCloudRunServiceAccount,
 });
 
 export const WEB_HOST = webUrl;

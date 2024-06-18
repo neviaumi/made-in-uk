@@ -2,7 +2,7 @@ import * as pulumi from '@pulumi/pulumi';
 
 const config = new pulumi.Config('gcp');
 
-export function getGcpConfig() {
+export function getLocation() {
   return config.require('region');
 }
 

@@ -19,7 +19,6 @@ services:
       - API_DATABASE_ID=made-in-uk-demo
       - API_ENV=development
       - API_PORT=3000
-      - API_PRODUCT_SEARCH_TOPIC=product-search
       - API_PRODUCT_SEARCH_ENDPOINT=http://bg-product-search:3000
       - API_PRODUCT_SEARCH_QUEUE=projects/made-in-uk/locations/localhost/queues/emulator
       - FIRESTORE_EMULATOR_HOST=firestore:8080
