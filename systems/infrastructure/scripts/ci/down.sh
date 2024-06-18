@@ -14,3 +14,5 @@ PULUMI_CONFIG_PASSPHRASE= pulumi stack select organization/$PROJECT/$STACK
 PULUMI_CONFIG_PASSPHRASE= pulumi down --yes
 PULUMI_CONFIG_PASSPHRASE= pulumi config rm app:web-image
 PULUMI_CONFIG_PASSPHRASE= pulumi config rm app:api-image
+PULUMI_CONFIG_PASSPHRASE= pulumi config rm app:bg-product-detail-image
+PULUMI_CONFIG_PASSPHRASE= pulumi config rm app:bg-product-search-image

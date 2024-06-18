@@ -16,8 +16,10 @@ import { createFireStoreDB } from './gcp/fire-store.ts';
 
 const { name: databaseName } = createFireStoreDB();
 const { repositoryUrl: dockerRepository } = createDockerRepository();
-const { name: productSearchQueueName } = createProductSearchTaskQueue();
-const { name: productDetailQueueName } = createProductDetailTaskQueue();
+const { fullQualifiedQueueName: productSearchQueueName } =
+  createProductSearchTaskQueue();
+const { fullQualifiedQueueName: productDetailQueueName } =
+  createProductDetailTaskQueue();
 
 const {
   name: backgroundProductDetailServiceName,
