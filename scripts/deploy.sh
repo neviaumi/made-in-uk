@@ -34,9 +34,6 @@ COMMIT_MESSAGE="release candidate v$RELEASE_VERSION [skip ci]"
 git switch -c "$RELEASE_BRANCH"
 git push --set-upstream origin "$RELEASE_BRANCH"
 npx lerna version --message "$COMMIT_MESSAGE" --yes $RELEASE_VERSION
-npx lerna exec --stream \
---scope 'infrastructure' \
--- "bash scripts/ci/deploy.sh infrastructure $ENVIRONMENT"
 
 npx lerna exec --stream \
 --scope 'infrastructure' \
@@ -55,7 +52,7 @@ npx lerna exec --stream \
 
 npx lerna exec --stream \
 --scope 'infrastructure' \
--- "bash scripts/ci/deploy.sh container $ENVIRONMENT $RELEASE_VERSION"
+-- "bash scripts/ci/deploy.sh $ENVIRONMENT $RELEASE_VERSION"
 
 npm install
 git add .
