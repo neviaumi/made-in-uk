@@ -30,6 +30,7 @@ export const schema = {
       title: String
       type: String
       url: String
+      price: String
     }
     enum ProductStreamType {
       FETCH_PRODUCT_DETAIL_EOS

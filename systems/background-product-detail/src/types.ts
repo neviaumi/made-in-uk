@@ -2,6 +2,7 @@ export type Product = {
   countryOfOrigin: string;
   id: string;
   image: string;
+  price: string;
   title: string;
   type: string;
   url: string;

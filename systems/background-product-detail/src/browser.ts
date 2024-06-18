@@ -5,7 +5,7 @@ import { createLogger, type Logger } from '@/logger.ts';
 
 import type { Product } from './types.ts';
 
-const baseUrl = 'https://www.ocado.com';
+export const baseUrl = 'https://www.ocado.com';
 
 export function createChromiumBrowser(
   browserLaunchOptions?: playwright.LaunchOptions,
@@ -107,11 +107,45 @@ export function createProductDetailsHandler(
         ok: false,
       };
     }
+    const priceInfo: {
+      price?: string | null;
+      priceCurrency?: string | null;
+    } = Object.fromEntries(
+      (
+        await page
+          .locator('meta[itemprop]')
+          .evaluateAll(elements =>
+            elements.map(ele => [
+              ele.getAttribute('itemprop'),
+              ele.getAttribute('content'),
+            ]),
+          )
+      ).filter((entity): entity is [string, string] =>
+        ['price', 'priceCurrency'].includes(String(entity[0])),
+      ),
+    );
+    if (!priceInfo.price || !priceInfo.priceCurrency) {
+      return {
+        error: {
+          code: 'ERR_ELEMENT_NOT_FOUND',
+          message: 'Price not found',
+          meta: { priceInfo, url: fullUrl },
+        },
+        ok: false,
+      };
+    }
+
+    const price = new Intl.NumberFormat('en-GB', {
+      currency: priceInfo.priceCurrency,
+      style: 'currency',
+    }).format(Number(priceInfo.price));
+
     return {
       data: {
         countryOfOrigin,
         id: productId,
         image: new URL(productOpenGraphMeta['og:image'], baseUrl).toString(),
+        price,
         title: productOpenGraphMeta['og:title'],
         type: productOpenGraphMeta['og:type'],
         url: new URL(productOpenGraphMeta['og:url'], baseUrl).toString(),

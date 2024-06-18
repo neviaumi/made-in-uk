@@ -26,6 +26,7 @@ const SearchProducts = gql`
         type
         countryOfOrigin
         url
+        price
       }
     }
   }
@@ -46,6 +47,7 @@ export default function Index() {
           countryOfOrigin: string;
           id: string;
           image: string;
+          price: string;
           title: string;
           type: string;
           url: string;
@@ -151,6 +153,9 @@ export default function Index() {
                       >
                         {product.title}
                       </h1>
+                      <p className={'tw-py-0.5 tw-text-lg tw-font-semibold'}>
+                        {product.price}
+                      </p>
                       <p className={'tw-text-lg tw-font-medium'}>
                         {product.countryOfOrigin}
                       </p>
