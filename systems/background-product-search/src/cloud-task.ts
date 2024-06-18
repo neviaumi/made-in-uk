@@ -39,7 +39,7 @@ export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
       const idTokenClient = await auth.getIdTokenClient(productDetailEndpoint);
       headers = Object.assign(
         headers,
-        idTokenClient.getRequestHeaders(productDetailEndpoint),
+        await idTokenClient.getRequestHeaders(productDetailEndpoint),
       );
     }
     return cloudTask.createTask({
