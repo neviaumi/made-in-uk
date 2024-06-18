@@ -82,15 +82,6 @@ export function loadConfig(appEnv: AppEnvironment) {
         format: String,
       },
     },
-    pubsub: {
-      topics: {
-        productSearch: {
-          default: null,
-          env: 'API_PRODUCT_SEARCH_TOPIC',
-          format: String,
-        },
-      },
-    },
   });
   configSchema.validate({
     allowed: 'strict',
