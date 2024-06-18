@@ -14,7 +14,6 @@ set -e
 PULUMI_CONFIG_PASSPHRASE= pulumi stack select organization/$PROJECT/$STACK
 PULUMI_CONFIG_PASSPHRASE= pulumi config set gcp:project made-in-uk
 PULUMI_CONFIG_PASSPHRASE= pulumi config set gcp:region europe-west2
-gcloud auth configure-docker europe-west2-docker.pkg.dev
 
 DOCKER_REGISTRY=$(PULUMI_CONFIG_PASSPHRASE= pulumi stack output DOCKER_REGISTRY)
 PULUMI_CONFIG_PASSPHRASE= pulumi config set app:web-image "$DOCKER_REGISTRY/web:$VERSION"
