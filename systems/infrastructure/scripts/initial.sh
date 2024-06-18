@@ -16,12 +16,6 @@ PULUMI_CONFIG_PASSPHRASE= pulumi config set gcp:project made-in-uk
 PULUMI_CONFIG_PASSPHRASE= pulumi config set gcp:region europe-west2
 gcloud auth configure-docker europe-west2-docker.pkg.dev
 
-DOCKER_REGISTRY=$(PULUMI_CONFIG_PASSPHRASE= pulumi stack output DOCKER_REGISTRY)
-PULUMI_CONFIG_PASSPHRASE= pulumi config set app:web-image "$DOCKER_REGISTRY/web:$VERSION"
-PULUMI_CONFIG_PASSPHRASE= pulumi config set app:api-image "$DOCKER_REGISTRY/api:$VERSION"
-PULUMI_CONFIG_PASSPHRASE= pulumi config set app:bg-product-search-image "$DOCKER_REGISTRY/bg-product-search:$VERSION"
-PULUMI_CONFIG_PASSPHRASE= pulumi config set app:bg-product-detail-image "$DOCKER_REGISTRY/bg-product-detail:$VERSION"
-
 PULUMI_CONFIG_PASSPHRASE= pulumi up --yes
 
 
