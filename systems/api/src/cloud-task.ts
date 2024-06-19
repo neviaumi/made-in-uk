@@ -45,7 +45,7 @@ export function createProductSearchScheduler(cloudTask: CloudTasksClient) {
           'Request-Id': payload.requestId,
         },
         httpMethod: 'POST' as const,
-        oauthToken: ![AppEnvironment.DEV, AppEnvironment.TEST].includes(APP_ENV)
+        oidcToken: ![AppEnvironment.DEV, AppEnvironment.TEST].includes(APP_ENV)
           ? {
               serviceAccountEmail: await getInstanceServiceAccount(),
             }
@@ -53,9 +53,6 @@ export function createProductSearchScheduler(cloudTask: CloudTasksClient) {
         url: productSearchEndpoint,
       },
     };
-    logger.info('Scheduling product search task', {
-      task: task,
-    });
     return cloudTask.createTask({
       parent: String(config.get('cloudTasks.productSearchQueue')),
       task: task,
