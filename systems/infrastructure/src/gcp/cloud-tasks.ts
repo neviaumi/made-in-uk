@@ -21,8 +21,8 @@ export function createProductDetailTaskQueue() {
   const queue = new cloudtasks.Queue(resourceName`product-detail`, {
     location: getLocation(),
     rateLimits: {
-      maxConcurrentDispatches: 1,
-      maxDispatchesPerSecond: 1,
+      maxConcurrentDispatches: 2,
+      maxDispatchesPerSecond: 4,
     },
   });
   return {

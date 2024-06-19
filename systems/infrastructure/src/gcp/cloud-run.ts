@@ -112,6 +112,7 @@ export function createCloudRunForApi({
             : {},
         ),
       ],
+      timeout: '900s',
     },
   });
 
@@ -203,7 +204,6 @@ export function createCloudRunForBackgroundProductDetail({
     {
       ingress: 'INGRESS_TRAFFIC_ALL',
       location: getLocation(),
-
       template: {
         containers: [
           Object.assign(
