@@ -187,7 +187,7 @@ const server = createServer(async (req, res) => {
             loggerWithRequestId.error('Failed to schedule task', {
               error: e,
             });
-            throw e;
+            // throw e;
           });
         });
     },
