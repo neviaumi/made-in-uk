@@ -1,7 +1,7 @@
 import { CloudTasksClient } from '@google-cloud/tasks';
 import { credentials } from '@grpc/grpc-js';
-import { GoogleAuth } from 'google-auth-library';
 
+import { getInstanceServiceAccount } from '@/cloud-run.ts';
 import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
 
 const config = loadConfig(APP_ENV);
@@ -62,19 +62,11 @@ export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
       >['scheduleTime'];
     },
   ) {
-    let headers = {
+    const headers = {
       'Content-Type': 'application/json',
       'Request-Id': payload.requestId,
     };
     const productDetailEndpoint = String(config.get('productDetail.endpoint'));
-    if (![AppEnvironment.DEV, AppEnvironment.TEST].includes(APP_ENV)) {
-      const auth = new GoogleAuth();
-      const idTokenClient = await auth.getIdTokenClient(productDetailEndpoint);
-      headers = Object.assign(
-        headers,
-        await idTokenClient.getRequestHeaders(productDetailEndpoint),
-      );
-    }
     return cloudTask.createTask({
       parent: String(config.get('cloudTasks.productDetailQueue')),
       task: {
@@ -84,6 +76,13 @@ export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
           ).toString('base64'),
           headers,
           httpMethod: 'POST',
+          oidcToken: ![AppEnvironment.DEV, AppEnvironment.TEST].includes(
+            APP_ENV,
+          )
+            ? {
+                serviceAccountEmail: await getInstanceServiceAccount(),
+              }
+            : null,
           url: productDetailEndpoint,
         },
         name: options.name,

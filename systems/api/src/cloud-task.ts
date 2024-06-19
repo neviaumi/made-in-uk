@@ -1,7 +1,7 @@
 import { CloudTasksClient } from '@google-cloud/tasks';
 import { credentials } from '@grpc/grpc-js';
-import { GoogleAuth } from 'google-auth-library';
 
+import { getInstanceServiceAccount } from '@/cloud-run.ts';
 import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
 
 const config = loadConfig(APP_ENV);
@@ -30,20 +30,8 @@ export function createProductSearchScheduler(cloudTask: CloudTasksClient) {
     requestId: string;
     search: { keyword: string };
   }) {
-    let headers = {
-      'Content-Type': 'application/json',
-      'Request-Id': payload.requestId,
-    };
     const productSearchEndpoint = String(config.get('productSearch.endpoint'));
-    if (![AppEnvironment.DEV, AppEnvironment.TEST].includes(APP_ENV)) {
-      const auth = new GoogleAuth();
-      const idTokenClient = await auth.getIdTokenClient(productSearchEndpoint);
 
-      headers = Object.assign(
-        headers,
-        await idTokenClient.getRequestHeaders(productSearchEndpoint),
-      );
-    }
     return cloudTask.createTask({
       parent: String(config.get('cloudTasks.productSearchQueue')),
       task: {
@@ -53,8 +41,18 @@ export function createProductSearchScheduler(cloudTask: CloudTasksClient) {
               search: payload.search,
             }),
           ).toString('base64'),
-          headers,
+          headers: {
+            'Content-Type': 'application/json',
+            'Request-Id': payload.requestId,
+          },
           httpMethod: 'POST',
+          oauthToken: ![AppEnvironment.DEV, AppEnvironment.TEST].includes(
+            APP_ENV,
+          )
+            ? {
+                serviceAccountEmail: await getInstanceServiceAccount(),
+              }
+            : null,
           url: productSearchEndpoint,
         },
       },
