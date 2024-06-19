@@ -10,13 +10,17 @@ import {
   createProductsSearchHandler,
 } from '@/browser.ts';
 import {
+  computeScheduleSeconds,
   createCloudTaskClient,
   createProductDetailScheduler,
+  createTaskId,
+  ONE_HOUR,
+  TASK_TYPE,
 } from '@/cloud-task.ts';
 import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
 import {
-  checkRequestStreamOnDatabase,
   connectReplyStreamOnDatabase,
+  connectToProductDatabase,
   createDatabaseConnection,
   databaseHealthCheck,
 } from '@/database.ts';
@@ -73,17 +77,17 @@ const server = createServer(async (req, res) => {
     requestId: requestId,
   });
   const database = createDatabaseConnection();
-  const writeToReplyStream = connectReplyStreamOnDatabase(database, {
+  const replyStream = connectReplyStreamOnDatabase(database, {
     logger: loggerWithRequestId,
   });
-  if (await checkRequestStreamOnDatabase(database)(requestId)) {
+  if (await replyStream.checkRequestAlreadyExist(requestId)) {
     loggerWithRequestId.info('Request already processed');
     res.statusCode = 204;
     res.end();
     return;
   }
   const payload = verifiedIncomingMessage.data;
-  await writeToReplyStream(requestId, {
+  await replyStream.writeToRepliesStreamHeader(requestId, {
     type: REPLY_DATA_TYPE.PRODUCT_SEARCH_LOCK,
   });
   const browser = await createChromiumBrowser();
@@ -105,7 +109,7 @@ const server = createServer(async (req, res) => {
       await closeBrowser(browser);
     });
   if (!matchProducts.ok) {
-    await writeToReplyStream(requestId, {
+    await replyStream.writeToRepliesStreamHeader(requestId, {
       error: {
         code: matchProducts.error.code,
         message: matchProducts.error.message,
@@ -118,7 +122,7 @@ const server = createServer(async (req, res) => {
     return;
   }
   const productToSearchDetails = [
-    AppEnvironment.PRD,
+    AppEnvironment.TEST,
     AppEnvironment.DEV,
   ].includes(APP_ENV)
     ? Object.entries(matchProducts.data).slice(0, 10)
@@ -128,21 +132,65 @@ const server = createServer(async (req, res) => {
   const scheduleProductDetailTask = createProductDetailScheduler(cloudTask);
   await pMap(
     productToSearchDetails,
-    ([productId, productUrl]) => {
-      scheduleProductDetailTask({
-        product: {
-          productId,
-          productUrl,
-          source: 'ocado',
-        },
-        requestId: requestId,
-      });
+    async ([productId, productUrl], index) => {
+      return connectToProductDatabase(database)
+        .getProductOrFail('ocado', productId)
+        .then(async product => {
+          loggerWithRequestId.debug('Response product from cache', {
+            productId,
+          });
+          const resp = await replyStream.writeToRepliesStream(
+            requestId,
+            productId,
+            {
+              data: product,
+              type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
+            },
+          );
+          scheduleProductDetailTask(
+            {
+              product: {
+                productId,
+                productUrl,
+                source: 'ocado',
+              },
+              requestId: requestId,
+              type: TASK_TYPE.UPDATE_PRODUCT_DETAIL,
+            },
+            {
+              name: createTaskId(`ocado-${productId}`),
+              scheduleTime: {
+                seconds: computeScheduleSeconds(ONE_HOUR + index * 5),
+              },
+            },
+          );
+          return resp;
+        })
+        .catch(() => {
+          return scheduleProductDetailTask(
+            {
+              product: {
+                productId,
+                productUrl,
+                source: 'ocado',
+              },
+              requestId: requestId,
+              type: TASK_TYPE.FETCH_PRODUCT_DETAIL,
+            },
+            {
+              name: createTaskId(`${requestId}-ocado-${productId}`),
+              scheduleTime: {
+                seconds: computeScheduleSeconds(index * 5),
+              },
+            },
+          );
+        });
     },
     {
       concurrency: 8,
     },
   );
-  await writeToReplyStream(requestId, {
+  await replyStream.writeToRepliesStreamHeader(requestId, {
     data: { total: numberOfProducts },
     search: search,
     type: REPLY_DATA_TYPE.PRODUCT_SEARCH,
