@@ -160,8 +160,10 @@ const server = createServer(async (req, res) => {
               },
             },
           ).catch(e => {
-            loggerWithRequestId.error('Failed to schedule task', {
+            loggerWithRequestId.error('Failed to schedule low priority task', {
               error: e,
+              productId,
+              productUrl,
             });
             // throw e;
           });
@@ -184,8 +186,10 @@ const server = createServer(async (req, res) => {
               },
             },
           ).catch(e => {
-            loggerWithRequestId.error('Failed to schedule task', {
+            loggerWithRequestId.error('Failed to schedule wanted task', {
               error: e,
+              productId,
+              productUrl,
             });
             // throw e;
           });
