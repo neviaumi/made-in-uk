@@ -3,8 +3,10 @@ import { credentials } from '@grpc/grpc-js';
 
 import { getInstanceServiceAccount } from '@/cloud-run.ts';
 import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
+import { createLogger } from '@/logger.ts';
 
 const config = loadConfig(APP_ENV);
+const logger = createLogger(APP_ENV);
 
 export function createCloudTaskClient(
   ...args: ConstructorParameters<typeof CloudTasksClient>
@@ -31,31 +33,32 @@ export function createProductSearchScheduler(cloudTask: CloudTasksClient) {
     search: { keyword: string };
   }) {
     const productSearchEndpoint = String(config.get('productSearch.endpoint'));
-
+    const task = {
+      httpRequest: {
+        body: Buffer.from(
+          JSON.stringify({
+            search: payload.search,
+          }),
+        ).toString('base64'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Request-Id': payload.requestId,
+        },
+        httpMethod: 'POST' as const,
+        oauthToken: ![AppEnvironment.DEV, AppEnvironment.TEST].includes(APP_ENV)
+          ? {
+              serviceAccountEmail: await getInstanceServiceAccount(),
+            }
+          : null,
+        url: productSearchEndpoint,
+      },
+    };
+    logger.info('Scheduling product search task', {
+      task: task,
+    });
     return cloudTask.createTask({
       parent: String(config.get('cloudTasks.productSearchQueue')),
-      task: {
-        httpRequest: {
-          body: Buffer.from(
-            JSON.stringify({
-              search: payload.search,
-            }),
-          ).toString('base64'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Request-Id': payload.requestId,
-          },
-          httpMethod: 'POST',
-          oauthToken: ![AppEnvironment.DEV, AppEnvironment.TEST].includes(
-            APP_ENV,
-          )
-            ? {
-                serviceAccountEmail: await getInstanceServiceAccount(),
-              }
-            : null,
-          url: productSearchEndpoint,
-        },
-      },
+      task: task,
     });
   };
 }
