@@ -139,14 +139,10 @@ const server = createServer(async (req, res) => {
           loggerWithRequestId.debug('Response product from cache', {
             productId,
           });
-          const resp = await replyStream.writeToRepliesStream(
-            requestId,
-            productId,
-            {
-              data: product,
-              type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
-            },
-          );
+          await replyStream.writeToRepliesStream(requestId, productId, {
+            data: product,
+            type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
+          });
           scheduleProductDetailTask(
             {
               product: {
@@ -163,8 +159,12 @@ const server = createServer(async (req, res) => {
                 seconds: computeScheduleSeconds(ONE_HOUR + index * 5),
               },
             },
-          );
-          return resp;
+          ).catch(e => {
+            loggerWithRequestId.error('Failed to schedule task', {
+              error: e,
+            });
+            // throw e;
+          });
         })
         .catch(() => {
           scheduleProductDetailTask(
