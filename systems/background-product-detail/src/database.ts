@@ -1,11 +1,8 @@
 import { Firestore, type Settings } from '@google-cloud/firestore';
 
 import { APP_ENV, loadConfig } from '@/config.ts';
-import { createLogger, type Logger } from '@/logger.ts';
-import type { REPLY_DATA_TYPE } from '@/types.ts';
 
 const config = loadConfig(APP_ENV);
-const defaultLogger = createLogger(APP_ENV);
 
 export function databaseHealthCheck(database: Firestore) {
   return async function healthCheckByGetCollectionInfo(): Promise<
@@ -43,47 +40,44 @@ export function createDatabaseConnection(settings?: Settings) {
   return new Firestore(storeConfig);
 }
 
-export function checkRequestStreamOnDatabase(database: Firestore) {
-  return async function checkRequestAlreadyExist(
-    requestId: string,
-    productId: string,
-  ) {
-    const collectionPath = `replies.${requestId}`;
-    const headers = await database
-      .collection(collectionPath)
-      .doc(productId)
-      .get();
-    return headers.exists;
+export function connectToProductDatabase(database: Firestore) {
+  return function cacheProduct(source: string, productId: string) {
+    return database.collection(`${source}.products`).doc(productId);
   };
 }
 
-export function createReplyStreamOnDatabase(
-  database: Firestore,
-  options?: {
-    logger: Logger;
-  },
-) {
-  const logger = options?.logger ?? defaultLogger;
-  return function writeToRepliesStream(
-    requestId: string,
-    productId: string,
-    reply:
-      | {
-          type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_LOCK;
-        }
-      | {
-          data: any;
-          type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL;
-        }
-      | {
-          error: { code: string; message: string };
-          type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE;
-        },
-  ) {
+export function createLockHandlerOnDatabase(database: Firestore) {
+  const collectionPath = `product-detail.request-lock`;
+
+  function formatDocPath(requestId: string, productId: string) {
+    return `${requestId}.${productId}`;
+  }
+  return {
+    async acquireLock(requestId: string, productId: string, payload: any) {
+      return database
+        .collection(collectionPath)
+        .doc(formatDocPath(requestId, productId))
+        .set(payload);
+    },
+    async checkRequestLock(requestId: string, productId: string) {
+      const lock = await database
+        .collection(collectionPath)
+        .doc(formatDocPath(requestId, productId))
+        .get();
+      return lock.exists;
+    },
+    async releaseLock(requestId: string, productId: string) {
+      await database
+        .collection(collectionPath)
+        .doc(formatDocPath(requestId, productId))
+        .delete();
+    },
+  };
+}
+
+export function createReplyStreamOnDatabase(database: Firestore) {
+  return function writeToRepliesStream(requestId: string, productId: string) {
     const collectionPath = `replies.${requestId}`;
-    logger.info(`Writing to ${collectionPath}`, {
-      reply,
-    });
-    return database.collection(collectionPath).doc(productId).set(reply);
+    return database.collection(collectionPath).doc(productId);
   };
 }

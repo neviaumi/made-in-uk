@@ -115,9 +115,6 @@ export function createListenerToReplyStreamData(
             return;
           }
           const changedData = change.doc.data();
-          if (changedData['type'] === 'FETCH_PRODUCT_DETAIL_LOCK') {
-            return;
-          }
           docReceivedCount += 1;
           duplexStream.push(changedData);
           if (docReceivedCount === totalDocsExpected) {

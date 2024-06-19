@@ -9,8 +9,9 @@ import {
 } from '@/browser.ts';
 import { APP_ENV, loadConfig } from '@/config.ts';
 import {
-  checkRequestStreamOnDatabase,
+  connectToProductDatabase,
   createDatabaseConnection,
+  createLockHandlerOnDatabase,
   createReplyStreamOnDatabase,
   databaseHealthCheck,
 } from '@/database.ts';
@@ -19,7 +20,10 @@ import { REPLY_DATA_TYPE } from '@/types.ts';
 
 const config = loadConfig(APP_ENV);
 const logger = createLogger(APP_ENV);
-
+enum TASK_TYPE {
+  FETCH_PRODUCT_DETAIL = 'FETCH_PRODUCT_DETAIL',
+  UPDATE_PRODUCT_DETAIL = 'UPDATE_PRODUCT_DETAIL',
+}
 async function handleHealthCheck(res: Parameters<RequestListener>[1]) {
   const database = createDatabaseConnection();
   const [databaseHealthCheckResult] = await Promise.all([
@@ -49,6 +53,103 @@ async function handleHealthCheck(res: Parameters<RequestListener>[1]) {
   res.end();
 }
 
+async function handleFetchProductDetail(
+  database: ReturnType<typeof createDatabaseConnection>,
+  requestId: string,
+  payload: {
+    product: {
+      productId: string;
+      productUrl: string;
+    };
+  },
+) {
+  const {
+    product: { productId, productUrl, source },
+  } = payload as {
+    product: {
+      productId: string;
+      productUrl: string;
+      source: string;
+    };
+  };
+  const replyStream = createReplyStreamOnDatabase(database);
+
+  const browser = await createChromiumBrowser();
+  const page = await createBrowserPage(browser)();
+
+  const productInfo = await createProductDetailsHandler(page)(productUrl)
+    .catch(e => ({
+      error: {
+        code: 'ERR_UNHANDLED_EXCEPTION',
+        message: e.message,
+        meta: { payload },
+      },
+      ok: false as const,
+    }))
+    .finally(async () => {
+      await closePage(page);
+      await closeBrowser(browser);
+    });
+  if (!productInfo.ok) {
+    await replyStream(requestId, productId).set({
+      error: productInfo.error,
+      type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE,
+    });
+    return;
+  }
+  const batchWrite = database.batch();
+  batchWrite.set(replyStream(requestId, productId), {
+    data: productInfo.data,
+    type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
+  });
+  batchWrite.set(
+    connectToProductDatabase(database)(source, productId),
+    productInfo.data,
+  );
+  await batchWrite.commit();
+}
+
+async function handleUpdateProductDetail(
+  database: ReturnType<typeof createDatabaseConnection>,
+  payload: {
+    product: {
+      productId: string;
+      productUrl: string;
+    };
+  },
+) {
+  const {
+    product: { productId, productUrl },
+  } = payload as {
+    product: {
+      productId: string;
+      productUrl: string;
+    };
+  };
+  const browser = await createChromiumBrowser();
+  const page = await createBrowserPage(browser)();
+
+  const productInfo = await createProductDetailsHandler(page)(productUrl)
+    .catch(e => ({
+      error: {
+        code: 'ERR_UNHANDLED_EXCEPTION',
+        message: e.message,
+        meta: { payload },
+      },
+      ok: false as const,
+    }))
+    .finally(async () => {
+      await closePage(page);
+      await closeBrowser(browser);
+    });
+  if (!productInfo.ok) {
+    return;
+  }
+  await connectToProductDatabase(database)('ocado', productId).set(
+    productInfo.data,
+  );
+}
+
 const server = createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/health') {
     await handleHealthCheck(res);
@@ -65,13 +166,17 @@ const server = createServer(async (req, res) => {
     requestId,
   });
   const database = createDatabaseConnection();
-  const writeToReplyStream = createReplyStreamOnDatabase(database);
+  const lock = createLockHandlerOnDatabase(database);
   const payload = verifiedIncomingMessage.data;
-  const { productId, productUrl } = payload as {
-    productId: string;
-    productUrl: string;
+  const { product, type } = payload as {
+    product: {
+      productId: string;
+      productUrl: string;
+      source: string;
+    };
+    type: TASK_TYPE;
   };
-  if (!productId || !productUrl) {
+  if (!product.productId || !product.productUrl) {
     loggerWithRequestId.error('Invalid message body', {
       message: payload,
     });
@@ -79,50 +184,26 @@ const server = createServer(async (req, res) => {
     res.end('Bad request');
     return;
   }
-  if (await checkRequestStreamOnDatabase(database)(requestId, productId)) {
+  if (await lock.checkRequestLock(requestId, product.productId)) {
     loggerWithRequestId.info('Request already exist', {
-      productId,
-      productUrl,
+      product,
       requestId,
     });
     res.statusCode = 204;
     res.end();
     return;
   }
-  await writeToReplyStream(requestId, productId, {
-    type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_LOCK,
-  });
-  const browser = await createChromiumBrowser();
-  const page = await createBrowserPage(browser)();
-
-  const productInfo = await createProductDetailsHandler(page, {
-    logger: loggerWithRequestId,
-  })(productUrl)
-    .catch(e => ({
-      error: {
-        code: 'ERR_UNHANDLED_EXCEPTION',
-        message: e.message,
-        meta: { payload },
-      },
-      ok: false as const,
-    }))
-    .finally(async () => {
-      await closePage(page);
-      await closeBrowser(browser);
+  await lock.acquireLock(requestId, product.productId, payload);
+  if (type === TASK_TYPE.FETCH_PRODUCT_DETAIL) {
+    await handleFetchProductDetail(database, requestId, { product });
+  } else if (type === TASK_TYPE.UPDATE_PRODUCT_DETAIL) {
+    await handleUpdateProductDetail(database, { product });
+  } else {
+    loggerWithRequestId.error('Invalid message type', {
+      message: payload,
     });
-  if (!productInfo.ok) {
-    await writeToReplyStream(requestId, productId, {
-      error: productInfo.error,
-      type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE,
-    });
-    res.statusCode = 204;
-    res.end();
-    return;
   }
-  await writeToReplyStream(requestId, productId, {
-    data: productInfo.data,
-    type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
-  });
+  await lock.releaseLock(requestId, product.productId);
   res.statusCode = 204;
   res.end();
 });

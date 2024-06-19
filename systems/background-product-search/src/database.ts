@@ -6,7 +6,6 @@ import { REPLY_DATA_TYPE } from '@/types.ts';
 
 const config = loadConfig(APP_ENV);
 const defaultLogger = createLogger(APP_ENV);
-
 export function databaseHealthCheck(database: Firestore) {
   return async function healthCheckByGetCollectionInfo(): Promise<
     | {
@@ -43,14 +42,24 @@ export function createDatabaseConnection(settings?: Settings) {
   return new Firestore(storeConfig);
 }
 
-export function checkRequestStreamOnDatabase(database: Firestore) {
-  return async function checkRequestAlreadyExist(requestId: string) {
-    const collectionPath = `replies.${requestId}`;
-    const headers = await database
-      .collection(collectionPath)
-      .doc('headers')
-      .get();
-    return headers.exists;
+export function connectToProductDatabase(database: Firestore) {
+  return {
+    async getProductOrFail(source: string, productId: string) {
+      const doc = await database
+        .collection(`${source}.products`)
+        .doc(productId)
+        .get();
+      if (!doc.exists) {
+        throw new Error(`Product ${productId} not found`);
+      }
+      const record = doc.data();
+      if (!record) {
+        throw new Error(
+          `Unexpected empty record for ${productId} in ${source}.products`,
+        );
+      }
+      return record;
+    },
   };
 }
 
@@ -61,34 +70,55 @@ export function connectReplyStreamOnDatabase(
   },
 ) {
   const logger = options?.logger ?? defaultLogger;
-  return function writeToRepliesStreamHeader(
-    requestId: string,
-    headers:
-      | {
-          type: REPLY_DATA_TYPE.PRODUCT_SEARCH_LOCK;
-        }
-      | {
-          error?: {
-            code: string;
-            message: string;
-          };
-          search: {
-            keyword: string;
-          };
-          type: REPLY_DATA_TYPE.PRODUCT_SEARCH_ERROR;
-        }
-      | {
-          data: { total: number };
-          search: {
-            keyword: string;
-          };
-          type: REPLY_DATA_TYPE.PRODUCT_SEARCH;
-        },
-  ) {
-    const collectionPath = `replies.${requestId}`;
-    logger.info(`Set header to ${collectionPath}`, {
-      headers,
-    });
-    return database.collection(collectionPath).doc('headers').set(headers);
+  return {
+    async checkRequestAlreadyExist(requestId: string) {
+      const collectionPath = `replies.${requestId}`;
+      const headers = await database
+        .collection(collectionPath)
+        .doc('headers')
+        .get();
+      return headers.exists;
+    },
+    writeToRepliesStream(
+      requestId: string,
+      productId: string,
+      reply: {
+        data: any;
+        type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL;
+      },
+    ) {
+      const collectionPath = `replies.${requestId}`;
+      return database.collection(collectionPath).doc(productId).set(reply);
+    },
+    writeToRepliesStreamHeader(
+      requestId: string,
+      headers:
+        | {
+            type: REPLY_DATA_TYPE.PRODUCT_SEARCH_LOCK;
+          }
+        | {
+            error?: {
+              code: string;
+              message: string;
+            };
+            search: {
+              keyword: string;
+            };
+            type: REPLY_DATA_TYPE.PRODUCT_SEARCH_ERROR;
+          }
+        | {
+            data: { total: number };
+            search: {
+              keyword: string;
+            };
+            type: REPLY_DATA_TYPE.PRODUCT_SEARCH;
+          },
+    ) {
+      const collectionPath = `replies.${requestId}`;
+      logger.info(`Set header to ${collectionPath}`, {
+        headers,
+      });
+      return database.collection(collectionPath).doc('headers').set(headers);
+    },
   };
 }
