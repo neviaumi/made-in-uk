@@ -167,7 +167,7 @@ const server = createServer(async (req, res) => {
           return resp;
         })
         .catch(() => {
-          return scheduleProductDetailTask(
+          scheduleProductDetailTask(
             {
               product: {
                 productId,
@@ -183,7 +183,12 @@ const server = createServer(async (req, res) => {
                 seconds: computeScheduleSeconds(index * 5),
               },
             },
-          );
+          ).catch(e => {
+            loggerWithRequestId.error('Failed to schedule task', {
+              error: e,
+            });
+            throw e;
+          });
         });
     },
     {
