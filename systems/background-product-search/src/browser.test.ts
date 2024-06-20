@@ -12,7 +12,7 @@ import { loadFixtures } from '@/fixtures/loader.ts';
 
 describe('background-product-search', () => {
   it('should load all product in response', async () => {
-    const browser = await createChromiumBrowser();
+    const browser = await createChromiumBrowser({});
     const browserContext = await browser.newContext({
       javaScriptEnabled: false,
     });
@@ -31,7 +31,7 @@ describe('background-product-search', () => {
     await closeBrowser(browser);
     expect(resp.ok).toBeTruthy();
     if (resp.ok) {
-      expect(Object.keys(resp.data).length).toBeGreaterThan(0);
+      expect(Object.keys(resp.data).length).toBeGreaterThan(50);
     }
   });
 }, 60000);
