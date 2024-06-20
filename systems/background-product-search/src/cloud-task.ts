@@ -43,63 +43,134 @@ export function createTaskId(taskId: string) {
 }
 
 export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
-  return async function scheduleProductDetailTask(
-    payload: {
-      product: {
-        productId: string;
-        productUrl: string;
-        source: string;
-      };
-      requestId: string;
-      type: TASK_TYPE;
-    },
-    options: {
-      name: NonNullable<
-        Parameters<CloudTasksClient['createTask']>[0]['task']
-      >['name'];
-      scheduleTime?: NonNullable<
-        Parameters<CloudTasksClient['createTask']>[0]['task']
-      >['scheduleTime'];
-    },
-  ) {
-    const headers = {
-      'Content-Type': 'application/json',
-      'Request-Id': payload.requestId,
-    };
-    const productDetailEndpoint = String(config.get('productDetail.endpoint'));
-    return cloudTask.createTask({
-      parent: String(config.get('cloudTasks.productDetailQueue')),
-      task: {
-        httpRequest: {
-          body: Buffer.from(
-            JSON.stringify({ product: payload.product, type: payload.type }),
-          ).toString('base64'),
-          headers,
-          httpMethod: 'POST',
-          oidcToken: ![AppEnvironment.DEV, AppEnvironment.TEST].includes(
-            APP_ENV,
-          )
-            ? {
-                serviceAccountEmail: await getInstanceServiceAccount(),
-              }
-            : null,
-          url: productDetailEndpoint,
-        },
-        name: options.name,
-        scheduleTime: options.scheduleTime,
+  return {
+    async scheduleProductDetailLowPriorityTask(
+      payload: {
+        product: {
+          productId: string;
+          productUrl: string;
+          source: string;
+        };
+        requestId: string;
+        type: TASK_TYPE;
       },
-    });
+      options: {
+        name: NonNullable<
+          Parameters<CloudTasksClient['createTask']>[0]['task']
+        >['name'];
+        scheduleTime?: NonNullable<
+          Parameters<CloudTasksClient['createTask']>[0]['task']
+        >['scheduleTime'];
+      },
+    ) {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Request-Id': payload.requestId,
+      };
+      const productDetailEndpoint = String(
+        config.get('productDetail.endpoint'),
+      );
+      return cloudTask.createTask({
+        parent: String(config.get('cloudTasks.productDetailLowPriorityQueue')),
+        task: {
+          httpRequest: {
+            body: Buffer.from(
+              JSON.stringify({ product: payload.product, type: payload.type }),
+            ).toString('base64'),
+            headers,
+            httpMethod: 'POST',
+            oidcToken: ![AppEnvironment.DEV, AppEnvironment.TEST].includes(
+              APP_ENV,
+            )
+              ? {
+                  serviceAccountEmail: await getInstanceServiceAccount(),
+                }
+              : null,
+            url: productDetailEndpoint,
+          },
+          name: options.name,
+          scheduleTime: options.scheduleTime,
+        },
+      });
+    },
+    async scheduleProductDetailTask(
+      payload: {
+        product: {
+          productId: string;
+          productUrl: string;
+          source: string;
+        };
+        requestId: string;
+        type: TASK_TYPE;
+      },
+      options: {
+        name: NonNullable<
+          Parameters<CloudTasksClient['createTask']>[0]['task']
+        >['name'];
+      },
+    ) {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Request-Id': payload.requestId,
+      };
+      const productDetailEndpoint = String(
+        config.get('productDetail.endpoint'),
+      );
+      return cloudTask.createTask({
+        parent: String(config.get('cloudTasks.productDetailQueue')),
+        task: {
+          httpRequest: {
+            body: Buffer.from(
+              JSON.stringify({ product: payload.product, type: payload.type }),
+            ).toString('base64'),
+            headers,
+            httpMethod: 'POST',
+            oidcToken: ![AppEnvironment.DEV, AppEnvironment.TEST].includes(
+              APP_ENV,
+            )
+              ? {
+                  serviceAccountEmail: await getInstanceServiceAccount(),
+                }
+              : null,
+            url: productDetailEndpoint,
+          },
+          name: options.name,
+        },
+      });
+    },
   };
 }
 
 export function withTaskAlreadyExistsErrorHandler(
-  scheduleProductDetailTask: ReturnType<typeof createProductDetailScheduler>,
+  scheduleProductDetailTask:
+    | ReturnType<
+        typeof createProductDetailScheduler
+      >['scheduleProductDetailTask']
+    | ReturnType<
+        typeof createProductDetailScheduler
+      >['scheduleProductDetailLowPriorityTask'],
 ) {
   return async function scheduleTaskWithErrorHandle(
-    ...args: Parameters<ReturnType<typeof createProductDetailScheduler>>
+    ...args:
+      | Parameters<
+          ReturnType<
+            typeof createProductDetailScheduler
+          >['scheduleProductDetailTask']
+        >
+      | Parameters<
+          ReturnType<
+            typeof createProductDetailScheduler
+          >['scheduleProductDetailLowPriorityTask']
+        >
   ) {
     try {
-      return await scheduleProductDetailTask(...args);
+      return await scheduleProductDetailTask(
+        ...(args as Parameters<
+          ReturnType<
+            typeof createProductDetailScheduler
+          >['scheduleProductDetailTask']
+        >),
+      );
     } catch (e) {
       if (
         ((obj: typeof e): obj is { code: number } => !isNaN((obj as any).code))(
