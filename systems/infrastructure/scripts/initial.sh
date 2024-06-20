@@ -4,6 +4,8 @@ set -ex
 PROJECT=made-in-uk
 STACK=$1
 
+curl -fsSL https://get.pulumi.com | sh
+npm i
 npm run build
 STATE_STORE_BUCKET=$(node ./bin/setup-state-store.js made-in-uk-iac-state-store)
 pulumi login "gs://$STATE_STORE_BUCKET"
