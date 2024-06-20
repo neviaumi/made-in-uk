@@ -3,10 +3,8 @@ import { credentials } from '@grpc/grpc-js';
 
 import { getInstanceServiceAccount } from '@/cloud-run.ts';
 import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
-import { createLogger } from '@/logger.ts';
 
 const config = loadConfig(APP_ENV);
-const logger = createLogger(APP_ENV);
 
 export function createCloudTaskClient(
   ...args: ConstructorParameters<typeof CloudTasksClient>
