@@ -143,6 +143,7 @@ async function handleUpdateProductDetail(
       await closeBrowser(browser);
     });
   if (!productInfo.ok) {
+    await connectToProductDatabase(database)('ocado', productId).delete();
     return;
   }
   await connectToProductDatabase(database)('ocado', productId).set(
