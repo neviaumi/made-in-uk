@@ -6,34 +6,32 @@ import {
   closePage,
   createBrowserPage,
   createChromiumBrowser,
-  createProductDetailsHandler,
+  createProductsSearchHandler,
 } from '@/browser.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
 
-describe('background-product-detail', () => {
-  it('should include pricing info in response', async () => {
+describe('background-product-search', () => {
+  it('should load all product in response', async () => {
     const browser = await createChromiumBrowser();
     const browserContext = await browser.newContext({
       javaScriptEnabled: false,
     });
     const page = await createBrowserPage(browserContext)();
     await page.route(
-      new URL('/products/budweiser-bottles-603216011', baseUrl).toString(),
+      new URL('/search?entry=beer', baseUrl).toString(),
       async route => {
         return route.fulfill({
-          body: await loadFixtures('603216011.html'),
+          body: await loadFixtures('search?entry=beer.html'),
           status: 200,
         });
       },
     );
-    const resp = await createProductDetailsHandler(page)(
-      '/products/budweiser-bottles-603216011',
-    );
+    const resp = await createProductsSearchHandler(page)('beer');
     await closePage(page);
     await closeBrowser(browser);
     expect(resp.ok).toBeTruthy();
     if (resp.ok) {
-      expect(resp.data.price).toEqual('£23.00');
+      expect(Object.keys(resp.data).length).toBeGreaterThan(0);
     }
   });
 }, 60000);

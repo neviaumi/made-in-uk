@@ -3,7 +3,7 @@ import playwright from 'playwright';
 import { APP_ENV } from '@/config.ts';
 import { createLogger, type Logger } from '@/logger.ts';
 
-const baseUrl = 'https://www.ocado.com';
+export const baseUrl = 'https://www.ocado.com';
 const defaultLogger = createLogger(APP_ENV);
 
 export function createChromiumBrowser(
@@ -13,7 +13,9 @@ export function createChromiumBrowser(
   return chromium.launch(browserLaunchOptions);
 }
 
-export function createBrowserPage(browser: playwright.Browser) {
+export function createBrowserPage(
+  browser: playwright.Browser | playwright.BrowserContext,
+) {
   return (pageOptions?: playwright.BrowserContextOptions) => {
     return browser.newPage(pageOptions);
   };
@@ -31,8 +33,25 @@ function loopUntilAllProductsLoaded(page: playwright.Page) {
   return async function loopUntilNoMoreProductsLoaded() {
     const productsLocator = page.locator('.main-column [data-sku] a[href]');
     const beforeScrollingCount = await productsLocator.count();
+    const waitForResponse = page.waitForResponse(
+      response => {
+        const requestUrl = new URL(response.url());
+        const plainRequestUrl = new URL(requestUrl.pathname, requestUrl.origin);
+        return (
+          plainRequestUrl.toString() ===
+          new URL('/webshop/api/v1/products', baseUrl).toString()
+        );
+      },
+      {
+        timeout: 5000,
+      },
+    );
     await productsLocator.last().scrollIntoViewIfNeeded();
-    await page.waitForTimeout(3000);
+    try {
+      await waitForResponse;
+    } catch {
+      return;
+    }
     const afterScrollingCount = await productsLocator.count();
     if (afterScrollingCount > beforeScrollingCount) {
       return loopUntilNoMoreProductsLoaded();
@@ -68,8 +87,9 @@ export function createProductsSearchHandler(
       searchUrl: searchUrl.toString(),
     });
     await page.goto(searchUrl.toString(), {
-      waitUntil: 'networkidle',
+      waitUntil: 'domcontentloaded',
     });
+    // await page.goto(searchUrl.toString());
     await page
       .getByRole('button', {
         name: 'Accept',
