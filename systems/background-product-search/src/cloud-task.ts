@@ -1,5 +1,6 @@
 import { CloudTasksClient } from '@google-cloud/tasks';
 import { credentials } from '@grpc/grpc-js';
+import { is } from 'ramda';
 
 import { getInstanceServiceAccount } from '@/cloud-run.ts';
 import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
@@ -89,5 +90,28 @@ export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
         scheduleTime: options.scheduleTime,
       },
     });
+  };
+}
+
+export function withTaskAlreadyExistsErrorHandler(
+  scheduleProductDetailTask: ReturnType<typeof createProductDetailScheduler>,
+) {
+  return function scheduleTaskWithErrorHandle(
+    ...args: Parameters<ReturnType<typeof createProductDetailScheduler>>
+  ) {
+    try {
+      return scheduleProductDetailTask(...args);
+    } catch (e) {
+      console.log(typeof e);
+      if (
+        ((obj: typeof e): obj is { code: number } => !isNaN((obj as any).code))(
+          e,
+        ) &&
+        e.code === 6
+      ) {
+        return;
+      }
+      throw e;
+    }
   };
 }

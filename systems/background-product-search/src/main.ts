@@ -16,6 +16,7 @@ import {
   createTaskId,
   ONE_HOUR,
   TASK_TYPE,
+  withTaskAlreadyExistsErrorHandler,
 } from '@/cloud-task.ts';
 import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
 import {
@@ -143,7 +144,7 @@ const server = createServer(async (req, res) => {
             data: product,
             type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
           });
-          scheduleProductDetailTask(
+          withTaskAlreadyExistsErrorHandler(scheduleProductDetailTask)(
             {
               product: {
                 productId,
@@ -159,17 +160,10 @@ const server = createServer(async (req, res) => {
                 seconds: computeScheduleSeconds(ONE_HOUR + index * 5),
               },
             },
-          ).catch(e => {
-            loggerWithRequestId.error('Failed to schedule low priority task', {
-              error: e,
-              productId,
-              productUrl,
-            });
-            // throw e;
-          });
+          );
         })
         .catch(() => {
-          scheduleProductDetailTask(
+          withTaskAlreadyExistsErrorHandler(scheduleProductDetailTask)(
             {
               product: {
                 productId,
@@ -185,14 +179,7 @@ const server = createServer(async (req, res) => {
                 seconds: computeScheduleSeconds(index * 5),
               },
             },
-          ).catch(e => {
-            loggerWithRequestId.error('Failed to schedule wanted task', {
-              error: e,
-              productId,
-              productUrl,
-            });
-            // throw e;
-          });
+          );
         });
     },
     {
