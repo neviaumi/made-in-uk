@@ -14,7 +14,9 @@ export function createChromiumBrowser(
   return chromium.launch(browserLaunchOptions);
 }
 
-export function createBrowserPage(browser: playwright.Browser) {
+export function createBrowserPage(
+  browser: playwright.Browser | playwright.BrowserContext,
+) {
   return (pageOptions?: playwright.BrowserContextOptions) => {
     return browser.newPage(pageOptions);
   };
