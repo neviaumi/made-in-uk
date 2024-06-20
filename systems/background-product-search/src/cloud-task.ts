@@ -101,7 +101,6 @@ export function withTaskAlreadyExistsErrorHandler(
     try {
       return await scheduleProductDetailTask(...args);
     } catch (e) {
-      console.log(typeof e);
       if (
         ((obj: typeof e): obj is { code: number } => !isNaN((obj as any).code))(
           e,
