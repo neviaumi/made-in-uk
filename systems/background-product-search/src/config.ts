@@ -44,6 +44,11 @@ export function loadConfig(appEnv: AppEnvironment) {
           : 'UNUSED',
         format: String,
       },
+      productDetailLowPriorityQueue: {
+        default: null,
+        env: 'BG_PRODUCT_SEARCH_PRODUCT_DETAIL_LOW_PRIORITY_QUEUE',
+        format: String,
+      },
       productDetailQueue: {
         default: null,
         env: 'BG_PRODUCT_SEARCH_PRODUCT_DETAIL_QUEUE',

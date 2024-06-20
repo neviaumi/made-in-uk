@@ -130,7 +130,7 @@ const server = createServer(async (req, res) => {
     : Object.entries(matchProducts.data);
   const numberOfProducts = productToSearchDetails.length;
 
-  const scheduleProductDetailTask = createProductDetailScheduler(cloudTask);
+  const productDetailScheduler = createProductDetailScheduler(cloudTask);
   await pMap(
     productToSearchDetails,
     async ([productId, productUrl], index) => {
@@ -144,7 +144,9 @@ const server = createServer(async (req, res) => {
             data: product,
             type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
           });
-          withTaskAlreadyExistsErrorHandler(scheduleProductDetailTask)(
+          await withTaskAlreadyExistsErrorHandler(
+            productDetailScheduler.scheduleProductDetailLowPriorityTask,
+          )(
             {
               product: {
                 productId,
@@ -163,7 +165,9 @@ const server = createServer(async (req, res) => {
           );
         })
         .catch(() => {
-          withTaskAlreadyExistsErrorHandler(scheduleProductDetailTask)(
+          withTaskAlreadyExistsErrorHandler(
+            productDetailScheduler.scheduleProductDetailTask,
+          )(
             {
               product: {
                 productId,
