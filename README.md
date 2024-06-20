@@ -1,108 +1,109 @@
 # Made in UK
 
-Project aim to crawling UK main grocery website
-for display their price and country of origin.
+The project aims to crawl the main UK grocery websites to display their prices and country of origin.
 
 ## Overview Architecture
 
-Diagram below show the high level architecture of the system
+The diagram below shows the high-level architecture of the system.
 
 ```mermaid
 C4Component
-title Grocery crawling system
-Person(user, "User")
+    title Grocery Crawling System
+    Person(user, "User")
 Container_Boundary(frontend, "Frontend") {
 Component(
-    web, "Web Server", 
-    "Remix", "Entry point for user interaction")
+    web, "Web Server",
+"Remix", "Entry point for user interaction")
 }
 Container_Boundary(backend, "Backend") {
-    Component(
-        api, "GraphQL Server", 
+Component(
+api, "GraphQL Server",
 "GraphQL Yoga", "Gateway to handle all data requests")
-    Container(
-        database, "Firestore",
-        "Document DB", "Persistent storage for product data")
-    Container_Boundary(backgroundService, "Background") {
-        Container_Boundary(ProductSearchService, "Product Search Service") {
-            Container(
-                productSearchTaskQueue, "Cloud Task",
-                "Product search tasks", "buffer to queuing search product request") 
-            Component(
-    productSearchAPI, "HTTP Server",
-    "Product search HTTP API", "API to handle product search")
-        }
-        Container_Boundary(ProductDetailService, "Product Detail Service") {
-            Container(
-                productDetailTaskQueue, "Cloud Task",
-                "Product detail tasks", "buffer to queuing fetching product detail request")
-            Container(
-                productDetailLowPriorityTaskQueue, "Cloud Task",
-                "Product detail low priority tasks", "buffer to queuing product detail request that have cached result")
-            Component(
-                productDetailAPI, "HTTP Server",
-                "Product detail HTTP API", "API to handle product detail")
-        }
+Container(
+database, "Firestore",
+"Document DB", "Persistent storage for product data")
+Container_Boundary(backgroundService, "Background Services") {
+Container_Boundary(ProductSearchService, "Product Search Service") {
+Container(
+productSearchTaskQueue, "Cloud Task",
+"Product search tasks", "Buffer to queue product search requests")
+Component(
+productSearchAPI, "HTTP Server",
+"Product Search HTTP API", "API to handle product searches")
+}
+Container_Boundary(ProductDetailService, "Product Detail Service") {
+Container(
+productDetailTaskQueue, "Cloud Task",
+"Product detail tasks", "Buffer to queue product detail requests")
+Container(
+productDetailLowPriorityTaskQueue, "Cloud Task",
+"Product detail low priority tasks", "Buffer to queue product detail requests that have cached results")
+Component(
+productDetailAPI, "HTTP Server",
+"Product Detail HTTP API", "API to handle product details")
+}
     }
-    System_Ext(groceryWebsite, "Grocery Website", "Grocery website contain product data")
+System_Ext(groceryWebsite, "Grocery Website", "Website containing product data")
 }
 Rel(user, web, "Uses", "Browser")
-Rel(web, api, "forward data request", "HTTPS/GraphQL")
-Rel(api, database, "subscribe background reply stream", "HTTPS")
-Rel(api, productSearchTaskQueue, "queue api request to product search", "HTTPS")
-Rel(productSearchTaskQueue, productSearchAPI, "forward task to product search API", "HTTPS")
-Rel(productSearchAPI, groceryWebsite, "list product that matching given filter", "HTTPS")
-Rel(productSearchAPI, productDetailTaskQueue, "queue api request to product search", "HTTPS")
-Rel(productSearchAPI, productDetailLowPriorityTaskQueue, "queue api request to product search for update cached data", "HTTPS")
-Rel(productDetailTaskQueue, productDetailAPI, "queue api request to fetch product detail", "HTTPS")
-Rel(productDetailLowPriorityTaskQueue, productDetailAPI, "queue api request to fetch product detail", "HTTPS")
-Rel(productDetailAPI, groceryWebsite, "fetch product detail", "HTTPS")
-Rel(productDetailAPI, database, "response to reply stream with product data", "HTTPS")
+Rel(web, api, "Forwards data requests", "HTTPS/GraphQL")
+Rel(api, database, "Subscribes to background reply stream", "HTTPS")
+Rel(api, productSearchTaskQueue, "Queues API requests for product search", "HTTPS")
+Rel(productSearchTaskQueue, productSearchAPI, "Forwards tasks to product search API", "HTTPS")
+Rel(productSearchAPI, groceryWebsite, "Lists products matching given filter", "HTTPS")
+Rel(productSearchAPI, productDetailTaskQueue, "Queues API requests for product search", "HTTPS")
+Rel(productSearchAPI, productDetailLowPriorityTaskQueue, "Queues API requests for product search to update cached data", "HTTPS")
+Rel(productDetailTaskQueue, productDetailAPI, "Queues API requests to fetch product details", "HTTPS")
+Rel(productDetailLowPriorityTaskQueue, productDetailAPI, "Queues API requests to fetch product details", "HTTPS")
+Rel(productDetailAPI, groceryWebsite, "Fetches product details", "HTTPS")
+Rel(productDetailAPI, database, "Responds to reply stream with product data", "HTTPS")
 ```
 
 ## Working Copy
 
-[Deployed website](https://made-in-uk-development-web-e955251-dxbhtl4gza-nw.a.run.app/)
+[Deployed Website](https://made-in-uk-development-web-e955251-dxbhtl4gza-nw.a.run.app/)
 
-### Working video
+### Working Videos
 
-#### Search for noodle (No cache)
+#### Search for Noodles (No Cache)
 
-![Fresh search - Search for noodle](./docs/search-for-noodle-fast-forward.gif)
+![Fresh search - Search for noodles](./docs/search-by-noodles.mp4)
 
-#### Search for beer (Cached before)
+#### Search for Beer (Cached Before)
 
-![Cached search - Search for beer](./docs/search-for-beer-fast-forward.gif)
+![Cached search - Search for beer](./docs/search-by-beer.mp4)
 
 ## Development
 
-[Install docker compose](https://docs.docker.com/compose/install/)
+[Install Docker Compose](https://docs.docker.com/compose/install/)
 
-### Start development server
+### Start Development Server
 
 ```sh
 bash ./scripts/dev.sh
 
-Open http://localhost:5333 for dev
+# Open http://localhost:5333 for development
 ```
 
 ## Deployment
 
 [Setup GCloud](https://cloud.google.com/sdk/docs/authorizing)
 
-### Init GCP
+### Initialize GCP
 
-Before deploy, you need to init GCP project
+Before deploying, you need to initialize the GCP project.
 
 ```sh
 cd systems/infrastructure
-# or production
+# For development
 bash ./scripts/init.sh development
 ```
 
-After init, you can deploy though that script
+After initialization, you can deploy using the following script:
 
 ```sh
-# or production
+# For development
 bash ./scripts/deploy.sh development
+# For production
+bash ./scripts/deploy.sh production
 ```
