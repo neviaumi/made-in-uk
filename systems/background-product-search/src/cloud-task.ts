@@ -96,11 +96,11 @@ export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
 export function withTaskAlreadyExistsErrorHandler(
   scheduleProductDetailTask: ReturnType<typeof createProductDetailScheduler>,
 ) {
-  return function scheduleTaskWithErrorHandle(
+  return async function scheduleTaskWithErrorHandle(
     ...args: Parameters<ReturnType<typeof createProductDetailScheduler>>
   ) {
     try {
-      return scheduleProductDetailTask(...args);
+      return await scheduleProductDetailTask(...args);
     } catch (e) {
       console.log(typeof e);
       if (
