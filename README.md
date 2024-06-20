@@ -67,11 +67,11 @@ Rel(productDetailAPI, database, "Responds to reply stream with product data", "H
 
 #### Search for Noodles (No Cache)
 
-![Fresh search - Search for noodles](./docs/search-by-noodles.mp4)
+https://github.com/neviaumi/made-in-uk/assets/2247500/5151b9ff-7bf8-4e7c-ab52-01e63e08ed02
 
 #### Search for Beer (Cached Before)
 
-![Cached search - Search for beer](./docs/search-by-beer.mp4)
+https://github.com/neviaumi/made-in-uk/assets/2247500/c3496563-5771-4a49-a652-89f47ab316db
 
 ## Development
 
