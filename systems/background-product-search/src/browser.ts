@@ -31,32 +31,48 @@ export function closePage(page: playwright.Page) {
 
 function loopUntilAllProductsLoaded(page: playwright.Page) {
   return async function loopUntilNoMoreProductsLoaded() {
-    const productsLocator = page.locator('.main-column [data-sku] a[href]');
-    const beforeScrollingCount = await productsLocator.count();
-    const waitForResponse = page.waitForResponse(
-      response => {
-        const requestUrl = new URL(response.url());
-        const plainRequestUrl = new URL(requestUrl.pathname, requestUrl.origin);
-        return (
-          plainRequestUrl.toString() ===
-          new URL('/webshop/api/v1/products', baseUrl).toString()
-        );
-      },
-      {
-        timeout: 5000,
-      },
-    );
-    await productsLocator.last().scrollIntoViewIfNeeded();
+    const currentScrollY = await page.evaluate(() => window.scrollY);
+    const waitForResponse = page
+      .waitForResponse(
+        response => {
+          const requestUrl = new URL(response.url());
+          const plainRequestUrl = new URL(
+            requestUrl.pathname,
+            requestUrl.origin,
+          );
+          return (
+            plainRequestUrl.toString() ===
+            new URL('/webshop/api/v1/products', baseUrl).toString()
+          );
+        },
+        {
+          timeout: 5000,
+        },
+      )
+      .catch(async e => {
+        if ((await page.evaluate(() => window.scrollY)) !== currentScrollY) {
+          return;
+        }
+        throw e;
+      });
+    await page
+      .locator('.main-column [data-sku]', {
+        has: page.locator('a[href]'),
+      })
+      .last()
+      .evaluate(ele => {
+        ele.scrollIntoView({
+          block: 'end',
+          inline: 'nearest',
+        });
+      });
+
     try {
       await waitForResponse;
     } catch {
       return;
     }
-    const afterScrollingCount = await productsLocator.count();
-    if (afterScrollingCount > beforeScrollingCount) {
-      return loopUntilNoMoreProductsLoaded();
-    }
-    return;
+    return loopUntilNoMoreProductsLoaded();
   };
 }
 
