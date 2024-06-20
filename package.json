@@ -5,7 +5,7 @@
   },
   "description": "",
   "devDependencies": {
-    "@busybox/commitlint-config": "2024.2.29-alpha.203",
+    "@busybox/commitlint-config": "2024.6.20-alpha.321",
     "@busybox/eslint-config": "2024.2.29-alpha.203",
     "@busybox/prettier-config": "2024.2.29-alpha.203",
     "@commitlint/cli": "19.3.0",
