@@ -175,9 +175,6 @@ const server = createServer(async (req, res) => {
             },
             {
               name: createTaskId(`${requestId}-ocado-${productId}`),
-              scheduleTime: {
-                seconds: computeScheduleSeconds(index * 5),
-              },
             },
           );
         });

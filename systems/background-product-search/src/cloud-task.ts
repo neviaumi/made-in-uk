@@ -58,7 +58,7 @@ export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
       name: NonNullable<
         Parameters<CloudTasksClient['createTask']>[0]['task']
       >['name'];
-      scheduleTime: NonNullable<
+      scheduleTime?: NonNullable<
         Parameters<CloudTasksClient['createTask']>[0]['task']
       >['scheduleTime'];
     },
