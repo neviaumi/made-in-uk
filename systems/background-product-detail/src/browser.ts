@@ -30,6 +30,24 @@ export function closePage(page: playwright.Page) {
   return page.close();
 }
 
+async function lookupCountryOfOrigin(page: playwright.Page) {
+  const countryOfOriginContainer = page
+    .locator('.gn-content.bop-info__field')
+    .filter({
+      has: page.getByRole('heading', {
+        name: 'Country of Origin',
+      }),
+    });
+  const countryOfOrigin = (await countryOfOriginContainer.isVisible())
+    ? await countryOfOriginContainer
+        .locator('.bop-info__content')
+        .first()
+        .textContent()
+        .then(text => text?.trim() ?? 'Unknown')
+    : 'Unknown';
+  return countryOfOrigin;
+}
+
 export function createProductDetailsHandler(
   page: playwright.Page,
   options?: {
@@ -46,37 +64,8 @@ export function createProductDetailsHandler(
   > {
     const fullUrl = new URL(productUrl, baseUrl).toString();
     await page.goto(fullUrl);
-    const countryOfOriginHeading = page.getByRole('heading', {
-      name: 'Country of Origin',
-    });
-    const parent = page
-      .locator('.gn-content.bop-info__field')
-      .filter({ has: countryOfOriginHeading });
-    if (!(await parent.isVisible())) {
-      return {
-        error: {
-          code: 'ERR_ELEMENT_NOT_FOUND',
-          message: 'Country of origin not found',
-          meta: { url: fullUrl },
-        },
-        ok: false,
-      };
-    }
-    const countryOfOrigin = await parent
-      .locator('.bop-info__content')
-      .first()
-      .textContent()
-      .then(text => text?.trim());
-    if (!countryOfOrigin) {
-      return {
-        error: {
-          code: 'ERR_ELEMENT_NOT_FOUND',
-          message: 'Country of origin not found',
-          meta: { url: fullUrl },
-        },
-        ok: false,
-      };
-    }
+
+    const countryOfOrigin = await lookupCountryOfOrigin(page);
     const productOpenGraphMeta: {
       'og:image': string;
       'og:title': string;
@@ -103,7 +92,7 @@ export function createProductDetailsHandler(
       return {
         error: {
           code: 'ERR_ELEMENT_NOT_FOUND',
-          message: 'Country of origin not found',
+          message: 'Product Id not found',
           meta: { ogMeta: productOpenGraphMeta, url: fullUrl },
         },
         ok: false,
