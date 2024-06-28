@@ -1,6 +1,5 @@
 import { createServer, type RequestListener } from 'node:http';
-
-import pMap from 'p-map';
+import { Readable } from 'node:stream';
 
 import {
   closeBrowser,
@@ -18,7 +17,7 @@ import {
   TASK_TYPE,
   withTaskAlreadyExistsErrorHandler,
 } from '@/cloud-task.ts';
-import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
+import { APP_ENV, loadConfig } from '@/config.ts';
 import {
   connectReplyStreamOnDatabase,
   connectToProductDatabase,
@@ -95,46 +94,20 @@ const server = createServer(async (req, res) => {
   const page = await createBrowserPage(browser)();
   const search = payload['search'] as { keyword: string };
 
-  const matchProducts = await createProductsSearchHandler(page, {
-    logger: loggerWithRequestId,
-  })(search.keyword)
-    .catch(e => ({
-      error: {
-        code: 'ERR_UNEXPECTED_ERROR',
-        message: e.message,
-      },
-      ok: false as const,
-    }))
-    .finally(async () => {
-      await closePage(page);
-      await closeBrowser(browser);
-    });
-  if (!matchProducts.ok) {
-    await replyStream.writeToRepliesStreamHeader(requestId, {
-      error: {
-        code: matchProducts.error.code,
-        message: matchProducts.error.message,
-      },
-      search: search,
-      type: REPLY_DATA_TYPE.PRODUCT_SEARCH_ERROR,
-    });
-    res.statusCode = 500;
-    res.end(matchProducts.error.message);
-    return;
-  }
-  const productToSearchDetails = [
-    AppEnvironment.TEST,
-    AppEnvironment.DEV,
-  ].includes(APP_ENV)
-    ? Object.entries(matchProducts.data).slice(0, 10)
-    : Object.entries(matchProducts.data);
-  const numberOfProducts = productToSearchDetails.length;
-
+  const matchProductStream = Readable.from(
+    createProductsSearchHandler(page, {
+      logger: loggerWithRequestId,
+    })(search.keyword),
+  );
+  matchProductStream.on('end', async () => {
+    await closePage(page);
+    await closeBrowser(browser);
+  });
+  let numberOfProducts = 0;
   const productDetailScheduler = createProductDetailScheduler(cloudTask);
-  await pMap(
-    productToSearchDetails,
-    async ([productId, productUrl], index) => {
-      return connectToProductDatabase(database)
+  try {
+    for await (const [productId, productUrl] of matchProductStream) {
+      await connectToProductDatabase(database)
         .getProductOrFail('ocado', productId)
         .then(async product => {
           loggerWithRequestId.debug('Response product from cache', {
@@ -159,7 +132,9 @@ const server = createServer(async (req, res) => {
             {
               name: createTaskId(`ocado-${productId}`),
               scheduleTime: {
-                seconds: computeScheduleSeconds(ONE_HOUR + index * 5),
+                seconds: computeScheduleSeconds(
+                  ONE_HOUR + numberOfProducts * 5,
+                ),
               },
             },
           );
@@ -182,21 +157,33 @@ const server = createServer(async (req, res) => {
             },
           );
         });
-    },
-    {
-      concurrency: 8,
-    },
-  );
-  await replyStream.writeToRepliesStreamHeader(requestId, {
-    data: { total: numberOfProducts },
-    search: search,
-    type: REPLY_DATA_TYPE.PRODUCT_SEARCH,
-  });
-  loggerWithRequestId.info('Product search completed', {
-    numberOfProducts,
-  });
-  res.statusCode = 204;
-  res.end();
+      numberOfProducts += 1;
+    }
+    await replyStream.writeToRepliesStreamHeader(requestId, {
+      data: { total: numberOfProducts },
+      search: search,
+      type: REPLY_DATA_TYPE.PRODUCT_SEARCH,
+    });
+    loggerWithRequestId.info('Product search completed', {
+      numberOfProducts,
+    });
+    res.statusCode = 204;
+    res.end();
+  } catch (e) {
+    if (e instanceof Error) {
+      await replyStream.writeToRepliesStreamHeader(requestId, {
+        error: {
+          // @ts-expect-error code is not defined on Error
+          code: e['code'] ?? 'ERR_UNEXPECTED_ERROR',
+          message: e.message,
+        },
+        search: search,
+        type: REPLY_DATA_TYPE.PRODUCT_SEARCH_ERROR,
+      });
+      res.statusCode = 500;
+      res.end(e.message);
+    }
+  }
 });
 
 server.listen(config.get('port'), () => {

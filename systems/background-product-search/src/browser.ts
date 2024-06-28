@@ -29,31 +29,19 @@ export function closePage(page: playwright.Page) {
   return page.close();
 }
 
-function loopUntilAllProductsLoaded(page: playwright.Page) {
-  return async function loopUntilNoMoreProductsLoaded() {
-    const currentScrollY = await page.evaluate(() => window.scrollY);
+function loadMoreProducts(page: playwright.Page) {
+  return async function loadMoreProducts() {
     const waitForResponse = page
-      .waitForResponse(
-        response => {
-          const requestUrl = new URL(response.url());
-          const plainRequestUrl = new URL(
-            requestUrl.pathname,
-            requestUrl.origin,
-          );
-          return (
-            plainRequestUrl.toString() ===
-            new URL('/webshop/api/v1/products', baseUrl).toString()
-          );
-        },
-        {
-          timeout: 5000,
-        },
-      )
-      .catch(async e => {
-        if ((await page.evaluate(() => window.scrollY)) !== currentScrollY) {
-          return;
-        }
-        throw e;
+      .waitForResponse(response => {
+        const requestUrl = new URL(response.url());
+        const plainRequestUrl = new URL(requestUrl.pathname, requestUrl.origin);
+        return (
+          plainRequestUrl.toString() ===
+          new URL('/webshop/api/v1/products', baseUrl).toString()
+        );
+      })
+      .catch(() => {
+        return;
       });
     await page
       .locator('.main-column [data-sku]', {
@@ -67,12 +55,7 @@ function loopUntilAllProductsLoaded(page: playwright.Page) {
         });
       });
 
-    try {
-      await waitForResponse;
-    } catch {
-      return;
-    }
-    return loopUntilNoMoreProductsLoaded();
+    await waitForResponse;
   };
 }
 
@@ -83,21 +66,9 @@ export function createProductsSearchHandler(
   },
 ) {
   const logger = options?.logger ?? defaultLogger;
-  return async function searchProducts(keyword: string): Promise<
-    | {
-        data: {
-          [productId: string]: string;
-        };
-        ok: true;
-      }
-    | {
-        error: {
-          code: string;
-          message: string;
-        };
-        ok: false;
-      }
-  > {
+  return async function* searchProducts(
+    keyword: string,
+  ): AsyncGenerator<[string, string]> {
     const searchUrl = new URL(`/search?entry=${keyword}`, baseUrl);
     logger.info(`Searching products that match ${keyword} ...`, {
       searchUrl: searchUrl.toString(),
@@ -105,31 +76,44 @@ export function createProductsSearchHandler(
     await page.goto(searchUrl.toString(), {
       waitUntil: 'domcontentloaded',
     });
-    // await page.goto(searchUrl.toString());
     await page
       .getByRole('button', {
         name: 'Accept',
       })
       .click();
-    await loopUntilAllProductsLoaded(page)();
+    const productsAlreadyLoaded = new Set<string>();
 
-    const matchProductUrls = await page
-      .locator('.main-column [data-sku]')
-      .evaluateAll(elements => {
-        return elements.map(element => {
-          const anchor = element.querySelector('a[href]');
-          if (!anchor) {
-            return null;
-          }
-          const productId = element.getAttribute('data-sku')!;
-          return [productId, anchor.getAttribute('href')!];
-        });
-      })
-      .then(links => links.filter((link): link is string[] => link !== null));
-
-    return {
-      data: Object.fromEntries(matchProductUrls),
-      ok: true as const,
-    };
+    do {
+      const matchProductUrls = await page
+        .locator('.main-column [data-sku]')
+        .evaluateAll(elements => {
+          return elements.map(element => {
+            const anchor = element.querySelector('a[href]');
+            if (!anchor) {
+              return null;
+            }
+            const productId = element.getAttribute('data-sku')!;
+            return [productId, anchor.getAttribute('href')!];
+          });
+        })
+        .then(links =>
+          links.filter(
+            (link): link is string[] =>
+              link !== null && !productsAlreadyLoaded.has(link[0]),
+          ),
+        );
+      if (matchProductUrls.length === 0) {
+        break;
+      }
+      for (const matchProductUrl of matchProductUrls) {
+        const [productId, productUrl] = matchProductUrl;
+        if (productsAlreadyLoaded.has(productId)) {
+          continue;
+        }
+        productsAlreadyLoaded.add(productId);
+        yield [productId, productUrl];
+      }
+      await loadMoreProducts(page)();
+    } while (true);
   };
 }
