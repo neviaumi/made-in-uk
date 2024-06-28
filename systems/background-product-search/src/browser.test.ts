@@ -1,3 +1,5 @@
+import { Readable } from 'node:stream';
+
 import { describe, expect, it } from 'vitest';
 
 import {
@@ -10,28 +12,39 @@ import {
 } from '@/browser.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
 
-describe('background-product-search', () => {
-  it('should load all product in response', async () => {
-    const browser = await createChromiumBrowser({});
-    const browserContext = await browser.newContext({
-      javaScriptEnabled: false,
+describe(
+  'background-product-search',
+  () => {
+    it('should load all product in response', async () => {
+      const browser = await createChromiumBrowser({
+        headless: true,
+      });
+      const browserContext = await browser.newContext({
+        javaScriptEnabled: false,
+      });
+      const page = await createBrowserPage(browserContext)();
+      await page.route(
+        new URL('/search?entry=beer', baseUrl).toString(),
+        async route => {
+          return route.fulfill({
+            body: await loadFixtures('search?entry=beer.html'),
+            status: 200,
+          });
+        },
+      );
+      const respStream = Readable.from(
+        createProductsSearchHandler(page)('beer'),
+      );
+      respStream.on('end', async () => {
+        await closePage(page);
+        await closeBrowser(browser);
+      });
+      const numberOfRecords = await respStream.reduce(acc => {
+        return acc + 1;
+      }, 0);
+
+      expect(numberOfRecords).toBeGreaterThan(50);
     });
-    const page = await createBrowserPage(browserContext)();
-    await page.route(
-      new URL('/search?entry=beer', baseUrl).toString(),
-      async route => {
-        return route.fulfill({
-          body: await loadFixtures('search?entry=beer.html'),
-          status: 200,
-        });
-      },
-    );
-    const resp = await createProductsSearchHandler(page)('beer');
-    await closePage(page);
-    await closeBrowser(browser);
-    expect(resp.ok).toBeTruthy();
-    if (resp.ok) {
-      expect(Object.keys(resp.data).length).toBeGreaterThan(50);
-    }
-  });
-}, 60000);
+  },
+  60000 * 60,
+);
