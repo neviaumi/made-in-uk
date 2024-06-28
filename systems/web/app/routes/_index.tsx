@@ -8,6 +8,8 @@ import { gql, useQuery } from 'urql';
 import { Page } from '@/components/Layout.tsx';
 import { Loader } from '@/components/Loader.tsx';
 
+const ukCountries = ['United Kingdom', 'UK', 'England'];
+
 export const meta: MetaFunction = () => {
   return [
     { title: 'Made In UK' },
@@ -135,7 +137,6 @@ export default function Index() {
                 .filter(({ type }) => type === 'FETCH_PRODUCT_DETAIL')
                 .toSorted((productA, productB) => {
                   if (!isEndOfStream) return 0;
-                  const ukCountries = ['United Kingdom', 'UK'];
                   if (
                     !ukCountries.includes(productA.data.countryOfOrigin) &&
                     !ukCountries.includes(productB.data.countryOfOrigin)
@@ -151,6 +152,17 @@ export default function Index() {
                   if (ukCountries.includes(productB.data.countryOfOrigin))
                     return 1;
                   return 0;
+                })
+                .toSorted((productA, productB) => {
+                  if (!isEndOfStream) return 0;
+                  if (
+                    !ukCountries.includes(productA.data.countryOfOrigin) ||
+                    !ukCountries.includes(productB.data.countryOfOrigin)
+                  )
+                    return 0;
+                  const productAPricing = Number(productA.data.price.slice(1));
+                  const productBPricing = Number(productB.data.price.slice(1));
+                  return productAPricing - productBPricing;
                 })
                 .map(({ data: product }) => (
                   <li key={product.id}>
