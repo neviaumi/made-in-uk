@@ -133,6 +133,25 @@ export default function Index() {
               data &&
               data.searchProduct
                 .filter(({ type }) => type === 'FETCH_PRODUCT_DETAIL')
+                .toSorted((productA, productB) => {
+                  if (!isEndOfStream) return 0;
+                  const ukCountries = ['United Kingdom', 'UK'];
+                  if (
+                    !ukCountries.includes(productA.data.countryOfOrigin) &&
+                    !ukCountries.includes(productB.data.countryOfOrigin)
+                  )
+                    return 0;
+                  if (
+                    ukCountries.includes(productA.data.countryOfOrigin) &&
+                    ukCountries.includes(productB.data.countryOfOrigin)
+                  )
+                    return 0;
+                  if (ukCountries.includes(productA.data.countryOfOrigin))
+                    return -1;
+                  if (ukCountries.includes(productB.data.countryOfOrigin))
+                    return 1;
+                  return 0;
+                })
                 .map(({ data: product }) => (
                   <li key={product.id}>
                     <a
