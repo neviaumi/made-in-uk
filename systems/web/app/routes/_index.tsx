@@ -29,6 +29,7 @@ const SearchProducts = gql`
         countryOfOrigin
         url
         price
+        pricePerItem
       }
     }
   }
@@ -50,6 +51,7 @@ export default function Index() {
           id: string;
           image: string;
           price: string;
+          pricePerItem: string | null;
           title: string;
           type: string;
           url: string;
@@ -85,7 +87,6 @@ export default function Index() {
               setMatchingFilters({
                 keyword: formData.get('keyword') as string,
               });
-              // executeSearchQuery();
             },
             [setMatchingFilters],
           )}
@@ -155,14 +156,41 @@ export default function Index() {
                 })
                 .toSorted((productA, productB) => {
                   if (!isEndOfStream) return 0;
-                  if (
-                    !ukCountries.includes(productA.data.countryOfOrigin) ||
-                    !ukCountries.includes(productB.data.countryOfOrigin)
-                  )
-                    return 0;
+                  const isOneOfProductIsMadeInUk =
+                    (ukCountries.includes(productA.data.countryOfOrigin) &&
+                      !ukCountries.includes(productB.data.countryOfOrigin)) ||
+                    (!ukCountries.includes(productA.data.countryOfOrigin) &&
+                      ukCountries.includes(productB.data.countryOfOrigin));
+                  if (isOneOfProductIsMadeInUk) return 0;
                   const productAPricing = Number(productA.data.price.slice(1));
                   const productBPricing = Number(productB.data.price.slice(1));
                   return productAPricing - productBPricing;
+                })
+                .toSorted((productA, productB) => {
+                  if (!isEndOfStream) return 0;
+                  const isOneOfProductIsMadeInUk =
+                    (ukCountries.includes(productA.data.countryOfOrigin) &&
+                      !ukCountries.includes(productB.data.countryOfOrigin)) ||
+                    (!ukCountries.includes(productA.data.countryOfOrigin) &&
+                      ukCountries.includes(productB.data.countryOfOrigin));
+                  if (isOneOfProductIsMadeInUk) return 0;
+                  const productAPricePerItem = productA.data.pricePerItem;
+                  const productBPricePerItem = productB.data.pricePerItem;
+                  if (!productAPricePerItem || !productBPricePerItem) return 0;
+                  const [productAPricing, , productAPricingUnit] =
+                    productAPricePerItem.split(' ');
+                  const [productBPricing, , productBPricingUnit] =
+                    productBPricePerItem.split(' ');
+                  if (productAPricingUnit !== productBPricingUnit) return 0;
+                  const parseProductPricingToNumber = (price: string) => {
+                    const isPenny = price.includes('p');
+                    if (isPenny) return Number(price.slice(0, -1)) / 100;
+                    return Number(price.slice(1));
+                  };
+                  return (
+                    parseProductPricingToNumber(productAPricing) -
+                    parseProductPricingToNumber(productBPricing)
+                  );
                 })
                 .map(({ data: product }) => (
                   <li key={product.id}>

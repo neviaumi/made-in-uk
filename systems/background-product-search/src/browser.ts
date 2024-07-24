@@ -32,14 +32,22 @@ export function closePage(page: playwright.Page) {
 function loadMoreProducts(page: playwright.Page) {
   return async function loadMoreProducts() {
     const waitForResponse = page
-      .waitForResponse(response => {
-        const requestUrl = new URL(response.url());
-        const plainRequestUrl = new URL(requestUrl.pathname, requestUrl.origin);
-        return (
-          plainRequestUrl.toString() ===
-          new URL('/webshop/api/v1/products', baseUrl).toString()
-        );
-      })
+      .waitForResponse(
+        response => {
+          const requestUrl = new URL(response.url());
+          const plainRequestUrl = new URL(
+            requestUrl.pathname,
+            requestUrl.origin,
+          );
+          return (
+            plainRequestUrl.toString() ===
+            new URL('/webshop/api/v1/products', baseUrl).toString()
+          );
+        },
+        {
+          timeout: 3000,
+        },
+      )
       .catch(() => {
         return;
       });

@@ -111,6 +111,9 @@ export function createListenerToReplyStreamData(
                 { headerTotal, totalDocsExpected },
               );
               totalDocsExpected = headerTotal;
+              if (docReceivedCount === totalDocsExpected) {
+                duplexStream.end();
+              }
             }
             return;
           }
