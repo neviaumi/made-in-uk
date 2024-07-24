@@ -126,6 +126,10 @@ export function createProductDetailsHandler(
       };
     }
 
+    const pricePerItem = (await page.locator('.bop-price__per').isVisible())
+      ? await page.locator('.bop-price__per').textContent()
+      : null;
+
     const price = new Intl.NumberFormat('en-GB', {
       currency: priceInfo.priceCurrency,
       style: 'currency',
@@ -137,6 +141,7 @@ export function createProductDetailsHandler(
         id: productId,
         image: new URL(productOpenGraphMeta['og:image'], baseUrl).toString(),
         price,
+        pricePerItem,
         title: productOpenGraphMeta['og:title'],
         type: productOpenGraphMeta['og:type'],
         url: new URL(productOpenGraphMeta['og:url'], baseUrl).toString(),
