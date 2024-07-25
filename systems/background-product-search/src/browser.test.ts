@@ -17,7 +17,7 @@ describe(
   () => {
     it('should load all product in response', async () => {
       const browser = await createChromiumBrowser({
-        headless: false,
+        headless: true,
       });
       const browserContext = await browser.newContext({
         javaScriptEnabled: false,
