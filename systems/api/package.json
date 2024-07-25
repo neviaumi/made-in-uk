@@ -44,5 +44,5 @@
     "test:ci": "API_ENV=test NODE_ENV=test Ci=true vitest run --no-file-parallelism"
   },
   "type": "module",
-  "version": "2024.7.25-alpha.2347"
+  "version": "2024.7.25-alpha.2404"
 }
