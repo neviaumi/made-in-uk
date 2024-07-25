@@ -2,5 +2,5 @@
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
   "npmClient": "npm",
   "packages": ["systems/*"],
-  "version": "2024.7.25-alpha.1707"
+  "version": "2024.7.25-alpha.1936"
 }
