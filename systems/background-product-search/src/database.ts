@@ -60,7 +60,7 @@ export function connectToProductDatabase(database: Firestore) {
         .doc(productId)
         .get();
       if (!doc.exists) {
-        throw new Error(`Product ${productId} not found`);
+        throw new ProductNotFoundError(`Product ${productId} not found`);
       }
       const record = doc.data();
       if (!record) {
