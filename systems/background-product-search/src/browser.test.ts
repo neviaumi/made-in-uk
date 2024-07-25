@@ -17,14 +17,15 @@ describe(
   () => {
     it('should load all product in response', async () => {
       const browser = await createChromiumBrowser({
-        headless: true,
+        headless: false,
       });
       const browserContext = await browser.newContext({
         javaScriptEnabled: false,
+        offline: true,
       });
       const page = await createBrowserPage(browserContext)();
       await page.route(
-        new URL('/search?entry=beer', baseUrl).toString(),
+        new URL('/search?entry=beer&display=1024', baseUrl).toString(),
         async route => {
           return route.fulfill({
             body: await loadFixtures('search?entry=beer.html'),
@@ -43,7 +44,7 @@ describe(
         return acc + 1;
       }, 0);
 
-      expect(numberOfRecords).toBeGreaterThan(50);
+      expect(numberOfRecords).toEqual(92);
     });
   },
   60000 * 60,
