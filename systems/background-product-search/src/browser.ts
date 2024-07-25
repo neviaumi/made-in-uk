@@ -45,22 +45,19 @@ function loadMoreProducts(page: playwright.Page) {
           );
         },
         {
-          timeout: Math.pow(2, 5) * 1000,
+          timeout: Math.pow(2, 2) * 1000,
         },
       )
       .catch(() => {
         return;
       });
     await page
-      .locator('.main-column [data-sku]', {
+      .locator('.main-column [data-sku]:visible', {
         has: page.locator('a[href]'),
       })
       .last()
       .evaluate(ele => {
-        ele.scrollIntoView({
-          block: 'end',
-          inline: 'nearest',
-        });
+        window.scrollBy(0, ele.scrollHeight * 2);
       });
 
     await waitForResponse;
@@ -78,6 +75,8 @@ export function createProductsSearchHandler(
     keyword: string,
   ): AsyncGenerator<[string, string]> {
     const searchUrl = new URL(`/search?entry=${keyword}`, baseUrl);
+    searchUrl.searchParams.set('display', '1024');
+    let loadMorePageAttempt = 0;
     logger.info(`Searching products that match ${keyword} ...`, {
       searchUrl: searchUrl.toString(),
     });
@@ -89,6 +88,16 @@ export function createProductsSearchHandler(
         name: 'Accept',
       })
       .click();
+    const totalProductNumber = Number(
+      await page
+        .locator('.total-product-number')
+        .first()
+        .innerText()
+        .then(text => text.split(' ')[0]),
+    );
+    if (isNaN(totalProductNumber)) {
+      throw new Error('Unexpected total product number');
+    }
     const productsAlreadyLoaded = new Set<string>();
 
     do {
@@ -110,8 +119,8 @@ export function createProductsSearchHandler(
               link !== null && !productsAlreadyLoaded.has(link[0]),
           ),
         );
-      if (matchProductUrls.length === 0) {
-        break;
+      if (matchProductUrls.length !== 0) {
+        loadMorePageAttempt = 0;
       }
       for (const matchProductUrl of matchProductUrls) {
         const [productId, productUrl] = matchProductUrl;
@@ -121,7 +130,14 @@ export function createProductsSearchHandler(
         productsAlreadyLoaded.add(productId);
         yield [productId, productUrl];
       }
+      if (
+        productsAlreadyLoaded.size >= totalProductNumber ||
+        loadMorePageAttempt > 16
+      ) {
+        break;
+      }
       await loadMoreProducts(page)();
+      loadMorePageAttempt += 1;
     } while (true);
   };
 }
