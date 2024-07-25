@@ -45,7 +45,7 @@ function loadMoreProducts(page: playwright.Page) {
           );
         },
         {
-          timeout: Math.pow(2, 4) * 1000,
+          timeout: Math.pow(2, 5) * 1000,
         },
       )
       .catch(() => {
