@@ -174,6 +174,9 @@ const server = createServer(async (req, res) => {
     res.end();
   } catch (e) {
     if (e instanceof Error) {
+      loggerWithRequestId.error(e.message, {
+        e,
+      });
       await replyStream.writeToRepliesStreamHeader(requestId, {
         error: {
           // @ts-expect-error code is not defined on Error

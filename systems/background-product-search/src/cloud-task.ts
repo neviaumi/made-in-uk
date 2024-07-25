@@ -63,13 +63,6 @@ export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
         >['scheduleTime'];
       },
     ) {
-      const headers = {
-        'Content-Type': 'application/json',
-        'Request-Id': payload.requestId,
-      };
-      const productDetailEndpoint = String(
-        config.get('productDetail.endpoint'),
-      );
       return cloudTask.createTask({
         parent: String(config.get('cloudTasks.productDetailLowPriorityQueue')),
         task: {
@@ -77,7 +70,10 @@ export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
             body: Buffer.from(
               JSON.stringify({ product: payload.product, type: payload.type }),
             ).toString('base64'),
-            headers,
+            headers: {
+              'Content-Type': 'application/json',
+              'Request-Id': payload.requestId,
+            },
             httpMethod: 'POST',
             oidcToken: ![AppEnvironment.DEV, AppEnvironment.TEST].includes(
               APP_ENV,
@@ -86,7 +82,7 @@ export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
                   serviceAccountEmail: await getInstanceServiceAccount(),
                 }
               : null,
-            url: productDetailEndpoint,
+            url: String(config.get('productDetail.endpoint')),
           },
           name: options.name,
           scheduleTime: options.scheduleTime,
@@ -109,13 +105,6 @@ export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
         >['name'];
       },
     ) {
-      const headers = {
-        'Content-Type': 'application/json',
-        'Request-Id': payload.requestId,
-      };
-      const productDetailEndpoint = String(
-        config.get('productDetail.endpoint'),
-      );
       return cloudTask.createTask({
         parent: String(config.get('cloudTasks.productDetailQueue')),
         task: {
@@ -123,7 +112,10 @@ export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
             body: Buffer.from(
               JSON.stringify({ product: payload.product, type: payload.type }),
             ).toString('base64'),
-            headers,
+            headers: {
+              'Content-Type': 'application/json',
+              'Request-Id': payload.requestId,
+            },
             httpMethod: 'POST',
             oidcToken: ![AppEnvironment.DEV, AppEnvironment.TEST].includes(
               APP_ENV,
@@ -132,7 +124,7 @@ export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
                   serviceAccountEmail: await getInstanceServiceAccount(),
                 }
               : null,
-            url: productDetailEndpoint,
+            url: String(config.get('productDetail.endpoint')),
           },
           name: options.name,
         },
