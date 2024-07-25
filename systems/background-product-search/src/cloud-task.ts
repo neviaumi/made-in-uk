@@ -38,6 +38,10 @@ export function createCloudTaskClient(
   return new CloudTasksClient(...args);
 }
 
+export function createLowPriorityTaskId(taskId: string) {
+  return `${String(config.get('cloudTasks.productDetailLowPriorityQueue'))}/tasks/${taskId}`;
+}
+
 export function createTaskId(taskId: string) {
   return `${String(config.get('cloudTasks.productDetailQueue'))}/tasks/${taskId}`;
 }

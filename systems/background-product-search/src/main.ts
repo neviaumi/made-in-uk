@@ -11,6 +11,7 @@ import {
 import {
   computeScheduleSeconds,
   createCloudTaskClient,
+  createLowPriorityTaskId,
   createProductDetailScheduler,
   createTaskId,
   ONE_HOUR,
@@ -130,7 +131,7 @@ const server = createServer(async (req, res) => {
               type: TASK_TYPE.UPDATE_PRODUCT_DETAIL,
             },
             {
-              name: createTaskId(`ocado-${productId}`),
+              name: createLowPriorityTaskId(`ocado-${productId}`),
               scheduleTime: {
                 seconds: computeScheduleSeconds(
                   ONE_HOUR + numberOfProducts * 5,
