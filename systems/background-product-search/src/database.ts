@@ -42,6 +42,16 @@ export function createDatabaseConnection(settings?: Settings) {
   return new Firestore(storeConfig);
 }
 
+class ProductNotFoundError extends Error implements NodeJS.ErrnoException {
+  code: string;
+
+  constructor(message: string) {
+    super(message);
+    this.name = 'ProductNotFoundError';
+    this.code = 'ERR_PRODUCT_NOT_FOUND';
+  }
+}
+
 export function connectToProductDatabase(database: Firestore) {
   return {
     async getProductOrFail(source: string, productId: string) {
@@ -54,7 +64,7 @@ export function connectToProductDatabase(database: Firestore) {
       }
       const record = doc.data();
       if (!record) {
-        throw new Error(
+        throw new ProductNotFoundError(
           `Unexpected empty record for ${productId} in ${source}.products`,
         );
       }

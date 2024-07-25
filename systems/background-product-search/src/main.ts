@@ -139,7 +139,10 @@ const server = createServer(async (req, res) => {
             },
           );
         })
-        .catch(() => {
+        .catch((err: NodeJS.ErrnoException) => {
+          if (err.code !== 'ERR_PRODUCT_NOT_FOUND') {
+            throw err;
+          }
           withTaskAlreadyExistsErrorHandler(
             productDetailScheduler.scheduleProductDetailTask,
           )(
