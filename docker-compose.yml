@@ -4,14 +4,14 @@ services:
       context: ./systems/api
       dockerfile: Dockerfile
       target: base
-    command: ./scripts/docker/watch.sh
+    command: ./scripts/docker/dev.sh
     depends_on:
       infrastructure:
         condition: service_completed_successfully
         restart: true
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
           path: systems/api/src
           target: /app/src
     entrypoint: /bin/sh
@@ -31,10 +31,14 @@ services:
       context: systems/background-product-detail
       dockerfile: Dockerfile
       target: base
-    command: ./scripts/docker/watch.sh
+    command: ./scripts/docker/dev.sh
+    depends_on:
+      llm:
+        condition: service_healthy
+        restart: true
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
           path: systems/background-product-detail/src
           target: /app/src
     entrypoint: /bin/sh
@@ -49,10 +53,10 @@ services:
       context: systems/background-product-search
       dockerfile: Dockerfile
       target: base
-    command: ./scripts/docker/watch.sh
+    command: ./scripts/docker/dev.sh
     develop:
       watch:
-        - action: sync
+        - action: sync+restart
           path: systems/background-product-search/src
           target: /app/src
     entrypoint: /bin/sh
@@ -91,6 +95,20 @@ services:
       - EMULATOR_PRODUCT_SEARCH_TOPIC=product-search
       - EMULATOR_PRODUCT_DETAIL_ENDPOINT=http://bg-product-detail:3000
       - EMULATOR_PRODUCT_DETAIL_TOPIC=product-detail
+  llm:
+    build:
+      context: systems/llm
+      dockerfile: Dockerfile
+      target: dev
+    command: ./scripts/docker/start.sh
+    develop:
+      watch:
+        - action: sync+restart
+          path: systems/background-product-detail/src
+          target: /app/src
+    entrypoint: /bin/sh
+    environment:
+      - LLM_PORT=3000
   web:
     build:
       context: ./systems/web
