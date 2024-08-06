@@ -1,0 +1,19 @@
+[project]
+name = "llm"
+version = "0.1.0"
+description = "Default template for PDM package"
+authors = [
+    {name = "David Ng", email = "david.ng.dev@gmail.com"},
+]
+dependencies = [
+    "gpt4all>=2.7.0",
+    "starlette>=0.38.2",
+    "uvicorn>=0.30.5",
+]
+requires-python = "==3.12.4"
+readme = "README.md"
+license = {text = "MIT"}
+
+
+[tool.pdm]
+distribution = false

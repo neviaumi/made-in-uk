@@ -14,21 +14,4 @@ server.listen(config.get('port'), () => {
   logger.info(
     `Server is running on http://localhost:${config.get('port')}/graphql`,
   );
-  if (import.meta.hot) {
-    function killServer() {
-      server.close(err => {
-        if (err) {
-          throw err;
-        }
-      });
-    }
-    import.meta.hot.on('vite:beforeFullReload', () => {
-      logger.debug('vite:beforeFullReload');
-      killServer();
-    });
-    import.meta.hot.dispose(() => {
-      logger.debug('dispose');
-      killServer();
-    });
-  }
 });
