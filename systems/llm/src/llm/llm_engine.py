@@ -4,7 +4,7 @@ from pathlib import PurePath, Path
 from gpt4all import GPT4All
 
 model_name = "Phi-3-mini-4k-instruct.Q4_0.gguf"
-cache_dir = PurePath(tempfile.gettempdir(), 'gpt4all')
+cache_dir = PurePath(os.getcwd(), 'gpt4all')
 
 
 def save_locally():
@@ -12,7 +12,7 @@ def save_locally():
     if Path(cache_dir.joinpath(model_name)).is_file():
         return cache_dir.joinpath(model_name)
     GPT4All.download_model(
-        modal_name,
+        model_name,
         cache_dir,
     )
     return cache_dir.joinpath(model_name)

@@ -201,8 +201,10 @@ export function createCloudRunForBackgroundProductSearch({
 
 export function createCloudRunForBackgroundProductDetail({
   databaseName,
+  llmEndpoint,
 }: {
   databaseName: Output<string>;
+  llmEndpoint: Output<string>;
 }) {
   const bgProductDetailImage = appConfig.get('bg-product-detail-image');
   const cloudRunService = new cloudrunv2.Service(
@@ -227,6 +229,10 @@ export function createCloudRunForBackgroundProductDetail({
                   name: 'BG_PRODUCT_DETAIL_ENV',
                   value: 'production',
                 },
+                {
+                  name: 'BG_PRODUCT_DETAIL_LLM_ENDPOINT',
+                  value: llmEndpoint,
+                },
               ],
               image:
                 bgProductDetailImage ??
@@ -241,6 +247,49 @@ export function createCloudRunForBackgroundProductDetail({
               ? {
                   args: ['./scripts/docker/start.sh'],
                   commands: ['sh'],
+                }
+              : {},
+          ),
+        ],
+      },
+    },
+  );
+
+  return {
+    name: cloudRunService.name,
+    serviceAccount: cloudRunService.template.serviceAccount,
+    url: cloudRunService.uri,
+  };
+}
+
+export function createCloudRunForLLM() {
+  const llmImage = appConfig.get('llm-image');
+  const cloudRunService = new cloudrunv2.Service(
+    resourceName`bg-product-detail`,
+    {
+      ingress: 'INGRESS_TRAFFIC_ALL',
+      location: getLocation(),
+      template: {
+        containers: [
+          Object.assign(
+            {
+              envs: [
+                {
+                  name: 'LLM_PORT',
+                  value: '8080',
+                },
+              ],
+              image: llmImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
+              resources: {
+                limits: {
+                  memory: '4096Mi',
+                },
+              },
+            },
+            llmImage
+              ? {
+                  args: ['./scripts/docker/start.sh'],
+                  commands: ['bash'],
                 }
               : {},
           ),
@@ -309,6 +358,25 @@ export function allowProductSearchToCallBackgroundProductDetail({
       ],
       role: 'roles/run.invoker',
       service: backgroundProductDetailCloudRunServiceName,
+    },
+  );
+}
+
+export function allowServiceAccountsToCallLLM({
+  llmServiceName,
+  serviceAccounts,
+}: {
+  llmServiceName: Output<string>;
+  serviceAccounts: Array<Output<string>>;
+}) {
+  new cloudrun.IamBinding(
+    resourceName`allow-service-account-to-call-product-detail`,
+    {
+      members: serviceAccounts.map(account =>
+        account.apply(serviceAccount => `serviceAccount:${serviceAccount}`),
+      ),
+      role: 'roles/run.invoker',
+      service: llmServiceName,
     },
   );
 }

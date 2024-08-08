@@ -2,9 +2,11 @@ import { createDockerRepository } from './gcp/artifact-registry.ts';
 import {
   allowAPIToCallBackgroundProductSearch,
   allowProductSearchToCallBackgroundProductDetail,
+  allowServiceAccountsToCallLLM,
   createCloudRunForApi,
   createCloudRunForBackgroundProductDetail,
   createCloudRunForBackgroundProductSearch,
+  createCloudRunForLLM,
   createCloudRunForWeb,
   onlyAllowServiceToServiceForInvokeAPI,
 } from './gcp/cloud-run.ts';
@@ -24,11 +26,15 @@ const { fullQualifiedQueueName: productDetailQueueName } =
 const { fullQualifiedQueueName: productDetailLowPriorityQueueName } =
   createProductDetailLowPriorityTaskQueue();
 
+const { name: llmServiceName, url: llmUrl } = createCloudRunForLLM();
+
 const {
   name: backgroundProductDetailServiceName,
+  serviceAccount: backgroundProductDetailServiceAccount,
   url: backgroundProductDetailUrl,
 } = createCloudRunForBackgroundProductDetail({
   databaseName: databaseName,
+  llmEndpoint: llmUrl,
 });
 
 const {
@@ -49,6 +55,11 @@ const {
   databaseName: databaseName,
   productSearchEndpoint: backgroundProductSearchUrl,
   productSearchTaskQueue: productSearchQueueName,
+});
+
+allowServiceAccountsToCallLLM({
+  llmServiceName: llmServiceName,
+  serviceAccounts: [backgroundProductDetailServiceAccount],
 });
 
 allowAPIToCallBackgroundProductSearch({
