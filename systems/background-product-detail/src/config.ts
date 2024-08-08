@@ -45,6 +45,13 @@ export function loadConfig(appEnv: AppEnvironment) {
     env: {
       default: appEnv,
     },
+    llm: {
+      endpoint: {
+        default: null,
+        env: 'BG_PRODUCT_DETAIL_LLM_ENDPOINT',
+        format: String,
+      },
+    },
     log: {
       level: {
         default: Level.info,

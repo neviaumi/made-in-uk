@@ -48,6 +48,7 @@ services:
       - BG_PRODUCT_DETAIL_PORT=3000
       - FIRESTORE_EMULATOR_HOST=firestore:8080
       - GCLOUD_PROJECT=made-in-uk
+      - BG_PRODUCT_DETAIL_LLM_ENDPOINT=http://llm:3000
   bg-product-search:
     build:
       context: systems/background-product-search

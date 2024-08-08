@@ -20,6 +20,7 @@ PULUMI_CONFIG_PASSPHRASE= pulumi config set app:web-image "$DOCKER_REGISTRY/web:
 PULUMI_CONFIG_PASSPHRASE= pulumi config set app:api-image "$DOCKER_REGISTRY/api:$VERSION"
 PULUMI_CONFIG_PASSPHRASE= pulumi config set app:bg-product-search-image "$DOCKER_REGISTRY/bg-product-search:$VERSION"
 PULUMI_CONFIG_PASSPHRASE= pulumi config set app:bg-product-detail-image "$DOCKER_REGISTRY/bg-product-detail:$VERSION"
+PULUMI_CONFIG_PASSPHRASE= pulumi config set app:llm-image "$DOCKER_REGISTRY/llm:$VERSION"
 
 PULUMI_CONFIG_PASSPHRASE= pulumi up --yes
 

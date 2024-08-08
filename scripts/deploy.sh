@@ -51,6 +51,7 @@ npx lerna exec --stream \
 --scope 'web' \
 --scope 'background-product-search' \
 --scope 'background-product-detail' \
+--scope 'llm' \
 -- "bash scripts/ci/deploy.sh"
 
 npx lerna exec --stream \
