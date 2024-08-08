@@ -3,6 +3,7 @@
   "dependencies": {
     "@google-cloud/firestore": "7.7.0",
     "convict": "6.2.4",
+    "google-auth-library": "9.13.0",
     "playwright": "1.44.1",
     "ramda": "0.30.0",
     "winston": "3.13.0"
@@ -17,6 +18,7 @@
     "@types/ramda": "0.30.0",
     "eslint": "8.57.0",
     "magic-string": "0.30.10",
+    "msw": "2.3.5",
     "rollup-plugin-node-externals": "7.1.2",
     "typescript": "5.4.5",
     "vite": "5.2.12",

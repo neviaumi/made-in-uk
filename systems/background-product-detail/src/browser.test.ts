@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   baseUrl,
@@ -9,11 +9,18 @@ import {
   createProductDetailsHandler,
 } from '@/browser.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
+import { server } from '@/mocks/node.ts';
 
 describe('background-product-detail', () => {
   type ProductDetailsResp = Awaited<
     ReturnType<ReturnType<typeof createProductDetailsHandler>>
   >;
+  beforeAll(() => {
+    server.listen();
+  });
+  afterAll(() => {
+    server.close();
+  });
   it.each([
     {
       case: 'product with country of origin',
@@ -34,7 +41,7 @@ describe('background-product-detail', () => {
         if (!resp.ok) throw new Error('Expected response to be ok');
         expect(resp.data.pricePerItem).toEqual('70p per 100g');
         expect(resp.data.price).toEqual('£1.75');
-        expect(resp.data.countryOfOrigin).toEqual('Unknown');
+        expect(resp.data.countryOfOrigin).toEqual('United Kingdom');
       },
       fixture: '623907011.html',
       url: '/products/blue-dragon-medium-egg-noodles-623907011',
@@ -77,7 +84,6 @@ describe('background-product-detail', () => {
       });
     });
     const resp = await createProductDetailsHandler(page)(url);
-    await page.pause();
     await closePage(page);
     await closeBrowser(browser);
     expectFunctions(resp);
