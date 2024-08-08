@@ -1,6 +1,7 @@
 import playwright from 'playwright';
 
 import { APP_ENV } from '@/config.ts';
+import { extractCountryFromAddress } from '@/llm.ts';
 import { createLogger, type Logger } from '@/logger.ts';
 
 import type { Product } from './types.ts';
@@ -30,7 +31,7 @@ export function closePage(page: playwright.Page) {
   return page.close();
 }
 
-async function lookupCountryOfOrigin(page: playwright.Page) {
+async function lookupCountryOfOrigin(page: playwright.Page, logger: Logger) {
   const countryOfOriginContainer = page
     .locator('.gn-content.bop-info__field')
     .filter({
@@ -45,6 +46,49 @@ async function lookupCountryOfOrigin(page: playwright.Page) {
         .textContent()
         .then(text => text?.trim() ?? 'Unknown')
     : 'Unknown';
+  if (countryOfOrigin !== 'Unknown') return countryOfOrigin;
+  const fallbackAddress: Array<[string, string]> = [
+    [
+      'manufacture',
+      await new Promise(resolve => {
+        const manufacturerContainer = page
+          .locator('.gn-content.bop-info__field')
+          .filter({
+            has: page.getByRole('heading', {
+              name: 'Manufacturer',
+            }),
+          });
+        manufacturerContainer
+          .isVisible()
+          .then(async isVisible => {
+            if (!isVisible) return 'Unknown';
+            const address = await manufacturerContainer
+              .locator('.bop-info__content')
+              .first()
+              .textContent()
+              .then(text => text?.trim() ?? 'Unknown');
+            return address;
+          })
+          .then(resolve);
+      }),
+    ],
+  ];
+  for (const [addressType, value] of fallbackAddress) {
+    if (value !== 'Unknown') {
+      const { extractedCountry, withInUK } = await extractCountryFromAddress(
+        value,
+        logger,
+      );
+      if (withInUK) {
+        logger.info(`Country of origin extracted from ${addressType} address`, {
+          address: value,
+          extractedCountry,
+          withInUK,
+        });
+        return extractedCountry;
+      }
+    }
+  }
   return countryOfOrigin;
 }
 
@@ -65,7 +109,7 @@ export function createProductDetailsHandler(
     const fullUrl = new URL(productUrl, baseUrl).toString();
     await page.goto(fullUrl);
 
-    const countryOfOrigin = await lookupCountryOfOrigin(page);
+    const countryOfOrigin = await lookupCountryOfOrigin(page, logger);
     const productOpenGraphMeta: {
       'og:image': string;
       'og:title': string;

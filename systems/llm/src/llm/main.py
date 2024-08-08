@@ -10,7 +10,7 @@ async def prompt(request):
     system = api_body['system']
     prompt_str = api_body['prompt']
     resp = llm_engine.prompt(system, prompt_str)
-    return JSONResponse({'message': resp})
+    return JSONResponse({'message': resp.split('\n\n')[0]})
 
 async def healthCheck(request):
     resp = llm_engine.prompt("You are running Health check for yourself","<|user|>Are you operating as normal? Reply as fast as you can<|end|>")
