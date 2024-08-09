@@ -264,39 +264,37 @@ export function createCloudRunForBackgroundProductDetail({
 
 export function createCloudRunForLLM() {
   const llmImage = appConfig.get('llm-image');
-  const cloudRunService = new cloudrunv2.Service(
-    resourceName`bg-product-detail`,
-    {
-      ingress: 'INGRESS_TRAFFIC_ALL',
-      location: getLocation(),
-      template: {
-        containers: [
-          Object.assign(
-            {
-              envs: [
-                {
-                  name: 'LLM_PORT',
-                  value: '8080',
-                },
-              ],
-              image: llmImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
-              resources: {
-                limits: {
-                  memory: '4096Mi',
-                },
+  const cloudRunService = new cloudrunv2.Service(resourceName`llm`, {
+    ingress: 'INGRESS_TRAFFIC_ALL',
+    location: getLocation(),
+    template: {
+      containers: [
+        Object.assign(
+          {
+            envs: [
+              {
+                name: 'LLM_PORT',
+                value: '8080',
+              },
+            ],
+            image: llmImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
+            resources: {
+              limits: {
+                cpu: '8',
+                memory: '4096Mi',
               },
             },
-            llmImage
-              ? {
-                  args: ['./scripts/docker/start.sh'],
-                  commands: ['bash'],
-                }
-              : {},
-          ),
-        ],
-      },
+          },
+          llmImage
+            ? {
+                args: ['./scripts/docker/start.sh'],
+                commands: ['sh'],
+              }
+            : {},
+        ),
+      ],
     },
-  );
+  });
 
   return {
     name: cloudRunService.name,
