@@ -367,14 +367,11 @@ export function allowServiceAccountsToCallLLM({
   llmServiceName: Output<string>;
   serviceAccounts: Array<Output<string>>;
 }) {
-  new cloudrun.IamBinding(
-    resourceName`allow-service-account-to-call-product-detail`,
-    {
-      members: serviceAccounts.map(account =>
-        account.apply(serviceAccount => `serviceAccount:${serviceAccount}`),
-      ),
-      role: 'roles/run.invoker',
-      service: llmServiceName,
-    },
-  );
+  new cloudrun.IamBinding(resourceName`allow-service-accounts-to-call-llm`, {
+    members: serviceAccounts.map(account =>
+      account.apply(serviceAccount => `serviceAccount:${serviceAccount}`),
+    ),
+    role: 'roles/run.invoker',
+    service: llmServiceName,
+  });
 }
