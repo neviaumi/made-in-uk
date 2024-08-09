@@ -71,7 +71,9 @@ describe('background-product-detail', () => {
       url: '/products/m-s-maxim-straight-sided-mug-white-567408011',
     },
   ])('$case', async ({ expectFunctions, fixture, url }) => {
-    const browser = await createChromiumBrowser();
+    const browser = await createChromiumBrowser({
+      headless: true,
+    });
     const browserContext = await browser.newContext({
       javaScriptEnabled: false,
       offline: true,
