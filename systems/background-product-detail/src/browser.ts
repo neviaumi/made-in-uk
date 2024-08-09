@@ -112,11 +112,13 @@ export function createProductDetailsHandler(
   > {
     const fullUrl = new URL(productUrl, baseUrl).toString();
     await page.goto(fullUrl);
-    await page
+    (await page
       .getByRole('button', {
         name: 'Accept',
       })
-      .click();
+      .isVisible()) &&
+      (await page.getByRole('button', { name: 'Accept' }).click());
+
     const countryOfOrigin = await lookupCountryOfOrigin(page, logger);
     const productOpenGraphMeta: {
       'og:image': string;
