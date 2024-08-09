@@ -50,7 +50,10 @@ async function lookupCountryOfOrigin(page: playwright.Page, logger: Logger) {
   const fallbackAddress: Array<[string, string]> = [
     [
       'manufacture',
-      await new Promise(resolve => {
+      await (async () => {
+        const brandDetailsButton = page.getByRole('button', {
+          name: /^Brand details/i,
+        });
         const manufacturerContainer = page
           .locator('.gn-content.bop-info__field')
           .filter({
@@ -58,19 +61,17 @@ async function lookupCountryOfOrigin(page: playwright.Page, logger: Logger) {
               name: 'Manufacturer',
             }),
           });
-        manufacturerContainer
-          .isVisible()
-          .then(async isVisible => {
-            if (!isVisible) return 'Unknown';
-            const address = await manufacturerContainer
+        if (!(await brandDetailsButton.isVisible())) return 'Unknown';
+        await brandDetailsButton.first().click();
+
+        return (await manufacturerContainer.isVisible())
+          ? await manufacturerContainer
               .locator('.bop-info__content')
               .first()
               .textContent()
-              .then(text => text?.trim() ?? 'Unknown');
-            return address;
-          })
-          .then(resolve);
-      }),
+              .then(text => text?.trim() ?? 'Unknown')
+          : 'Unknown';
+      })(),
     ],
   ];
   for (const [addressType, value] of fallbackAddress) {
@@ -89,6 +90,9 @@ async function lookupCountryOfOrigin(page: playwright.Page, logger: Logger) {
       }
     }
   }
+  logger.warn('Country of origin not found', {
+    fallbackAddress,
+  });
   return countryOfOrigin;
 }
 
@@ -108,7 +112,11 @@ export function createProductDetailsHandler(
   > {
     const fullUrl = new URL(productUrl, baseUrl).toString();
     await page.goto(fullUrl);
-
+    await page
+      .getByRole('button', {
+        name: 'Accept',
+      })
+      .click();
     const countryOfOrigin = await lookupCountryOfOrigin(page, logger);
     const productOpenGraphMeta: {
       'og:image': string;
