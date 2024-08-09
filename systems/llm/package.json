@@ -1,8 +1,4 @@
 {
-  "dependencies": {
-  },
-  "devDependencies": {
-  },
   "engines": {
     "node": ">=20",
     "yarn": "Use npm"
@@ -10,10 +6,9 @@
   "license": "UNLICENSED",
   "name": "llm",
   "private": true,
-  "scripts": {
-  },
+  "scripts": {},
   "sideEffects": false,
   "type": "module",
   "description": "Unused package.json for Monorepo configuration",
-  "version": "2024.7.25-alpha.2404"
+  "version": "2024.8.9-alpha.1941"
 }
