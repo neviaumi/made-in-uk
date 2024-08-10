@@ -80,7 +80,7 @@ async function lookupCountryOfOrigin(page: playwright.Page, logger: Logger) {
         value,
         logger,
       );
-      if (extractedCountry !== 'Unknown') {
+      if (extractedCountry && extractedCountry !== 'Unknown') {
         logger.info(`Country of origin extracted from ${addressType} address`, {
           address: value,
           extractedCountry,
