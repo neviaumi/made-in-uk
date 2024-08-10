@@ -16,6 +16,9 @@ jobs:
           cache: npm
           cache-dependency-path: '**/package-lock.json'
           node-version-file: .nvmrc
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: systems/llm/.python-version
       - run: bash ./scripts/setup.sh
       - run: bash ./scripts/test.sh
 name: Verify PR
