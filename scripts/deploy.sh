@@ -44,6 +44,7 @@ npx lerna exec --stream \
 source $WORK_SPACE_ROOT/.env
 
 export DOCKER_REGISTRY=$DOCKER_REGISTRY
+export LLM_STORAGE_BUCKET=$LLM_STORAGE_BUCKET
 gcloud auth configure-docker europe-west2-docker.pkg.dev
 
 npx lerna exec --stream \

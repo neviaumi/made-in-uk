@@ -10,6 +10,7 @@ import {
   createCloudRunForWeb,
   onlyAllowServiceToServiceForInvokeAPI,
 } from './gcp/cloud-run.ts';
+import { createCloudStorageBucketForLLM } from './gcp/cloud-storage.ts';
 import {
   createProductDetailLowPriorityTaskQueue,
   createProductDetailTaskQueue,
@@ -17,6 +18,7 @@ import {
 } from './gcp/cloud-tasks.ts';
 import { createFireStoreDB } from './gcp/fire-store.ts';
 
+const { bucketName: llmStorageBucket } = createCloudStorageBucketForLLM();
 const { name: databaseName } = createFireStoreDB();
 const { repositoryUrl: dockerRepository } = createDockerRepository();
 const { fullQualifiedQueueName: productSearchQueueName } =
@@ -85,3 +87,4 @@ onlyAllowServiceToServiceForInvokeAPI({
 
 export const WEB_HOST = webUrl;
 export const DOCKER_REGISTRY = dockerRepository;
+export const LLM_STORAGE_BUCKET = llmStorageBucket;
