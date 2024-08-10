@@ -1,5 +1,6 @@
 import tempfile
 import os
+import json
 from pathlib import PurePath, Path
 from gpt4all import GPT4All
 
@@ -26,7 +27,16 @@ def prompt(system, prompt_str: str):
 {system}<|end|>
 {{0}}
 <|assistant|>"""):
-        resp = model.generate(prompt_str)
+        resp = ""
+        def generate_callback(token, str):
+            nonlocal resp
+            resp+=str
+            try:
+                json.loads(resp)
+                return False
+            except:
+                return True
+        model.generate(prompt_str, callback=generate_callback)
     model.close()
 
     return resp
