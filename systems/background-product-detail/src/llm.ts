@@ -9,8 +9,11 @@ export async function extractCountryFromAddress(
   address: string,
   logger: Logger,
 ): Promise<{
-  extractedCountry: string;
-  withInUK: boolean;
+  data: {
+    extractedCountry: string;
+    withInUK: boolean;
+  };
+  raw: string;
 }> {
   const llmEndpoint = config.get('llm.endpoint');
   if (!llmEndpoint) throw new Error('llm.endpoint is not defined');
@@ -41,14 +44,14 @@ ${address}<|end|>`,
     .then(jsonRes => {
       return ((content: string) => {
         try {
-          return JSON.parse(content);
+          return { data: JSON.parse(content), raw: content };
         } catch {
           logger.error('Failed to parse JSON response from LLM', {
             generatedContent: content,
           });
           return {
-            extractedCountry: 'Unknown',
-            withInUK: false,
+            data: { extractedCountry: 'Unknown', withInUK: false },
+            raw: content,
           };
         }
       })(jsonRes['message']);
