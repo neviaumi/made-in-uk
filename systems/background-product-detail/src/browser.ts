@@ -74,25 +74,23 @@ async function lookupCountryOfOrigin(page: playwright.Page, logger: Logger) {
       })(),
     ],
   ];
-  for (const [addressType, value] of fallbackAddress) {
+  for (const [, value] of fallbackAddress) {
     if (value !== 'Unknown') {
-      const { extractedCountry, withInUK } = await extractCountryFromAddress(
-        value,
-        logger,
-      );
+      const {
+        data: { extractedCountry, withInUK },
+        raw,
+      } = await extractCountryFromAddress(value, logger);
       if (extractedCountry && extractedCountry !== 'Unknown') {
-        logger.info(`Country of origin extracted from ${addressType} address`, {
-          address: value,
-          extractedCountry,
-          withInUK,
-        });
-        return extractedCountry;
+        return String(extractedCountry);
       }
+      logger.warn(`Unable parse given address`, {
+        address: value,
+        extractedCountry,
+        generatedContent: raw,
+        withInUK,
+      });
     }
   }
-  logger.warn('Country of origin not found', {
-    fallbackAddress,
-  });
   return countryOfOrigin;
 }
 

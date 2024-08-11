@@ -57,7 +57,7 @@ function loadMoreProducts(page: playwright.Page) {
       })
       .last()
       .evaluate(ele => {
-        window.scrollBy(0, ele.scrollHeight * 2);
+        window.scrollBy(0, ele.scrollHeight);
       });
 
     await waitForResponse;
