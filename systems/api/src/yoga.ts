@@ -5,7 +5,10 @@ import { createSchema, createYoga, useReadinessCheck } from 'graphql-yoga';
 
 import { APP_ENV, loadConfig } from '@/config.ts';
 import { createLogger } from '@/logger.ts';
-import { searchProductQuery } from '@/search-product.query.ts';
+import {
+  searchProductQuery,
+  searchProductStream,
+} from '@/search-product.query.ts';
 import type { GraphqlContext } from '@/types.ts';
 
 import { createDatabaseConnection, databaseHealthCheck } from './database.ts';
@@ -17,6 +20,9 @@ export const schema = {
   resolvers: {
     Query: {
       searchProduct: searchProductQuery,
+    },
+    SearchProductResult: {
+      stream: searchProductStream,
     },
   },
   typeDefs: /* GraphQL */ `
@@ -41,8 +47,12 @@ export const schema = {
       type: ProductStreamType!
       data: Product
     }
+    type SearchProductResult {
+      requestId: String!
+      stream: [ProductStream!]!
+    }
     type Query {
-      searchProduct(input: SearchProductInput!): [ProductStream!]!
+      searchProduct(input: SearchProductInput!): SearchProductResult!
     }
   `,
 };

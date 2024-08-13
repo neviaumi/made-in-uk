@@ -33,9 +33,7 @@ services:
       target: base
     command: ./scripts/docker/dev.sh
     depends_on:
-      llm:
-        condition: service_healthy
-        restart: true
+      - llm
     develop:
       watch:
         - action: sync+restart
@@ -105,7 +103,7 @@ services:
     develop:
       watch:
         - action: sync+restart
-          path: systems/background-product-detail/src
+          path: systems/llm/src
           target: /app/src
     entrypoint: /bin/sh
     environment:
