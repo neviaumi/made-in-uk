@@ -1,9 +1,9 @@
 encryptionsalt: v1:eu6KLsBnOdY=:v1:dqrXLbxMTJslVOrR:TpPZ8xvl1ssp7Zb3Wj/fmiyJz2NBlA==
 config:
-  app:api-image: europe-west2-docker.pkg.dev/made-in-uk/docker-divine-impala/api:2024.8.11-alpha.943
-  app:bg-product-detail-image: europe-west2-docker.pkg.dev/made-in-uk/docker-divine-impala/bg-product-detail:2024.8.11-alpha.943
-  app:bg-product-search-image: europe-west2-docker.pkg.dev/made-in-uk/docker-divine-impala/bg-product-search:2024.8.11-alpha.943
-  app:llm-image: europe-west2-docker.pkg.dev/made-in-uk/docker-divine-impala/llm:2024.8.11-alpha.943
-  app:web-image: europe-west2-docker.pkg.dev/made-in-uk/docker-divine-impala/web:2024.8.11-alpha.943
+  app:api-image: europe-west2-docker.pkg.dev/made-in-uk/docker-divine-impala/api:2024.8.13-alpha.1829
+  app:bg-product-detail-image: europe-west2-docker.pkg.dev/made-in-uk/docker-divine-impala/bg-product-detail:2024.8.13-alpha.1829
+  app:bg-product-search-image: europe-west2-docker.pkg.dev/made-in-uk/docker-divine-impala/bg-product-search:2024.8.13-alpha.1829
+  app:llm-image: europe-west2-docker.pkg.dev/made-in-uk/docker-divine-impala/llm:2024.8.13-alpha.1829
+  app:web-image: europe-west2-docker.pkg.dev/made-in-uk/docker-divine-impala/web:2024.8.13-alpha.1829
   gcp:project: made-in-uk
   gcp:region: europe-west2
