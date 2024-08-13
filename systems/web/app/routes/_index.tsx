@@ -141,13 +141,22 @@ export default function Index() {
           </Button>
         </form>
         {data && (
-          <section className={'tw-mx-auto tw-mt-2 tw-flex tw-w-35 tw-flex-col'}>
-            <p className={'  tw-text-lg'}>
-              Number of products streamed: {data.searchProduct.stream.length}
+          <section
+            className={
+              'tw-mx-auto tw-mt-2 tw-flex tw-w-40 tw-flex-col tw-gap-0.5'
+            }
+          >
+            <p className={'tw-text-lg'}>
+              Number of products streamed:{' '}
+              <span className={'tw-font-bold'}>
+                {data.searchProduct.stream.length}
+              </span>
             </p>
             <p>Request Id: {data.searchProduct.requestId}</p>
 
-            {!isEndOfStream && <p>More product loading...</p>}
+            {!isEndOfStream && (
+              <p className={'tw-text-sm'}>More product loading...</p>
+            )}
           </section>
         )}
       </Page.Header>
