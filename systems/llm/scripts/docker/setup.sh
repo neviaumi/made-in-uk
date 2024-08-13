@@ -2,6 +2,8 @@
 
 set -ex
 
+apt-get update
+apt-get install -y curl
 IS_DEV=${1:--dev}
 if [ "$IS_DEV" == "--dev" ]; then
   pdm install

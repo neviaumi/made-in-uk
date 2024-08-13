@@ -2,4 +2,4 @@
 
 set -ex
 
-docker compose watch
+docker compose watch --prune

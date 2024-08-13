@@ -1,6 +1,7 @@
 import { Button, Field, Input } from '@headlessui/react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import type { MetaFunction } from '@remix-run/node';
+import { json, type MetaFunction } from '@remix-run/node';
+import { useLoaderData } from '@remix-run/react';
 import type React from 'react';
 import { useCallback, useRef, useState } from 'react';
 import { gql, useQuery } from 'urql';
@@ -19,24 +20,35 @@ export const meta: MetaFunction = () => {
 
 const SearchProducts = gql`
   query searchProducts($input: SearchProductInput!) {
-    searchProduct(input: $input) @stream {
-      type
-      data {
-        id
-        image
-        title
+    searchProduct(input: $input) {
+      requestId
+      stream @stream {
         type
-        countryOfOrigin
-        url
-        price
-        pricePerItem
+        data {
+          id
+          image
+          title
+          type
+          countryOfOrigin
+          url
+          price
+          pricePerItem
+        }
       }
     }
   }
 `;
 
+export async function loader() {
+  return json({
+    ENV: {
+      WEB_ENV: process.env['WEB_ENV'],
+    },
+  });
+}
+
 export default function Index() {
-  // const loaderData = useLoaderData<typeof loader>();
+  const { ENV } = useLoaderData<typeof loader>();
   const searchForm = useRef<HTMLFormElement>(null);
   const [matchingFilters, setMatchingFilters] = useState<{
     keyword: string;
@@ -45,19 +57,22 @@ export default function Index() {
   });
   const [matchingResults] = useQuery<
     {
-      searchProduct: Array<{
-        data: {
-          countryOfOrigin: string;
-          id: string;
-          image: string;
-          price: string;
-          pricePerItem: string | null;
-          title: string;
+      searchProduct: {
+        requestId: string;
+        stream: Array<{
+          data: {
+            countryOfOrigin: string;
+            id: string;
+            image: string;
+            price: string;
+            pricePerItem: string | null;
+            title: string;
+            type: string;
+            url: string;
+          };
           type: string;
-          url: string;
-        };
-        type: string;
-      }>;
+        }>;
+      };
     },
     { input: typeof matchingFilters }
   >({
@@ -70,11 +85,19 @@ export default function Index() {
   const { data, error, fetching } = matchingResults;
   // @ts-expect-error type error
   const isEndOfStream = !fetching && matchingResults['hasNext'] === false;
-
+  // eslint-disable-next-line no-console
+  console.log({
+    ENV,
+    data,
+    error,
+    fetching,
+  });
   return (
-    <Page className={'tw-mx-auto tw-p-2'}>
+    <Page className={'tw-mx-auto tw-pb-2'}>
       <Page.Header
-        className={'tw-border-b tw-border-solid tw-border-b-primary tw-pb-2'}
+        className={
+          'tw-sticky tw-top-0 tw-z-10 tw-border-b tw-border-solid tw-border-b-primary tw-bg-white tw-py-2'
+        }
       >
         <form
           className={
@@ -117,6 +140,16 @@ export default function Index() {
             <MagnifyingGlassIcon />
           </Button>
         </form>
+        {data && (
+          <section className={'tw-mx-auto tw-mt-2 tw-flex tw-w-35 tw-flex-col'}>
+            <p className={'  tw-text-lg'}>
+              Number of products streamed: {data.searchProduct.stream.length}
+            </p>
+            <p>Request Id: {data.searchProduct.requestId}</p>
+
+            {!isEndOfStream && <p>More product loading...</p>}
+          </section>
+        )}
       </Page.Header>
       <Page.Main className={'tw-pt-2'}>
         <article>
@@ -134,7 +167,7 @@ export default function Index() {
             )}
             {!fetching &&
               data &&
-              data.searchProduct
+              data.searchProduct.stream
                 .filter(({ type }) => type === 'FETCH_PRODUCT_DETAIL')
                 .toSorted((productA, productB) => {
                   if (!isEndOfStream) return 0;

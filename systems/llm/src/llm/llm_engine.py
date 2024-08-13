@@ -18,25 +18,29 @@ def save_locally():
     )
     return cache_dir.joinpath(model_name)
 
-
-def prompt(system, prompt_str: str):
+def create_interface():
     if not Path(cache_dir.joinpath(model_name)).is_file():
         raise Exception("Run save_locally.py before get the prompt")
     model = GPT4All(model_name, model_path=cache_dir, allow_download=False)
-    with model.chat_session(system, f"""<|system|>
+    class ModelWrapper:
+        def __init__(self, model):
+            self.model = model
+        def __del__(self):
+            self.model.close()
+        def prompt(self, system, prompt_str: str):
+            with self.model.chat_session(system, f"""<|system|>
 {system}<|end|>
 {{0}}
 <|assistant|>"""):
-        resp = ""
-        def generate_callback(token, str):
-            nonlocal resp
-            resp+=str
-            try:
-                json.loads(resp)
-                return False
-            except:
-                return True
-        model.generate(prompt_str, callback=generate_callback)
-    model.close()
-
-    return resp
+                resp = ""
+                def generate_callback(token, str):
+                    nonlocal resp
+                    resp+=str
+                    try:
+                        json.loads(resp)
+                        return False
+                    except:
+                        return True
+                self.model.generate(prompt_str, callback=generate_callback)
+            return resp
+    return ModelWrapper(model)
