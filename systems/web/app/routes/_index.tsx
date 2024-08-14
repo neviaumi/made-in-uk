@@ -140,7 +140,7 @@ export default function Index() {
             <MagnifyingGlassIcon />
           </Button>
         </form>
-        {data && (
+        {!fetching && data && (
           <section
             className={
               'tw-mx-auto tw-mt-2 tw-flex tw-w-52 tw-flex-col tw-gap-0.5 tw-text-center'
@@ -162,6 +162,19 @@ export default function Index() {
       </Page.Header>
       <Page.Main className={'tw-pt-2'}>
         <article>
+          {isEndOfStream && data && data.searchProduct.stream.length === 0 && (
+            <section className={'tw-flex tw-flex-col tw-gap-2 tw-text-center'}>
+              <header className={'tw-text-6xl tw-font-extrabold'}>
+                👀 Can&apos;t see the 💩 Captain!
+              </header>
+              <p className={'tw-text-3xl tw-font-semibold'}>
+                No products matched for keyword {`"${matchingFilters.keyword}"`}
+              </p>
+            </section>
+          )}
+          {error && !fetching && isEndOfStream && (
+            <pre>{JSON.stringify(matchingResults, null, 4)}</pre>
+          )}
           <ul
             className={
               'tw-grid tw-grid-cols-1 tw-gap-1 sm:tw-grid-cols-2 lg:tw-grid-cols-4 2xl:tw-grid-cols-8'
@@ -171,9 +184,6 @@ export default function Index() {
               Array.from({ length: 8 }).map((_, index) => (
                 <Loader className={'tw-h-16 '} key={index} />
               ))}
-            {error && !fetching && isEndOfStream && (
-              <pre>{JSON.stringify(matchingResults, null, 4)}</pre>
-            )}
             {!fetching &&
               data &&
               data.searchProduct.stream
