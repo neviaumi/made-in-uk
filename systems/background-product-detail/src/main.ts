@@ -1,5 +1,7 @@
 import { createServer, type RequestListener } from 'node:http';
 
+import { Timestamp } from '@google-cloud/firestore';
+
 import {
   closeBrowser,
   closePage,
@@ -104,7 +106,10 @@ async function handleFetchProductDetail(
   });
   batchWrite.set(
     connectToProductDatabase(database)(source, productId),
-    productInfo.data,
+    Object.assign(productInfo.data, {
+      // 1 hour
+      expiresAt: Timestamp.fromDate(new Date(Date.now() + 1000 * 60 * 60)),
+    }),
   );
   await batchWrite.commit();
 }
@@ -147,7 +152,9 @@ async function handleUpdateProductDetail(
     return;
   }
   await connectToProductDatabase(database)('ocado', productId).set(
-    productInfo.data,
+    Object.assign(productInfo.data, {
+      expiresAt: Timestamp.fromDate(new Date(Date.now() + 1000 * 60 * 60)),
+    }),
   );
 }
 
