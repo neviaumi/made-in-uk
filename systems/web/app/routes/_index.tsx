@@ -143,7 +143,7 @@ export default function Index() {
         {data && (
           <section
             className={
-              'tw-mx-auto tw-mt-2 tw-flex tw-w-40 tw-flex-col tw-gap-0.5'
+              'tw-mx-auto tw-mt-2 tw-flex tw-w-52 tw-flex-col tw-gap-0.5 tw-text-center'
             }
           >
             <p className={'tw-text-lg'}>
