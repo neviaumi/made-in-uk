@@ -83,11 +83,15 @@ export function createProductsSearchHandler(
     await page.goto(searchUrl.toString(), {
       waitUntil: 'domcontentloaded',
     });
-    await page
+    (await page
       .getByRole('button', {
         name: 'Accept',
       })
-      .click();
+      .isVisible()) &&
+      (await page.getByRole('button', { name: 'Accept' }).click());
+    if (await page.locator('.nf-resourceNotFound').isVisible()) {
+      return;
+    }
     const totalProductNumber = Number(
       await page
         .locator('.total-product-number')
