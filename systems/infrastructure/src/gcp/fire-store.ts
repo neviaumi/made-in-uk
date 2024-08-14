@@ -8,6 +8,12 @@ export function createFireStoreDB() {
     locationId: getLocation(),
     type: 'FIRESTORE_NATIVE',
   });
+  new firestore.Field(resourceName`ocado-cache-ttl`, {
+    collection: 'ocado.products',
+    database: dbRef.name,
+    field: 'expiresAt',
+    ttlConfig: {},
+  });
   return {
     name: dbRef.name,
   };
