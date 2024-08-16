@@ -18,6 +18,7 @@ def get_logger(*args, **kwargs):
             record_dict = {k: v for k, v in record.__dict__.items() if
                            k not in ignored_fields}
             record_dict['severity'] = severity_mapping[record_dict['levelname']]
+            record_dict['message'] = record_dict['msg']
             return json.dumps(record_dict)
 
     log_handler = logging.StreamHandler()
