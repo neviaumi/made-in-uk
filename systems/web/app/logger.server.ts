@@ -4,7 +4,7 @@ import {
   transports,
 } from 'winston';
 
-import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
+import { APP_ENV, AppEnvironment, loadConfig } from '@/config.server.ts';
 import { Level, levels } from '@/logger.types.ts';
 
 const config = loadConfig(APP_ENV);

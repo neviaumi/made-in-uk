@@ -8,8 +8,10 @@ import { gql, useQuery } from 'urql';
 
 import { Page } from '@/components/Layout.tsx';
 import { Loader } from '@/components/Loader.tsx';
+import { APP_ENV, loadConfig } from '@/config.server.ts';
 
 const ukCountries = ['United Kingdom', 'UK', 'England'];
+const config = loadConfig(APP_ENV);
 
 export const meta: MetaFunction = () => {
   return [
@@ -42,7 +44,7 @@ const SearchProducts = gql`
 export async function loader() {
   return json({
     ENV: {
-      WEB_ENV: process.env['WEB_ENV'],
+      WEB_ENV: config.get('env'),
     },
   });
 }
