@@ -11,7 +11,6 @@ import { Loader } from '@/components/Loader.tsx';
 import { APP_ENV, loadConfig } from '@/config.server.ts';
 
 const ukCountries = ['United Kingdom', 'UK', 'England'];
-const config = loadConfig(APP_ENV);
 
 export const meta: MetaFunction = () => {
   return [
@@ -42,6 +41,7 @@ const SearchProducts = gql`
 `;
 
 export async function loader() {
+  const config = loadConfig(APP_ENV);
   return json({
     ENV: {
       WEB_ENV: config.get('env'),
