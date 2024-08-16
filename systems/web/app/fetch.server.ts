@@ -1,5 +1,9 @@
 import { GoogleAuth } from 'google-auth-library';
 
+import { APP_ENV, loadConfig } from '@/config.server.ts';
+
+const config = loadConfig(APP_ENV);
+
 function headerInitToEntries(init: HeadersInit | undefined) {
   if (!init) return [];
   if (Array.isArray(init)) return init;
@@ -9,10 +13,9 @@ function headerInitToEntries(init: HeadersInit | undefined) {
 
 export function createFetchClient() {
   const { webApiHost, webEnv } = {
-    webApiHost: process.env['WEB_API_HOST']!,
-    webEnv: process.env['WEB_ENV']!,
+    webApiHost: config.get('api.endpoint')!,
+    webEnv: config.get('env')!,
   };
-  if (!webApiHost) throw new Error('webApiHost is not defined');
   const auth = new GoogleAuth();
 
   return async (path: string, init: RequestInit) => {
