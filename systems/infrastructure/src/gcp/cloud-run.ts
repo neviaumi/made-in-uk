@@ -33,6 +33,16 @@ export function createCloudRunForWeb({
               },
             ],
             image: webImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
+            livenessProbe: {
+              httpGet: {
+                path: '/health',
+              },
+            },
+            startupProbe: {
+              httpGet: {
+                path: '/health',
+              },
+            },
           },
           webImage
             ? {
@@ -98,9 +108,19 @@ export function createCloudRunForApi({
               },
             ],
             image: apiImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
+            livenessProbe: {
+              httpGet: {
+                path: '/ready',
+              },
+            },
             resources: {
               limits: {
                 memory: '2048Mi',
+              },
+            },
+            startupProbe: {
+              httpGet: {
+                path: '/health',
               },
             },
           },
@@ -174,9 +194,19 @@ export function createCloudRunForBackgroundProductSearch({
               image:
                 bgProductSearchImage ??
                 'us-docker.pkg.dev/cloudrun/container/hello',
+              livenessProbe: {
+                httpGet: {
+                  path: '/health',
+                },
+              },
               resources: {
                 limits: {
                   memory: '2048Mi',
+                },
+              },
+              startupProbe: {
+                httpGet: {
+                  path: '/health',
                 },
               },
             },
@@ -237,9 +267,19 @@ export function createCloudRunForBackgroundProductDetail({
               image:
                 bgProductDetailImage ??
                 'us-docker.pkg.dev/cloudrun/container/hello',
+              livenessProbe: {
+                httpGet: {
+                  path: '/health',
+                },
+              },
               resources: {
                 limits: {
                   memory: '2048Mi',
+                },
+              },
+              startupProbe: {
+                httpGet: {
+                  path: '/health',
                 },
               },
             },
@@ -278,10 +318,20 @@ export function createCloudRunForLLM() {
               },
             ],
             image: llmImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',
+            livenessProbe: {
+              httpGet: {
+                path: '/health',
+              },
+            },
             resources: {
               limits: {
                 cpu: '8',
                 memory: '4096Mi',
+              },
+            },
+            startupProbe: {
+              httpGet: {
+                path: '/health',
               },
             },
           },
