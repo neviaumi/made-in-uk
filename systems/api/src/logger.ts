@@ -1,4 +1,5 @@
 import {
+  config as winstonConfig,
   createLogger as createWinstonLogger,
   format,
   transports,
@@ -6,16 +7,7 @@ import {
 
 import { AppEnvironment } from '@/config.ts';
 
-// default levels: https://github.com/winstonjs/triple-beam/blob/c2991b2b7ff2297a6b57bce8a8d8b70f4183b019/config/npm.js#L15-L21
-enum Level {
-  debug = 'debug',
-  error = 'error',
-  http = 'http',
-  info = 'info',
-  silly = 'silly',
-  verbose = 'verbose',
-  warn = 'warn',
-}
+const logLevels = winstonConfig.syslog.levels;
 
 export type { Logger } from 'winston';
 export function createLogger(appEnv: AppEnvironment) {
@@ -23,11 +15,28 @@ export function createLogger(appEnv: AppEnvironment) {
   return createWinstonLogger({
     format: format.combine(
       format.timestamp(),
+      format(function includeGCPSeverity(info) {
+        const gcpSeverityMapping = Object.fromEntries(
+          Object.keys(logLevels).map(level => {
+            if (['emerg', 'crit'].includes(level)) {
+              if (level === 'emerg') {
+                return [level, 'EMERGENCY'];
+              }
+              return [level, 'CRITICAL'];
+            }
+            return [level, level.toUpperCase()];
+          }),
+        );
+        return Object.assign(info, {
+          severity: gcpSeverityMapping[info.level],
+        });
+      })(),
       ...(isDev
         ? [format.prettyPrint({ colorize: true, depth: 4 })]
         : [format.json()]),
     ),
-    level: isDev ? Level.debug : Level.info,
+    level: isDev ? 'debug' : 'info',
+    levels: logLevels,
     silent: [AppEnvironment.TEST].includes(appEnv),
     transports: [new transports.Console({})],
   });
