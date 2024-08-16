@@ -32,11 +32,14 @@ def create_interface():
 
         def prompt(self, system, prompt_str: str):
             with self.model.chat_session(system):
-                resp = ""
+                resp = None
 
                 def generate_callback(token, str):
                     nonlocal resp
-                    resp += str
+                    if resp is None and "{" in str:
+                        resp = str
+                    elif resp is not None:
+                        resp += str
                     try:
                         json.loads(resp)
                         return False
