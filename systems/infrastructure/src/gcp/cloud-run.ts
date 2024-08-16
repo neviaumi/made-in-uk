@@ -322,6 +322,8 @@ export function createCloudRunForLLM() {
               httpGet: {
                 path: '/health',
               },
+              periodSeconds: 300,
+              timeoutSeconds: 120,
             },
             resources: {
               limits: {
@@ -333,6 +335,8 @@ export function createCloudRunForLLM() {
               httpGet: {
                 path: '/health',
               },
+              periodSeconds: 120,
+              timeoutSeconds: 90,
             },
           },
           llmImage
