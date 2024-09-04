@@ -61,4 +61,9 @@ export default defineConfig({
       allow: [searchForWorkspaceRoot(process.cwd())],
     },
   },
+  test: {
+    env: {
+      BG_PRODUCT_DETAIL_ENV: 'test',
+    },
+  },
 });

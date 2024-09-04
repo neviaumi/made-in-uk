@@ -43,6 +43,11 @@ export function loadConfig(appEnv: AppEnvironment) {
           : 'UNUSED',
         format: String,
       },
+      productDetailQueue: {
+        default: null,
+        env: 'API_PRODUCT_DETAIL_QUEUE',
+        format: String,
+      },
       productSearchQueue: {
         default: null,
         env: 'API_PRODUCT_SEARCH_QUEUE',
@@ -74,6 +79,13 @@ export function loadConfig(appEnv: AppEnvironment) {
       default: 5333,
       env: 'API_PORT',
       format: 'port',
+    },
+    productDetail: {
+      endpoint: {
+        default: null,
+        env: 'API_PRODUCT_DETAIL_ENDPOINT',
+        format: String,
+      },
     },
     productSearch: {
       endpoint: {

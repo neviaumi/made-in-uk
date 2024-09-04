@@ -5,6 +5,73 @@ import type { Logger } from '@/logger.ts';
 
 const config = loadConfig(APP_ENV);
 
+export async function extractTotalWeight(
+  input: { description: string },
+  options: { logger: Logger },
+): Promise<{
+  data: {
+    totalWeight: number | null;
+    weightUnit: 'kg';
+  };
+  raw?: string;
+}> {
+  const logger = options.logger;
+  const llmEndpoint = config.get('llm.endpoint');
+  if (!llmEndpoint) throw new Error('llm.endpoint is not defined');
+  const requestInit: RequestInit = {
+    body: JSON.stringify({
+      prompt: `<|user|>
+Extract total weight from given product description, report what is total weight in kilogram?
+Generated response in JSON Object format with 2 key, 'totalWeight' (number in kilogram unit, example value: 2, 4, 5,6 ...etc. ) and 'weightUnit' (string, only valid value should be kg.)<|end|>
+<|assistant|>
+${input.description}
+The weight probably include the product name, please remove it before compute the price per unit.<|end|>`,
+      system:
+        'You are AI system that able to compute price per unit from given total price and capacity.',
+    }),
+    method: 'POST',
+  };
+  const requestInitHeaders: Array<[string, string]> = [
+    ['Content-Type', 'application/json'],
+  ];
+  if (![AppEnvironment.DEV, AppEnvironment.TEST].includes(APP_ENV)) {
+    const auth = new GoogleAuth();
+    const idTokenClient = await auth.getIdTokenClient(llmEndpoint);
+    requestInit.headers = requestInitHeaders.concat(
+      Object.entries(await idTokenClient.getRequestHeaders()),
+    );
+  }
+
+  try {
+    return await Promise.race<any>([
+      new Promise(resolve =>
+        setTimeout(() => {
+          resolve({ data: { totalWeight: null, weightUnit: 'kg' } } as any);
+        }, 60000),
+      ),
+      fetch(new URL('/prompt', llmEndpoint), requestInit)
+        .then(res => res.json())
+        .then(jsonRes => {
+          return ((content: string) => {
+            try {
+              return { data: JSON.parse(content), raw: content };
+            } catch {
+              logger.error('Failed to parse JSON response from LLM', {
+                generatedContent: content,
+              });
+              return {
+                data: { totalWeight: null, weightUnit: 'kg' },
+                raw: content,
+              };
+            }
+          })(jsonRes['message']);
+        }),
+    ]);
+  } catch {
+    return { data: { totalWeight: null, weightUnit: 'kg' } };
+  }
+}
+
 export async function extractCountryFromAddress(
   address: string,
   logger: Logger,
@@ -13,7 +80,7 @@ export async function extractCountryFromAddress(
     extractedCountry: string;
     withInUK: boolean;
   };
-  raw: string;
+  raw?: string;
 }> {
   const llmEndpoint = config.get('llm.endpoint');
   if (!llmEndpoint) throw new Error('llm.endpoint is not defined');
@@ -39,21 +106,27 @@ ${address}<|end|>`,
       Object.entries(await idTokenClient.getRequestHeaders()),
     );
   }
-  return await fetch(new URL('/prompt', llmEndpoint), requestInit)
-    .then(res => res.json())
-    .then(jsonRes => {
-      return ((content: string) => {
-        try {
-          return { data: JSON.parse(content), raw: content };
-        } catch {
-          logger.error('Failed to parse JSON response from LLM', {
-            generatedContent: content,
-          });
-          return {
-            data: { extractedCountry: 'Unknown', withInUK: false },
-            raw: content,
-          };
-        }
-      })(jsonRes['message']);
-    });
+  try {
+    return await fetch(new URL('/prompt', llmEndpoint), requestInit)
+      .then(res => res.json())
+      .then(jsonRes => {
+        return ((content: string) => {
+          try {
+            return { data: JSON.parse(content), raw: content };
+          } catch {
+            logger.error('Failed to parse JSON response from LLM', {
+              generatedContent: content,
+            });
+            return {
+              data: { extractedCountry: 'Unknown', withInUK: false },
+              raw: content,
+            };
+          }
+        })(jsonRes['message']);
+      });
+  } catch {
+    return {
+      data: { extractedCountry: 'Unknown', withInUK: false },
+    };
+  }
 }

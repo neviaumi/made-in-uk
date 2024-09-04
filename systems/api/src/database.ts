@@ -43,7 +43,52 @@ export function createDatabaseConnection(settings?: Settings) {
   return new Firestore(storeConfig);
 }
 
-export function handleStreamHeader(stream: Duplex) {
+export function connectToProductDatabase(database: Firestore) {
+  return {
+    async getProduct(source: string, productId: string) {
+      const doc = await database
+        .collection(`${source}.products`)
+        .doc(productId)
+        .get();
+      if (!doc.exists) {
+        return {
+          error: {
+            code: 'ERR_PRODUCT_NOT_FOUND',
+            message: `Product ${productId} not found in ${source}.products`,
+          },
+          ok: false,
+        };
+      }
+      const record = doc.data();
+      if (!record) {
+        return {
+          error: {
+            code: 'ERR_PRODUCT_NOT_FOUND',
+            message: `Unexpected empty record for ${productId} in ${source}.products`,
+          },
+          ok: false,
+        };
+      }
+      return {
+        data: record,
+        ok: true,
+      };
+    },
+  };
+}
+
+type SteamHeaderHandler = (
+  stream: Duplex,
+) => (change: FirebaseFirestore.DocumentChange) => number | null;
+
+export function handleNoHeaderStream(stream: Duplex) {
+  return function writeHeaderToStream() {
+    stream.end();
+    throw new Error('No header should be used');
+  };
+}
+
+export function handleProductStreamHeader(stream: Duplex) {
   return function writeHeaderToStream(
     change: FirebaseFirestore.DocumentChange,
   ) {
@@ -81,6 +126,7 @@ export function closeReplyStream(
 
 export function createListenerToReplyStreamData(
   database: Firestore,
+  streamHeaderHandler: SteamHeaderHandler,
   options?: {
     logger?: Logger;
   },
@@ -104,7 +150,7 @@ export function createListenerToReplyStreamData(
           if (change.type === 'removed') return;
           const isHeader = change.doc.id === 'headers';
           if (isHeader) {
-            const headerTotal = handleStreamHeader(duplexStream)(change);
+            const headerTotal = streamHeaderHandler(duplexStream)(change);
             if (headerTotal !== null) {
               logger.info(
                 `Update total from ${totalDocsExpected} to ${headerTotal}`,
@@ -126,6 +172,6 @@ export function createListenerToReplyStreamData(
         });
       });
     duplexStream.on('end', () => detachDBListener());
-    return Readable.from(duplexStream);
+    return duplexStream;
   };
 }
