@@ -6,14 +6,14 @@ import {
   closePage,
   createBrowserPage,
   createChromiumBrowser,
-  createProductDetailsHandler,
 } from '@/browser.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
 import { server } from '@/mocks/node.ts';
+import { createProductDetailsFetcher } from '@/ocado.ts';
 
 describe('background-product-detail', () => {
   type ProductDetailsResp = Awaited<
-    ReturnType<ReturnType<typeof createProductDetailsHandler>>
+    ReturnType<ReturnType<typeof createProductDetailsFetcher>>
   >;
   beforeAll(() => {
     server.listen();
@@ -85,7 +85,7 @@ describe('background-product-detail', () => {
         status: 200,
       });
     });
-    const resp = await createProductDetailsHandler(page)(url);
+    const resp = await createProductDetailsFetcher(page)(url);
     await closePage(page);
     await closeBrowser(browser);
     expectFunctions(resp);

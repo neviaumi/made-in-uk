@@ -151,7 +151,7 @@ const server = createServer(async (req, res) => {
               product: {
                 productId,
                 productUrl,
-                source: 'ocado',
+                source: 'OCADO',
               },
               requestId: requestId,
               type: TASK_TYPE.FETCH_PRODUCT_DETAIL,

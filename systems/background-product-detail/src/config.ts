@@ -65,9 +65,12 @@ export function loadConfig(appEnv: AppEnvironment) {
       format: 'port',
     },
   });
-  configSchema.validate({
-    allowed: 'strict',
-  });
+  if (![AppEnvironment.TEST].includes(appEnv)) {
+    configSchema.validate({
+      allowed: 'strict',
+    });
+  }
+
   return configSchema;
 }
 

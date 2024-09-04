@@ -7,7 +7,6 @@ import {
   closePage,
   createBrowserPage,
   createChromiumBrowser,
-  createProductDetailsHandler,
 } from '@/browser.ts';
 import { APP_ENV, loadConfig } from '@/config.ts';
 import {
@@ -17,8 +16,12 @@ import {
   createReplyStreamOnDatabase,
   databaseHealthCheck,
 } from '@/database.ts';
+import * as lilysKitchen from '@/lilys-kitchen.ts';
 import { createLogger } from '@/logger.ts';
-import { REPLY_DATA_TYPE } from '@/types.ts';
+import * as ocado from '@/ocado.ts';
+import * as petsAtHome from '@/pets-at-home.ts';
+import { PRODUCT_SOURCE, REPLY_DATA_TYPE } from '@/types.ts';
+import * as zooplus from '@/zooplus.ts';
 
 const config = loadConfig(APP_ENV);
 const logger = createLogger(APP_ENV);
@@ -26,6 +29,7 @@ enum TASK_TYPE {
   FETCH_PRODUCT_DETAIL = 'FETCH_PRODUCT_DETAIL',
   UPDATE_PRODUCT_DETAIL = 'UPDATE_PRODUCT_DETAIL',
 }
+
 async function handleHealthCheck(res: Parameters<RequestListener>[1]) {
   const database = createDatabaseConnection();
   const [databaseHealthCheckResult] = await Promise.all([
@@ -71,34 +75,51 @@ async function handleFetchProductDetail(
     product: {
       productId: string;
       productUrl: string;
-      source: string;
+      source: PRODUCT_SOURCE;
     };
   };
   const replyStream = createReplyStreamOnDatabase(database);
 
   const browser = await createChromiumBrowser();
   const page = await createBrowserPage(browser)();
-
-  const productInfo = await createProductDetailsHandler(page)(productUrl)
-    .catch(e => ({
-      error: {
-        code: 'ERR_UNHANDLED_EXCEPTION',
-        message: e.message,
-        meta: { payload },
-      },
-      ok: false as const,
-    }))
+  const fetchers = {
+    [PRODUCT_SOURCE.LILYS_KITCHEN]: lilysKitchen,
+    [PRODUCT_SOURCE.OCADO]: ocado,
+    [PRODUCT_SOURCE.PETS_AT_HOME]: petsAtHome,
+    [PRODUCT_SOURCE.ZOOPLUS]: zooplus,
+  };
+  const productInfo = await fetchers[source]
+    .createProductDetailsFetcher(page)(productUrl)
+    .catch(e => {
+      logger.error('Failed to fetch product detail', {
+        error: e,
+      });
+      return {
+        error: {
+          code: 'ERR_UNHANDLED_EXCEPTION',
+          message: e.message,
+          meta: { payload },
+        },
+        ok: false as const,
+      };
+    })
     .finally(async () => {
       await closePage(page);
       await closeBrowser(browser);
     });
   if (!productInfo.ok) {
+    logger.error('Failed to fetch product detail', {
+      error: productInfo.error,
+    });
     await replyStream(requestId, productId).set({
       error: productInfo.error,
       type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE,
     });
     return;
   }
+  logger.info('Fetched product detail', {
+    product: productInfo.data,
+  });
   const batchWrite = database.batch();
   batchWrite.set(replyStream(requestId, productId), {
     data: productInfo.data,
@@ -134,7 +155,8 @@ async function handleUpdateProductDetail(
   const browser = await createChromiumBrowser();
   const page = await createBrowserPage(browser)();
 
-  const productInfo = await createProductDetailsHandler(page)(productUrl)
+  const productInfo = await ocado
+    .createProductDetailsFetcher(page)(productUrl)
     .catch(e => ({
       error: {
         code: 'ERR_UNHANDLED_EXCEPTION',
@@ -203,6 +225,10 @@ const server = createServer(async (req, res) => {
   }
   await lock.acquireLock(requestId, product.productId, payload);
   if (type === TASK_TYPE.FETCH_PRODUCT_DETAIL) {
+    loggerWithRequestId.info('Handle FETCH_PRODUCT_DETAIL Request', {
+      product,
+      type,
+    });
     await handleFetchProductDetail(database, requestId, { product });
   } else if (type === TASK_TYPE.UPDATE_PRODUCT_DETAIL) {
     await handleUpdateProductDetail(database, { product });

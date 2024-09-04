@@ -1,0 +1,77 @@
+import playwright from 'playwright';
+
+import { APP_ENV } from '@/config.ts';
+import { extractTotalWeight } from '@/llm.ts';
+import { createLogger, type Logger } from '@/logger.ts';
+import { type Product, PRODUCT_SOURCE } from '@/types.ts';
+
+export const baseUrl = 'https://www.lilyskitchen.co.uk/';
+export function createProductDetailsFetcher(
+  page: playwright.Page,
+  options?: {
+    logger: Logger;
+  },
+) {
+  const logger = options?.logger ?? createLogger(APP_ENV);
+  return async function fetchProductDetails(productUrl: string): Promise<
+    | {
+        error: { code: string; message: string; meta: Record<string, unknown> };
+        ok: false;
+      }
+    | { data: Product; ok: true }
+  > {
+    const fullUrl = new URL(productUrl, baseUrl).toString();
+    await page.goto(fullUrl);
+    (await page
+      .getByRole('button', { name: 'Accept All Cookies' })
+      .isVisible()) &&
+      (await page.getByRole('button', { name: 'Accept All Cookies' }).click());
+    const productTitle = await page
+      .locator('meta[property="og:title"]')
+      .getAttribute('content');
+    const image = await page
+      .locator('meta[property="og:image"]')
+      .getAttribute('content');
+    const url = await page
+      .locator('meta[property="og:url"]')
+      .getAttribute('content');
+
+    const productDetail = await page
+      .locator('[data-product-details]')
+      .first()
+      .evaluate(el => JSON.parse(el.getAttribute('data-product-details')!));
+    const price = Intl.NumberFormat('en-GB', {
+      currency: productDetail['currency'],
+      style: 'currency',
+    }).format(productDetail['unit_price']);
+    const productWeight = await extractTotalWeight(
+      {
+        description: productTitle!,
+      },
+      { logger },
+    );
+    const pricePerItem =
+      productWeight.data.totalWeight === null
+        ? null
+        : `${Intl.NumberFormat('en-GB', {
+            currency: productDetail['currency'],
+            style: 'currency',
+          }).format(
+            productDetail['unit_price'] / productWeight.data.totalWeight,
+          )}/${productWeight.data.weightUnit}`;
+    return {
+      data: {
+        countryOfOrigin: 'Unknown',
+        id: productDetail['id'],
+        image: image!,
+        price: price,
+        pricePerItem: pricePerItem,
+        source: PRODUCT_SOURCE.LILYS_KITCHEN,
+        title: productTitle!,
+        type: 'product',
+        url: url!,
+      },
+      ok: true,
+    };
+  };
+}

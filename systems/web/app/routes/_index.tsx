@@ -19,9 +19,9 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-const SearchProducts = gql`
+const SearchProductsQuery = gql`
   query searchProducts($input: SearchProductInput!) {
-    searchProduct(input: $input) {
+    products(input: $input) {
       requestId
       stream @stream {
         type
@@ -59,7 +59,7 @@ export default function Index() {
   });
   const [matchingResults] = useQuery<
     {
-      searchProduct: {
+      products: {
         requestId: string;
         stream: Array<{
           data: {
@@ -79,7 +79,7 @@ export default function Index() {
     { input: typeof matchingFilters }
   >({
     pause: matchingFilters.keyword.length === 0,
-    query: SearchProducts,
+    query: SearchProductsQuery,
     variables: {
       input: matchingFilters,
     },
@@ -87,13 +87,7 @@ export default function Index() {
   const { data, error, fetching } = matchingResults;
   // @ts-expect-error type error
   const isEndOfStream = !fetching && matchingResults['hasNext'] === false;
-  // eslint-disable-next-line no-console
-  console.log({
-    ENV,
-    data,
-    error,
-    fetching,
-  });
+
   return (
     <Page className={'tw-mx-auto tw-pb-2'}>
       <Page.Header
@@ -151,10 +145,10 @@ export default function Index() {
             <p className={'tw-text-lg'}>
               Number of products streamed:{' '}
               <span className={'tw-font-bold'}>
-                {data.searchProduct.stream.length}
+                {data.products.stream.length}
               </span>
             </p>
-            <p>Request Id: {data.searchProduct.requestId}</p>
+            <p>Request Id: {data.products.requestId}</p>
 
             {!isEndOfStream && (
               <p className={'tw-text-sm'}>More product loading...</p>
@@ -164,7 +158,7 @@ export default function Index() {
       </Page.Header>
       <Page.Main className={'tw-pt-2'}>
         <article>
-          {isEndOfStream && data && data.searchProduct.stream.length === 0 && (
+          {isEndOfStream && data && data.products.stream.length === 0 && (
             <section className={'tw-flex tw-flex-col tw-gap-2 tw-text-center'}>
               <header className={'tw-text-6xl tw-font-extrabold'}>
                 👀 Can&apos;t see the 💩 Captain!
@@ -188,7 +182,7 @@ export default function Index() {
               ))}
             {!fetching &&
               data &&
-              data.searchProduct.stream
+              data.products.stream
                 .filter(({ type }) => type === 'FETCH_PRODUCT_DETAIL')
                 .toSorted((productA, productB) => {
                   if (!isEndOfStream) return 0;

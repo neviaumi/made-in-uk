@@ -4,6 +4,11 @@ import { useDeferStream } from '@graphql-yoga/plugin-defer-stream';
 import { createSchema, createYoga, useReadinessCheck } from 'graphql-yoga';
 
 import { APP_ENV, loadConfig } from '@/config.ts';
+import {
+  dealMonitorItemDefer,
+  getDealMonitorQuery,
+  listDealMonitorsQuery,
+} from '@/deal-monitor.query.ts';
 import { createLogger } from '@/logger.ts';
 import {
   searchProductQuery,
@@ -18,8 +23,13 @@ const logger = createLogger(APP_ENV);
 
 export const schema = {
   resolvers: {
+    GetDealMonitorResult: {
+      items: dealMonitorItemDefer,
+    },
     Query: {
-      searchProduct: searchProductQuery,
+      dealMonitor: getDealMonitorQuery,
+      dealMonitors: listDealMonitorsQuery,
+      products: searchProductQuery,
     },
     SearchProductResult: {
       stream: searchProductStream,
@@ -38,6 +48,10 @@ export const schema = {
       url: String
       price: String
       pricePerItem: String
+      source: String
+    }
+    input GetDealMonitorInput {
+      monitorId: String!
     }
     enum ProductStreamType {
       FETCH_PRODUCT_DETAIL_EOS
@@ -51,8 +65,29 @@ export const schema = {
       requestId: String!
       stream: [ProductStream!]!
     }
+
+    type DealMonitor {
+      id: String!
+      name: String!
+      description: String!
+      numberOfItems: Int!
+    }
+
+    type GetDealMonitorResult {
+      requestId: String!
+      monitor: DealMonitor
+      items: [Product!]!
+    }
+
+    type ListDealMonitorsResult {
+      requestId: String!
+      monitors: [DealMonitor!]!
+    }
+
     type Query {
-      searchProduct(input: SearchProductInput!): SearchProductResult!
+      products(input: SearchProductInput!): SearchProductResult!
+      dealMonitor(input: GetDealMonitorInput!): GetDealMonitorResult!
+      dealMonitors: ListDealMonitorsResult!
     }
   `,
 };

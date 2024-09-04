@@ -24,6 +24,44 @@ export function createCloudTaskClient(
   }
   return new CloudTasksClient(...args);
 }
+export enum TASK_TYPE {
+  FETCH_PRODUCT_DETAIL = 'FETCH_PRODUCT_DETAIL',
+}
+export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
+  return async function scheduleProductDetailTask(payload: {
+    product: {
+      productId: string;
+      productUrl: string;
+      source: string;
+    };
+    requestId: string;
+    type: TASK_TYPE;
+  }) {
+    return cloudTask.createTask({
+      parent: String(config.get('cloudTasks.productDetailQueue')),
+      task: {
+        httpRequest: {
+          body: Buffer.from(
+            JSON.stringify({ product: payload.product, type: payload.type }),
+          ).toString('base64'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Request-Id': payload.requestId,
+          },
+          httpMethod: 'POST',
+          oidcToken: ![AppEnvironment.DEV, AppEnvironment.TEST].includes(
+            APP_ENV,
+          )
+            ? {
+                serviceAccountEmail: await getInstanceServiceAccount(),
+              }
+            : null,
+          url: String(config.get('productDetail.endpoint')),
+        },
+      },
+    });
+  };
+}
 
 export function createProductSearchScheduler(cloudTask: CloudTasksClient) {
   return async function scheduleProductSearchTask(payload: {
