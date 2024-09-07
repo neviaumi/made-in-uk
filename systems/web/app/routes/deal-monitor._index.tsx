@@ -58,12 +58,11 @@ export default function GoodDealsMonitorListing() {
       };
     };
   } = useLoaderData();
-  console.log(dealMonitors);
   return (
     <Page className={'tw-mx-auto tw-pb-2'}>
       <Page.Header
         className={
-          'tw-sticky tw-top-0 tw-z-10 tw-border-b tw-border-solid tw-border-b-primary tw-bg-white tw-py-2'
+          'tw-sticky tw-top-0 tw-z-10 tw-border-b tw-border-solid tw-border-b-primary tw-bg-white  tw-pb-2'
         }
       >
         <h1 className={'tw-text-center'}>Deal Monitors</h1>

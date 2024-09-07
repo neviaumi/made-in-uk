@@ -4,6 +4,7 @@ import {
   Links,
   LiveReload,
   Meta,
+  NavLink,
   Outlet,
   Scripts,
   ScrollRestoration,
@@ -31,6 +32,38 @@ export default function App() {
         <Links />
       </head>
       <body>
+        <nav className={'tw-container tw-mx-auto'}>
+          <ol className={'tw-flex tw-flex-row tw-gap-0.5 tw-py-1'}>
+            <li>
+              <NavLink
+                className={({ isActive }) => {
+                  const classes = [
+                    'tw-block tw-px-2 tw-py-1 tw-rounded-xl hover:tw-outline hover:tw-outline-1 hover:tw-outline-emerald-300',
+                  ];
+                  if (isActive) classes.push('tw-bg-primary tw-font-semibold');
+                  return classes.join(' ');
+                }}
+                to={'/'}
+              >
+                Mall
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                className={({ isActive }) => {
+                  const classes = [
+                    'tw-block tw-px-2 tw-py-1 tw-rounded-xl hover:tw-outline hover:tw-outline-1 hover:tw-outline-emerald-300',
+                  ];
+                  if (isActive) classes.push('tw-bg-primary tw-font-semibold');
+                  return classes.join(' ');
+                }}
+                to={'/deal-monitor'}
+              >
+                Deal Monitors
+              </NavLink>
+            </li>
+          </ol>
+        </nav>
         <Provider value={client}>
           <Outlet />
         </Provider>

@@ -14,6 +14,24 @@ export function createFireStoreDB() {
     field: 'expiresAt',
     ttlConfig: {},
   });
+  new firestore.Field(resourceName`lilys-kitchen-cache-ttl`, {
+    collection: 'LILYS_KITCHEN.products',
+    database: dbRef.name,
+    field: 'expiresAt',
+    ttlConfig: {},
+  });
+  new firestore.Field(resourceName`pets-at-home-cache-ttl`, {
+    collection: 'PETS_AT_HOME.products',
+    database: dbRef.name,
+    field: 'expiresAt',
+    ttlConfig: {},
+  });
+  new firestore.Field(resourceName`zooplus-cache-ttl`, {
+    collection: 'ZOOPLUS.products',
+    database: dbRef.name,
+    field: 'expiresAt',
+    ttlConfig: {},
+  });
   return {
     name: dbRef.name,
   };
