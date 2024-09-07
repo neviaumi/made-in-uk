@@ -39,6 +39,7 @@ describe('Pets at home', () => {
             'https://cdn.petsathome.com/public/images/products/900_7128260.jpg',
           price: '£19.49',
           pricePerItem: '£9.75/kg',
+          source: 'PETS_AT_HOME',
           title:
             'Lily’s Kitchen Fisherman’s Feast Adult Cat Dry Food White Fish & Salmon | Pets',
           type: 'product',

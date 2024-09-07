@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   closeBrowser,
@@ -8,11 +8,30 @@ import {
 } from '@/browser.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
 import { baseUrl, createProductDetailsFetcher } from '@/lilys-kitchen.ts';
+import { createLLMPromptHandler } from '@/mocks/handlers.ts';
+import { HttpResponse } from '@/mocks/msw.ts';
+import { server } from '@/mocks/node.ts';
 
 describe('Lilys Kitchen', () => {
+  beforeAll(() => {
+    server.listen();
+  });
+  afterAll(() => {
+    server.close();
+  });
   it(
     'Cat Dry food',
     async () => {
+      server.use(
+        createLLMPromptHandler(() =>
+          HttpResponse.json({
+            message: JSON.stringify({
+              totalWeight: 4,
+              weightUnit: 'kg',
+            }),
+          }),
+        ),
+      );
       const browser = await createChromiumBrowser({
         headless: true,
       });
@@ -40,6 +59,7 @@ describe('Lilys Kitchen', () => {
             'https://www.lilyskitchen.co.uk/dw/image/v2/BCBF_PRD/on/demandware.static/-/Sites-lilsrp-master-catalog/default/dwd7c74b6c/images/hi-res/BCDDC.png?sw=600&sh=600&sm=fit',
           price: '£53.00',
           pricePerItem: '£13.25/kg',
+          source: 'LILYS_KITCHEN',
           title: 'Chicken with Veggies Dry Food (4kg)',
           type: 'product',
           url: expect.any(String),
