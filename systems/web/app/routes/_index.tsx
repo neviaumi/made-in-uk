@@ -1,7 +1,6 @@
 import { Button, Field, Input } from '@headlessui/react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { json, type MetaFunction } from '@remix-run/node';
-import { useLoaderData } from '@remix-run/react';
 import type React from 'react';
 import { useCallback, useRef, useState } from 'react';
 import { gql, useQuery } from 'urql';
@@ -50,7 +49,6 @@ export async function loader() {
 }
 
 export default function Index() {
-  const { ENV } = useLoaderData<typeof loader>();
   const searchForm = useRef<HTMLFormElement>(null);
   const [matchingFilters, setMatchingFilters] = useState<{
     keyword: string;
@@ -92,7 +90,7 @@ export default function Index() {
     <Page className={'tw-mx-auto tw-pb-2'}>
       <Page.Header
         className={
-          'tw-sticky tw-top-0 tw-z-10 tw-border-b tw-border-solid tw-border-b-primary tw-bg-white tw-py-2'
+          'tw-sticky tw-top-0 tw-z-10 tw-border-b tw-border-solid tw-border-b-primary tw-bg-white tw-pb-2'
         }
       >
         <form

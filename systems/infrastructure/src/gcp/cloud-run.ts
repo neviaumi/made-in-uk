@@ -69,10 +69,14 @@ export function createCloudRunForWeb({
 
 export function createCloudRunForApi({
   databaseName,
+  productDetailEndpoint,
+  productDetailTaskQueue,
   productSearchEndpoint,
   productSearchTaskQueue,
 }: {
   databaseName: Output<string>;
+  productDetailEndpoint: Output<string>;
+  productDetailTaskQueue: Output<string>;
   productSearchEndpoint: Output<string>;
   productSearchTaskQueue: Output<string>;
 }) {
@@ -105,6 +109,14 @@ export function createCloudRunForApi({
               {
                 name: 'API_PRODUCT_SEARCH_QUEUE',
                 value: productSearchTaskQueue,
+              },
+              {
+                name: 'API_PRODUCT_DETAIL_ENDPOINT',
+                value: productDetailEndpoint,
+              },
+              {
+                name: 'API_PRODUCT_DETAIL_QUEUE',
+                value: productDetailTaskQueue,
               },
             ],
             image: apiImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',

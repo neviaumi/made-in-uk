@@ -5,7 +5,23 @@ import type { Logger } from '@/logger.ts';
 
 const config = loadConfig(APP_ENV);
 
-export async function extractTotalWeight(
+function withTimeout(timeout: number) {
+  return function wrapper<F extends (...args: any[]) => Promise<any>>(
+    fn: F,
+    defaultValue: Awaited<ReturnType<F>>,
+  ): (...args: Parameters<F>) => Promise<Awaited<ReturnType<F>>> {
+    return (...args: Parameters<F>): Promise<Awaited<ReturnType<F>>> => {
+      return Promise.race([
+        new Promise<Awaited<ReturnType<F>>>(resolve =>
+          setTimeout(() => resolve(defaultValue), timeout),
+        ),
+        fn(...args),
+      ]);
+    };
+  };
+}
+
+async function _extractTotalWeight(
   input: { description: string },
   options: { logger: Logger },
 ): Promise<{
@@ -43,36 +59,33 @@ The weight probably include the product name, please remove it before compute th
   }
 
   try {
-    return await Promise.race<any>([
-      new Promise(resolve =>
-        setTimeout(() => {
-          resolve({ data: { totalWeight: null, weightUnit: 'kg' } } as any);
-        }, 60000),
-      ),
-      fetch(new URL('/prompt', llmEndpoint), requestInit)
-        .then(res => res.json())
-        .then(jsonRes => {
-          return ((content: string) => {
-            try {
-              return { data: JSON.parse(content), raw: content };
-            } catch {
-              logger.error('Failed to parse JSON response from LLM', {
-                generatedContent: content,
-              });
-              return {
-                data: { totalWeight: null, weightUnit: 'kg' },
-                raw: content,
-              };
-            }
-          })(jsonRes['message']);
-        }),
-    ]);
+    return await fetch(new URL('/prompt', llmEndpoint), requestInit)
+      .then(res => res.json())
+      .then(jsonRes => {
+        return ((content: string) => {
+          try {
+            return { data: JSON.parse(content), raw: content };
+          } catch {
+            logger.error('Failed to parse JSON response from LLM', {
+              generatedContent: content,
+            });
+            return {
+              data: { totalWeight: null, weightUnit: 'kg' },
+              raw: content,
+            };
+          }
+        })(jsonRes['message']);
+      });
   } catch {
     return { data: { totalWeight: null, weightUnit: 'kg' } };
   }
 }
 
-export async function extractCountryFromAddress(
+export const extractTotalWeight = withTimeout(60000)<
+  typeof _extractTotalWeight
+>(_extractTotalWeight, { data: { totalWeight: null, weightUnit: 'kg' } });
+
+async function _extractCountryFromAddress(
   address: string,
   logger: Logger,
 ): Promise<{
@@ -130,3 +143,9 @@ ${address}<|end|>`,
     };
   }
 }
+
+export const extractCountryFromAddress = withTimeout(60000)<
+  typeof _extractCountryFromAddress
+>(_extractCountryFromAddress, {
+  data: { extractedCountry: 'Unknown', withInUK: false },
+});

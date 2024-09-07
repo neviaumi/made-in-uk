@@ -91,9 +91,6 @@ async function handleFetchProductDetail(
   const productInfo = await fetchers[source]
     .createProductDetailsFetcher(page)(productUrl)
     .catch(e => {
-      logger.error('Failed to fetch product detail', {
-        error: e,
-      });
       return {
         error: {
           code: 'ERR_UNHANDLED_EXCEPTION',
@@ -108,18 +105,12 @@ async function handleFetchProductDetail(
       await closeBrowser(browser);
     });
   if (!productInfo.ok) {
-    logger.error('Failed to fetch product detail', {
-      error: productInfo.error,
-    });
     await replyStream(requestId, productId).set({
       error: productInfo.error,
       type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE,
     });
     return;
   }
-  logger.info('Fetched product detail', {
-    product: productInfo.data,
-  });
   const batchWrite = database.batch();
   batchWrite.set(replyStream(requestId, productId), {
     data: productInfo.data,
