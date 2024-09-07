@@ -405,21 +405,19 @@ export function allowAPIToCallBackgroundProductSearch({
   });
 }
 
-export function allowProductSearchToCallBackgroundProductDetail({
+export function allowServiceAccountsToCallBackgroundProductDetail({
   backgroundProductDetailCloudRunServiceName,
-  productSearchCloudRunServiceAccount,
+  serviceAccounts,
 }: {
   backgroundProductDetailCloudRunServiceName: Output<string>;
-  productSearchCloudRunServiceAccount: Output<string>;
+  serviceAccounts: Array<Output<string>>;
 }) {
   new cloudrun.IamBinding(
-    resourceName`allow-service-account-to-call-product-detail`,
+    resourceName`allow-service-accounts-to-call-product-detail`,
     {
-      members: [
-        productSearchCloudRunServiceAccount.apply(
-          serviceAccount => `serviceAccount:${serviceAccount}`,
-        ),
-      ],
+      members: serviceAccounts.map(account =>
+        account.apply(serviceAccount => `serviceAccount:${serviceAccount}`),
+      ),
       role: 'roles/run.invoker',
       service: backgroundProductDetailCloudRunServiceName,
     },

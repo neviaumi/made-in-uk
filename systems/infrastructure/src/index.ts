@@ -1,7 +1,7 @@
 import { createDockerRepository } from './gcp/artifact-registry.ts';
 import {
   allowAPIToCallBackgroundProductSearch,
-  allowProductSearchToCallBackgroundProductDetail,
+  allowServiceAccountsToCallBackgroundProductDetail,
   allowServiceAccountsToCallLLM,
   createCloudRunForApi,
   createCloudRunForBackgroundProductDetail,
@@ -53,6 +53,8 @@ const {
   url: apiUrl,
 } = createCloudRunForApi({
   databaseName: databaseName,
+  productDetailEndpoint: backgroundProductDetailUrl,
+  productDetailTaskQueue: productDetailQueueName,
   productSearchEndpoint: backgroundProductSearchUrl,
   productSearchTaskQueue: productSearchQueueName,
 });
@@ -67,10 +69,13 @@ allowAPIToCallBackgroundProductSearch({
   backgroundProductSearchCloudRunServiceName:
     backgroundProductSearchServiceName,
 });
-allowProductSearchToCallBackgroundProductDetail({
+allowServiceAccountsToCallBackgroundProductDetail({
   backgroundProductDetailCloudRunServiceName:
     backgroundProductDetailServiceName,
-  productSearchCloudRunServiceAccount: productSearchCloudRunServiceAccount,
+  serviceAccounts: [
+    apiCloudRunServiceAccount,
+    productSearchCloudRunServiceAccount,
+  ],
 });
 
 const { serviceAccount: webCloudRunServiceAccount, url: webUrl } =

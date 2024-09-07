@@ -39,6 +39,7 @@ describe('Zooplus', () => {
             'https://media.zooplus.com/bilder/4/400/413997_pla_encore_cat_huhn_lachs_hs_01_4.jpg',
           price: '£5.79',
           pricePerItem: '£7.24/kg',
+          source: 'ZOOPLUS',
           title: 'Encore Cat Chicken with Salmon | zooplus.co.uk',
           type: 'product',
           url: expect.any(String),

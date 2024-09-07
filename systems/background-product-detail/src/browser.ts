@@ -1,11 +1,5 @@
 import playwright from 'playwright';
 
-import { APP_ENV } from '@/config.ts';
-import { extractCountryFromAddress } from '@/llm.ts';
-import { createLogger, type Logger } from '@/logger.ts';
-
-import type { Product } from './types.ts';
-
 export const baseUrl = 'https://www.ocado.com';
 
 export function createChromiumBrowser(

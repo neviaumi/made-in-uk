@@ -60,7 +60,7 @@ async function lookupCountryOfOrigin(page: playwright.Page, logger: Logger) {
       if (extractedCountry && extractedCountry !== 'Unknown') {
         return String(extractedCountry);
       }
-      logger.warn(`Unable parse given address`, {
+      logger.warning(`Unable parse given address`, {
         address: value,
         extractedCountry,
         generatedContent: raw,
@@ -114,7 +114,7 @@ export function createProductDetailsFetcher(
       .split('/')
       .pop();
     if (!productId) {
-      logger.warn('Product no open graph meta', {
+      logger.warning('Product no open graph meta', {
         productOpenGraphMeta,
         url: fullUrl,
       });

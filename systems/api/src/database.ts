@@ -1,4 +1,4 @@
-import { Duplex, Readable } from 'node:stream';
+import { Duplex } from 'node:stream';
 
 import { Firestore, type Settings } from '@google-cloud/firestore';
 

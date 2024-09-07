@@ -1,17 +1,9 @@
 import playwright from 'playwright';
 
-import { APP_ENV } from '@/config.ts';
-import { createLogger, type Logger } from '@/logger.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
 
 export const baseUrl = 'https://www.petsathome.com';
-export function createProductDetailsFetcher(
-  page: playwright.Page,
-  options?: {
-    logger: Logger;
-  },
-) {
-  const logger = options?.logger ?? createLogger(APP_ENV);
+export function createProductDetailsFetcher(page: playwright.Page) {
   return async function fetchProductDetails(productUrl: string): Promise<
     | {
         error: { code: string; message: string; meta: Record<string, unknown> };
