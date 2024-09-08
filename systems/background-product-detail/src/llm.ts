@@ -81,7 +81,7 @@ The weight probably include the product name, please remove it before compute th
   }
 }
 
-export const extractTotalWeight = withTimeout(60000)<
+export const extractTotalWeight = withTimeout(1000 * 60 * 5)<
   typeof _extractTotalWeight
 >(_extractTotalWeight, { data: { totalWeight: null, weightUnit: 'kg' } });
 
@@ -144,7 +144,7 @@ ${address}<|end|>`,
   }
 }
 
-export const extractCountryFromAddress = withTimeout(60000)<
+export const extractCountryFromAddress = withTimeout(1000 * 60 * 5)<
   typeof _extractCountryFromAddress
 >(_extractCountryFromAddress, {
   data: { extractedCountry: 'Unknown', withInUK: false },
