@@ -3,6 +3,7 @@ from starlette.responses import JSONResponse
 from starlette.routing import Route
 import os
 import llm_engine
+import datetime
 import time
 import uvicorn
 import app_logging
@@ -23,7 +24,7 @@ async def prompt(request):
         "system": system,
         "prompt_str": prompt_str,
         "response": resp,
-        "response_time": resp_end - resp_start
+        "response_time": str(datetime.timedelta(seconds=resp_end - resp_start))
     })
     return JSONResponse({'message': resp})
 
