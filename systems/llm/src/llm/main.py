@@ -3,6 +3,7 @@ from starlette.responses import JSONResponse
 from starlette.routing import Route
 import os
 import llm_engine
+import time
 import uvicorn
 import app_logging
 
@@ -13,13 +14,16 @@ logger = app_logging.get_logger(__name__)
 
 async def prompt(request):
     api_body = await request.json()
+    resp_start = time.time()
     system = api_body['system']
     prompt_str = api_body['prompt']
     resp = llm_model.prompt(system, prompt_str)
+    resp_end = time.time()
     logger.info("Response from LLM", extra={
         "system": system,
         "prompt_str": prompt_str,
         "response": resp,
+        "response_time": resp_end - resp_start
     })
     return JSONResponse({'message': resp})
 
