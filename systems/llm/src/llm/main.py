@@ -24,7 +24,8 @@ async def prompt(request):
         "system": system,
         "prompt_str": prompt_str,
         "response": resp,
-        "response_time": str(datetime.timedelta(seconds=resp_end - resp_start))
+        "response_time": str(datetime.timedelta(seconds=resp_end - resp_start)),
+        "request_id": request.headers.get('request-id')
     })
     return JSONResponse({'message': resp})
 

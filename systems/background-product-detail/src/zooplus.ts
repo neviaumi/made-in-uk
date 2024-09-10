@@ -5,6 +5,52 @@ import { createLogger, type Logger } from '@/logger.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
 
 export const baseUrl = 'https://www.zooplus.co.uk/';
+
+async function extractPrice(page: playwright.Page) {
+  const priceContainer = page.locator(
+    '[data-zta="SelectedArticleBox__TopSection"]',
+  );
+  const isPriceReduced = !(await priceContainer
+    .locator('[data-zta="productStandardPriceAmount"]')
+    .first()
+    .isVisible());
+  if (!isPriceReduced) {
+    return {
+      price: await priceContainer
+        .locator('[data-zta="productStandardPriceAmount"]')
+        .first()
+        .textContent(),
+      pricePerItem: await priceContainer
+        .locator('[data-zta="productStandardPriceSuffix"]')
+        .first()
+        .textContent()
+        .then(price =>
+          price
+            ?.split('/')
+            .map(p => p.trim())
+            .join('/'),
+        ),
+    };
+  }
+
+  return {
+    price: await priceContainer
+      .locator('[data-zta="productReducedPriceAmount"]')
+      .first()
+      .textContent(),
+    pricePerItem: await priceContainer
+      .locator('[data-zta="productReducedPriceSuffix"]')
+      .first()
+      .textContent()
+      .then(price =>
+        price
+          ?.split('/')
+          .map(p => p.trim())
+          .join('/'),
+      ),
+  };
+}
+
 export function createProductDetailsFetcher(
   page: playwright.Page,
   options?: {
@@ -32,20 +78,7 @@ export function createProductDetailsFetcher(
     const image = await page
       .locator('meta[property="og:image"]')
       .getAttribute('content');
-    const price = await page
-      .locator('[data-zta="SelectedArticleBox"]')
-      .locator('[data-zta="productStandardPriceAmount"]')
-      .textContent();
-    const pricePerItem = await page
-      .locator('[data-zta="SelectedArticleBox"]')
-      .locator('[data-zta="productStandardPriceSuffix"]')
-      .textContent()
-      .then(price =>
-        price
-          ?.split('/')
-          .map(p => p.trim())
-          .join('/'),
-      );
+    const { price, pricePerItem } = await extractPrice(page);
     return {
       data: {
         countryOfOrigin: 'Unknown',

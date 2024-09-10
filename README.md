@@ -91,15 +91,7 @@ bash ./scripts/dev.sh
 
 ### Initialize GCP
 
-Before deploying, you need to initialize the GCP project.
-
-```sh
-cd systems/infrastructure
-# For development
-bash ./scripts/init.sh development
-```
-
-After initialization, you can deploy using the following script:
+It may error about you need enable project on dashboard, just follow the link and enable the project.
 
 ```sh
 # For development

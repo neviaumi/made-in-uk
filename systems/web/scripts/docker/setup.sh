@@ -3,6 +3,7 @@
 set -e
 
 IS_DEV=${1:---dev}
+apk --no-cache add curl
 
 if [ "$IS_DEV" == "--dev" ]; then
   npm ci --ignore-scripts

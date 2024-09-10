@@ -69,6 +69,9 @@ async function handleFetchProductDetail(
     };
   },
 ) {
+  const loggerWithRequestId = logger.child({
+    requestId,
+  });
   const {
     product: { productId, productUrl, source },
   } = payload as {
@@ -89,7 +92,10 @@ async function handleFetchProductDetail(
     [PRODUCT_SOURCE.ZOOPLUS]: zooplus,
   };
   const productInfo = await fetchers[source]
-    .createProductDetailsFetcher(page)(productUrl)
+    .createProductDetailsFetcher(page, {
+      logger: loggerWithRequestId,
+      requestId: requestId,
+    })(productUrl)
     .catch(e => {
       return {
         error: {

@@ -67,6 +67,68 @@ const monitors: {
     ],
     name: 'Cat Dry Food',
   },
+  '2': {
+    description: 'Monitor on cat wet food',
+    id: '2',
+    items: [
+      {
+        id: '1934688',
+        source: 'ZOOPLUS',
+        url: '/shop/cats/canned_cat_food_pouches/encore/cans/1934688',
+      },
+      {
+        id: '693953',
+        source: 'ZOOPLUS',
+        url: '/shop/cats/canned_cat_food_pouches/encore/cans/693953',
+      },
+      {
+        id: '1946567',
+        source: 'ZOOPLUS',
+        url: '/shop/cats/canned_cat_food_pouches/encore/cans/1946567',
+      },
+      {
+        id: '693948',
+        source: 'ZOOPLUS',
+        url: '/shop/cats/canned_cat_food_pouches/encore/cans/693948',
+      },
+      {
+        id: '1080139.0',
+        source: 'ZOOPLUS',
+        url: '/shop/cats/canned_cat_food_pouches/lilys_kitchen_wet_cat_food/lilys_kitchen_cans/1080139?activeVariant=1080139.0',
+      },
+      {
+        id: '1080139.1',
+        source: 'ZOOPLUS',
+        url: '/shop/cats/canned_cat_food_pouches/lilys_kitchen_wet_cat_food/lilys_kitchen_cans/1080139?activeVariant=1080139.1',
+      },
+      {
+        id: '7141317P',
+        source: 'PETS_AT_HOME',
+        url: '/product/lilys-kitchen-shredded-fillets-wet-cats-food-multipack-8-tin/7141317P',
+      },
+      {
+        id: '7144736P',
+        source: 'PETS_AT_HOME',
+        url: '/product/lilys-kitchen-shredded-fillets-wet-adult-cat-food-multipack-16-tins/7144736P',
+      },
+      {
+        id: '7142879P',
+        source: 'PETS_AT_HOME',
+        url: '/product/encore-wet-adult-cat-food-tuna-fillet-in-broth-16-tins/7142879P',
+      },
+      {
+        id: 'CSFM70',
+        source: 'LILYS_KITCHEN',
+        url: '/for-cats/wet-food/shredded-fillets-8-x-70g-multipack-CSFM70.html',
+      },
+      {
+        id: 'KCSFTS70',
+        source: 'LILYS_KITCHEN',
+        url: '/for-cats/wet-food/tuna-with-salmon-shredded-fillets-24-x-70g-KCSFTS70.html',
+      },
+    ],
+    name: 'Cat Wet Food',
+  },
 };
 
 export const dealMonitorItemDefer: ResolverFunction<
@@ -75,7 +137,6 @@ export const dealMonitorItemDefer: ResolverFunction<
   { monitor: { id: string; numberOfItems: number }; requestId: string }
 > = async (parent, _, context) => {
   const logger = context.logger;
-  logger.info('dealMonitorItemDefer');
   const requestId = parent.requestId;
   const monitor = monitors[parent.monitor.id];
   const database = createDatabaseConnection();
@@ -85,7 +146,7 @@ export const dealMonitorItemDefer: ResolverFunction<
   const items: Array<unknown> = [];
   for (const item of monitor.items) {
     const cachedRecord = await productDatabase.getProduct(item.source, item.id);
-    logger.info('cachedRecord', cachedRecord);
+
     if (!cachedRecord.ok) {
       await productDetailScheduler({
         product: {
@@ -118,7 +179,7 @@ export const dealMonitorItemDefer: ResolverFunction<
     }
   });
   await closeReplyStream(database, { logger: logger })(requestId);
-  return items;
+  return items.filter(item => item !== undefined && item !== null);
 };
 
 export const listDealMonitorsQuery: ResolverFunction<never> = (

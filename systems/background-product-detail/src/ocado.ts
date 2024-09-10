@@ -8,7 +8,11 @@ import { type Product, PRODUCT_SOURCE } from './types.ts';
 
 export const baseUrl = 'https://www.ocado.com';
 
-async function lookupCountryOfOrigin(page: playwright.Page, logger: Logger) {
+async function lookupCountryOfOrigin(
+  page: playwright.Page,
+  options: { logger: Logger; requestId: string },
+) {
+  const { logger, requestId } = options;
   const countryOfOriginContainer = page
     .locator('.gn-content.bop-info__field')
     .filter({
@@ -56,7 +60,10 @@ async function lookupCountryOfOrigin(page: playwright.Page, logger: Logger) {
       const {
         data: { extractedCountry, withInUK },
         raw,
-      } = await extractCountryFromAddress(value, logger);
+      } = await extractCountryFromAddress(value, {
+        logger,
+        requestId,
+      });
       if (extractedCountry && extractedCountry !== 'Unknown') {
         return String(extractedCountry);
       }
@@ -73,8 +80,9 @@ async function lookupCountryOfOrigin(page: playwright.Page, logger: Logger) {
 
 export function createProductDetailsFetcher(
   page: playwright.Page,
-  options?: {
+  options: {
     logger: Logger;
+    requestId: string;
   },
 ) {
   const logger = options?.logger ?? createLogger(APP_ENV);
@@ -94,7 +102,10 @@ export function createProductDetailsFetcher(
       .isVisible()) &&
       (await page.getByRole('button', { name: 'Accept' }).click());
 
-    const countryOfOrigin = await lookupCountryOfOrigin(page, logger);
+    const countryOfOrigin = await lookupCountryOfOrigin(page, {
+      logger,
+      requestId: options.requestId,
+    });
     const productOpenGraphMeta: {
       'og:image': string;
       'og:title': string;
