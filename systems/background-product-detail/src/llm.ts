@@ -1,12 +1,10 @@
 import { GoogleAuth } from 'google-auth-library';
-import { Agent, fetch, type RequestInit } from 'undici';
 
 import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
 import type { Logger } from '@/logger.ts';
 
 const config = loadConfig(APP_ENV);
-const DEFAULT_LLM_TIMEOUT =
-  APP_ENV === AppEnvironment.DEV ? 1000 * 60 * 10 : 1000 * 60 * 5;
+const DEFAULT_LLM_TIMEOUT = 1000 * 60 * 5;
 
 function withTimeout(timeout: number) {
   return function wrapper<F extends (...args: any[]) => Promise<any>>(
@@ -61,10 +59,6 @@ total weight of White Fish & Salmon Dry Food (2kg) is 2kg because 2kg = 2kg<|end
 <|user|>Given Input: ${input.description}<|end|>`,
       system:
         'You are AI system that able to extract total weight from given input .',
-    }),
-    dispatcher: new Agent({
-      bodyTimeout: DEFAULT_LLM_TIMEOUT,
-      headersTimeout: DEFAULT_LLM_TIMEOUT,
     }),
     method: 'POST',
   };
