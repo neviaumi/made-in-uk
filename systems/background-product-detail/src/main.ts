@@ -127,8 +127,8 @@ async function handleFetchProductDetail(
   batchWrite.set(
     connectToProductDatabase(database)(source, productId),
     Object.assign(productInfo.data, {
-      // 1 hour
-      expiresAt: Timestamp.fromDate(new Date(Date.now() + 1000 * 60 * 60)),
+      // 1 day
+      expiresAt: Timestamp.fromDate(new Date(Date.now() + 1000 * 60 * 60 * 24)),
     }),
   );
   await batchWrite.commit();
