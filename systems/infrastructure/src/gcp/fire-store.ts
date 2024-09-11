@@ -32,6 +32,12 @@ export function createFireStoreDB() {
     field: 'expiresAt',
     ttlConfig: {},
   });
+  new firestore.Field(resourceName`vet-shop-cache-ttl`, {
+    collection: 'VET_SHOP.products',
+    database: dbRef.name,
+    field: 'expiresAt',
+    ttlConfig: {},
+  });
   return {
     name: dbRef.name,
   };
