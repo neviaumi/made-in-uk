@@ -14,40 +14,26 @@ async function extractPrice(page: playwright.Page) {
     .locator('[data-zta="productStandardPriceAmount"]')
     .first()
     .isVisible());
-  if (!isPriceReduced) {
-    return {
-      price: await priceContainer
-        .locator('[data-zta="productStandardPriceAmount"]')
-        .first()
-        .textContent(),
-      pricePerItem: await priceContainer
-        .locator('[data-zta="productStandardPriceSuffix"]')
-        .first()
-        .textContent()
-        .then(price =>
-          price
-            ?.split('/')
-            .map(p => p.trim())
-            .join('/'),
-        ),
-    };
-  }
+  const pricePerItemSelector = isPriceReduced
+    ? priceContainer.locator('[data-zta="productReducedPriceSuffix"]')
+    : priceContainer.locator('[data-zta="productStandardPriceSuffix"]');
+  const price = isPriceReduced
+    ? priceContainer.locator('[data-zta="productReducedPriceAmount"]')
+    : priceContainer.locator('[data-zta="productStandardPriceAmount"]');
 
   return {
-    price: await priceContainer
-      .locator('[data-zta="productReducedPriceAmount"]')
-      .first()
-      .textContent(),
-    pricePerItem: await priceContainer
-      .locator('[data-zta="productReducedPriceSuffix"]')
-      .first()
-      .textContent()
-      .then(price =>
-        price
-          ?.split('/')
-          .map(p => p.trim())
-          .join('/'),
-      ),
+    price: await price.first().textContent(),
+    pricePerItem: (await pricePerItemSelector.isVisible())
+      ? await pricePerItemSelector
+          .first()
+          .textContent()
+          .then(price =>
+            price
+              ?.split('/')
+              .map(p => p.trim())
+              .join('/'),
+          )
+      : null,
   };
 }
 

@@ -6,11 +6,15 @@ import {
   createBrowserPage,
   createChromiumBrowser,
 } from '@/browser.ts';
+import { APP_ENV } from '@/config.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
 import { baseUrl, createProductDetailsFetcher } from '@/lilys-kitchen.ts';
+import { createLogger } from '@/logger.ts';
 import { createLLMPromptHandler } from '@/mocks/handlers.ts';
 import { HttpResponse } from '@/mocks/msw.ts';
 import { server } from '@/mocks/node.ts';
+
+const logger = createLogger(APP_ENV);
 
 describe('Lilys Kitchen', () => {
   beforeAll(() => {
@@ -47,7 +51,10 @@ describe('Lilys Kitchen', () => {
           status: 200,
         });
       });
-      const data = await createProductDetailsFetcher(page)(url);
+      const data = await createProductDetailsFetcher(page, {
+        logger,
+        requestId: 'unused',
+      })(url);
       await closePage(page);
       await closeBrowser(browser);
       expect(data.ok).toBeTruthy();

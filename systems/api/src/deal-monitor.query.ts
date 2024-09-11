@@ -24,7 +24,7 @@ const monitors: {
     id: string;
     items: Array<{
       id: string;
-      source: 'LILYS_KITCHEN' | 'PETS_AT_HOME' | 'ZOOPLUS';
+      source: 'LILYS_KITCHEN' | 'PETS_AT_HOME' | 'ZOOPLUS' | 'VET_SHOP';
       url: string;
     }>;
     name: string;
@@ -125,6 +125,41 @@ const monitors: {
         id: 'KCSFTS70',
         source: 'LILYS_KITCHEN',
         url: '/for-cats/wet-food/tuna-with-salmon-shredded-fillets-24-x-70g-KCSFTS70.html',
+      },
+      {
+        id: 'ENC1104-1EN',
+        source: 'VET_SHOP',
+        url: '/Encore-Natural-Wet-Cat-Food-Tins-Fish-Selection-Broth-12-x-70g',
+      },
+      {
+        id: '569176',
+        source: 'VET_SHOP',
+        url: '/Applaws-Tuna-Fillet-Wet-Cat-Food-Tins-24-x-70g',
+      },
+      {
+        id: '42136',
+        source: 'VET_SHOP',
+        url: '/Catit-Cuisine-Tuna-Pt-with-Sardines-Wet-Cat-Food-12-x-95g',
+      },
+      {
+        id: 'ENC1003-1EN',
+        source: 'VET_SHOP',
+        url: '/Encore-Natural-Wet-Cat-Food-Tins-Tuna-Fillet-in-Broth-16-x-70g',
+      },
+      {
+        id: '289034',
+        source: 'ZOOPLUS',
+        url: '/shop/cats/canned_cat_food_pouches/applaws/applaws_wet_cat_food/289034',
+      },
+      {
+        id: '540682',
+        source: 'ZOOPLUS',
+        url: '/shop/cats/canned_cat_food_pouches/applaws/applaws_wet_cat_food/540682',
+      },
+      {
+        id: '1326515',
+        source: 'ZOOPLUS',
+        url: '/shop/cats/canned_cat_food_pouches/applaws/applaws_wet_cat_food/1326515',
       },
     ],
     name: 'Cat Wet Food',

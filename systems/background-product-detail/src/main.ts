@@ -21,6 +21,7 @@ import { createLogger } from '@/logger.ts';
 import * as ocado from '@/ocado.ts';
 import * as petsAtHome from '@/pets-at-home.ts';
 import { PRODUCT_SOURCE, REPLY_DATA_TYPE } from '@/types.ts';
+import * as vetShop from '@/vet-shop.ts';
 import * as zooplus from '@/zooplus.ts';
 
 const config = loadConfig(APP_ENV);
@@ -90,6 +91,7 @@ async function handleFetchProductDetail(
     [PRODUCT_SOURCE.OCADO]: ocado,
     [PRODUCT_SOURCE.PETS_AT_HOME]: petsAtHome,
     [PRODUCT_SOURCE.ZOOPLUS]: zooplus,
+    [PRODUCT_SOURCE.VET_SHOP]: vetShop,
   };
   const productInfo = await fetchers[source]
     .createProductDetailsFetcher(page, {
@@ -134,6 +136,7 @@ async function handleFetchProductDetail(
 
 async function handleUpdateProductDetail(
   database: ReturnType<typeof createDatabaseConnection>,
+  requestId: string,
   payload: {
     product: {
       productId: string;
@@ -153,7 +156,10 @@ async function handleUpdateProductDetail(
   const page = await createBrowserPage(browser)();
 
   const productInfo = await ocado
-    .createProductDetailsFetcher(page)(productUrl)
+    .createProductDetailsFetcher(page, {
+      logger: logger.child({ requestId }),
+      requestId,
+    })(productUrl)
     .catch(e => ({
       error: {
         code: 'ERR_UNHANDLED_EXCEPTION',
@@ -222,13 +228,9 @@ const server = createServer(async (req, res) => {
   }
   await lock.acquireLock(requestId, product.productId, payload);
   if (type === TASK_TYPE.FETCH_PRODUCT_DETAIL) {
-    loggerWithRequestId.info('Handle FETCH_PRODUCT_DETAIL Request', {
-      product,
-      type,
-    });
     await handleFetchProductDetail(database, requestId, { product });
   } else if (type === TASK_TYPE.UPDATE_PRODUCT_DETAIL) {
-    await handleUpdateProductDetail(database, { product });
+    await handleUpdateProductDetail(database, requestId, { product });
   } else {
     loggerWithRequestId.error('Invalid message type', {
       message: payload,
