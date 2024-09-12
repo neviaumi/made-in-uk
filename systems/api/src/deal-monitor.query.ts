@@ -193,7 +193,7 @@ export const dealMonitorItemDefer: ResolverFunction<
         type: TASK_TYPE.FETCH_PRODUCT_DETAIL,
       });
     } else {
-      items.push(cachedRecord.data);
+      items.push({ data: cachedRecord.data, type: 'FETCH_PRODUCT_DETAIL' });
     }
   }
 
@@ -208,13 +208,24 @@ export const dealMonitorItemDefer: ResolverFunction<
     },
   )(requestId);
   await Readable.from(replyStream).forEach(item => {
-    items.push(item.data);
+    if (item.type === 'FETCH_PRODUCT_DETAIL_FAILURE') {
+      logger.info('error when fetching product detail', {
+        error: item.error,
+      });
+      items.push({
+        data: {
+          id: item.error.meta.payload.product.productId,
+        },
+        type: 'FETCH_PRODUCT_DETAIL_FAILURE',
+      });
+    }
+    items.push(item);
     if (items.length === parent.monitor.numberOfItems) {
       replyStream.end();
     }
   });
   await closeReplyStream(database, { logger: logger })(requestId);
-  return items.filter(item => item !== undefined && item !== null);
+  return items;
 };
 
 export const listDealMonitorsQuery: ResolverFunction<never> = (
