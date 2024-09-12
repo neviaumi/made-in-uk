@@ -211,7 +211,7 @@ export default function Index() {
                         {product.title}
                       </h1>
                       <p className={'tw-py-0.5 tw-text-lg tw-font-semibold'}>
-                        {product.price}
+                        {product.price} ({product.pricePerItem})
                       </p>
                       <p className={'tw-text-lg tw-font-medium'}>
                         {product.countryOfOrigin}
