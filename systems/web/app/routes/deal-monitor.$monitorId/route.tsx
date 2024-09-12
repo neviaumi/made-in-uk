@@ -129,7 +129,9 @@ export default function GoodDealsMonitor() {
   const monitor = matchingResults.data?.dealMonitor;
   if (!monitor) return;
   const containProductWithError =
-    isEndOfStream && monitor.items.some(item => isFailureProductResponse(item));
+    isEndOfStream &&
+    monitor.items &&
+    monitor.items.some(item => isFailureProductResponse(item));
   return (
     <Page className={'tw-mx-auto tw-pb-2'}>
       <Page.Header

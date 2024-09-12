@@ -1,4 +1,4 @@
-enum FetchProductResponseType {
+export enum FetchProductResponseType {
   FETCH_PRODUCT_DETAIL = 'FETCH_PRODUCT_DETAIL',
   FETCH_PRODUCT_DETAIL_FAILURE = 'FETCH_PRODUCT_DETAIL_FAILURE',
 }
