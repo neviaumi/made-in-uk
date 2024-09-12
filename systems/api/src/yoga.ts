@@ -14,7 +14,7 @@ import {
   searchProductQuery,
   searchProductStream,
 } from '@/search-product.query.ts';
-import type { GraphqlContext } from '@/types.ts';
+import type { GraphqlContext, Product } from '@/types.ts';
 
 import { createDatabaseConnection, databaseHealthCheck } from './database.ts';
 
@@ -25,6 +25,42 @@ export const schema = {
   resolvers: {
     GetDealMonitorResult: {
       items: dealMonitorItemDefer,
+    },
+    Product: {
+      pricePerItem: (product: Product) => {
+        if (!product.pricePerItem) return null;
+        function splitPricePerItem(pricePerItem: string) {
+          if (pricePerItem.includes('per')) {
+            const [price, , pricePerUnit] = pricePerItem
+              .split(' ')
+              .map(text => text.trim());
+            return [price, pricePerUnit];
+          }
+          if (pricePerItem.includes('/')) {
+            const [price, pricePerUnit] = pricePerItem.split('/');
+            return [price, pricePerUnit];
+          }
+          return null;
+        }
+        function parseProductPricingToNumber(price: string) {
+          const isPenny = price.includes('p');
+          if (isPenny) return Number(price.slice(0, -1)) / 100;
+          return Number(price.slice(1));
+        }
+        const pricePerItemInfo = splitPricePerItem(product.pricePerItem);
+        if (!pricePerItemInfo) return product.pricePerItem;
+        const [price, pricePerUnit] = pricePerItemInfo;
+        const pricePerUnitInPound = parseProductPricingToNumber(price);
+        if (isNaN(pricePerUnitInPound)) return product.pricePerItem;
+        const priceInString =
+          pricePerUnitInPound < 1
+            ? `${pricePerUnitInPound}p`
+            : new Intl.NumberFormat('en-GB', {
+                currency: 'GBP',
+                style: 'currency',
+              }).format(pricePerUnitInPound);
+        return [priceInString, pricePerUnit].join(' per ');
+      },
     },
     Query: {
       dealMonitor: getDealMonitorQuery,

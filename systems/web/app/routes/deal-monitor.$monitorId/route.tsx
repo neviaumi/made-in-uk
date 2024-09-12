@@ -213,7 +213,9 @@ export default function GoodDealsMonitor() {
                           {item.data.price}
                         </p>
                         <p
-                          className={'tw-py-0.5 tw-text-base tw-font-semibold'}
+                          className={
+                            'tw-py-0.5 tw-text-base  tw-font-semibold tw-text-placeholder'
+                          }
                         >
                           {item.data.pricePerItem}
                         </p>

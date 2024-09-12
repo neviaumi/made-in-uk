@@ -31,7 +31,7 @@ export function isFailureProductResponse(
   return product.type === 'FETCH_PRODUCT_DETAIL_FAILURE';
 }
 function isUkCountry(country: string) {
-  const ukCountries = ['United Kingdom', 'UK', 'England'];
+  const ukCountries = ['United Kingdom', 'UK', 'England', 'Scotland', 'Wales'];
 
   return ukCountries.includes(country);
 }
@@ -83,10 +83,10 @@ export function sortByPricePerItem(
 
   if (!productAPricePerItem || !productBPricePerItem) return 0;
 
-  const [productAPricing, productAPricingUnit] =
-    productAPricePerItem.split('/');
-  const [productBPricing, productBPricingUnit] =
-    productBPricePerItem.split('/');
+  const [productAPricing, , productAPricingUnit] =
+    productAPricePerItem.split(' ');
+  const [productBPricing, , productBPricingUnit] =
+    productBPricePerItem.split(' ');
 
   // Only compare if the units match
   if (productAPricingUnit !== productBPricingUnit) return 0;
