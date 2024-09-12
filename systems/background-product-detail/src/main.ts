@@ -28,7 +28,6 @@ const config = loadConfig(APP_ENV);
 const logger = createLogger(APP_ENV);
 enum TASK_TYPE {
   FETCH_PRODUCT_DETAIL = 'FETCH_PRODUCT_DETAIL',
-  UPDATE_PRODUCT_DETAIL = 'UPDATE_PRODUCT_DETAIL',
 }
 
 async function handleHealthCheck(res: Parameters<RequestListener>[1]) {
@@ -134,55 +133,6 @@ async function handleFetchProductDetail(
   await batchWrite.commit();
 }
 
-async function handleUpdateProductDetail(
-  database: ReturnType<typeof createDatabaseConnection>,
-  requestId: string,
-  payload: {
-    product: {
-      productId: string;
-      productUrl: string;
-    };
-  },
-) {
-  const {
-    product: { productId, productUrl },
-  } = payload as {
-    product: {
-      productId: string;
-      productUrl: string;
-    };
-  };
-  const browser = await createChromiumBrowser();
-  const page = await createBrowserPage(browser)();
-
-  const productInfo = await ocado
-    .createProductDetailsFetcher(page, {
-      logger: logger.child({ requestId }),
-      requestId,
-    })(productUrl)
-    .catch(e => ({
-      error: {
-        code: 'ERR_UNHANDLED_EXCEPTION',
-        message: e.message,
-        meta: { payload },
-      },
-      ok: false as const,
-    }))
-    .finally(async () => {
-      await closePage(page);
-      await closeBrowser(browser);
-    });
-  if (!productInfo.ok) {
-    await connectToProductDatabase(database)('ocado', productId).delete();
-    return;
-  }
-  await connectToProductDatabase(database)('ocado', productId).set(
-    Object.assign(productInfo.data, {
-      expiresAt: Timestamp.fromDate(new Date(Date.now() + 1000 * 60 * 60)),
-    }),
-  );
-}
-
 const server = createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/health') {
     await handleHealthCheck(res);
@@ -229,8 +179,6 @@ const server = createServer(async (req, res) => {
   await lock.acquireLock(requestId, product.productId, payload);
   if (type === TASK_TYPE.FETCH_PRODUCT_DETAIL) {
     await handleFetchProductDetail(database, requestId, { product });
-  } else if (type === TASK_TYPE.UPDATE_PRODUCT_DETAIL) {
-    await handleUpdateProductDetail(database, requestId, { product });
   } else {
     loggerWithRequestId.error('Invalid message type', {
       message: payload,

@@ -80,7 +80,6 @@ services:
     entrypoint: /bin/sh
     environment:
       - BG_PRODUCT_SEARCH_PRODUCT_DETAIL_QUEUE=projects/made-in-uk/locations/localhost/queues/emulator
-      - BG_PRODUCT_SEARCH_PRODUCT_DETAIL_LOW_PRIORITY_QUEUE=projects/made-in-uk/locations/localhost/queues/emulator
       - BG_PRODUCT_SEARCH_DATABASE_ID=made-in-uk-demo
       - BG_PRODUCT_SEARCH_ENV=development
       - BG_PRODUCT_SEARCH_PORT=3000
