@@ -6,6 +6,7 @@
     "google-auth-library": "9.13.0",
     "playwright": "1.44.1",
     "ramda": "0.30.0",
+    "undici": "6.19.8",
     "winston": "3.13.0"
   },
   "description": "",
@@ -34,5 +35,5 @@
   "private": true,
   "scripts": {},
   "type": "module",
-  "version": "2024.9.8-alpha.2225"
+  "version": "2024.9.12-alpha.219"
 }

@@ -9,6 +9,7 @@ COPY ./scripts/build.sh ./scripts/build.sh
 COPY ./scripts/docker/ ./scripts/docker/
 
 RUN bash ./scripts/docker/setup.sh --dev
+HEALTHCHECK --interval=30s --timeout=60s --start-period=5s --retries=3 CMD [ "sh", "scripts/docker/health-check.sh" ]
 
 FROM base AS builder
 RUN bash ./scripts/build.sh
@@ -22,5 +23,4 @@ COPY --from=builder /app/package.json /app/package-lock.json ./
 COPY --from=builder /app/scripts/docker/ ./scripts/docker/
 
 RUN bash ./scripts/docker/setup.sh --prod
-HEALTHCHECK --interval=30s --timeout=60s --start-period=5s --retries=3 CMD [ "sh", "scripts/docker/health-check.sh" ]
 

@@ -8,8 +8,12 @@ import { gql, useQuery } from 'urql';
 import { Page } from '@/components/Layout.tsx';
 import { Loader } from '@/components/Loader.tsx';
 import { APP_ENV, loadConfig } from '@/config.server.ts';
-
-const ukCountries = ['United Kingdom', 'UK', 'England'];
+import {
+  type AsyncProductSuccess,
+  sortByCountryOfOrigin,
+  sortByPrice,
+  sortByPricePerItem,
+} from '@/product.ts';
 
 export const meta: MetaFunction = () => {
   return [
@@ -59,19 +63,7 @@ export default function Index() {
     {
       products: {
         requestId: string;
-        stream: Array<{
-          data: {
-            countryOfOrigin: string;
-            id: string;
-            image: string;
-            price: string;
-            pricePerItem: string | null;
-            title: string;
-            type: string;
-            url: string;
-          };
-          type: string;
-        }>;
+        stream: Array<AsyncProductSuccess>;
       };
     },
     { input: typeof matchingFilters }
@@ -181,62 +173,22 @@ export default function Index() {
             {!fetching &&
               data &&
               data.products.stream
-                .filter(({ type }) => type === 'FETCH_PRODUCT_DETAIL')
                 .toSorted((productA, productB) => {
                   if (!isEndOfStream) return 0;
-                  if (
-                    !ukCountries.includes(productA.data.countryOfOrigin) &&
-                    !ukCountries.includes(productB.data.countryOfOrigin)
-                  )
-                    return 0;
-                  if (
-                    ukCountries.includes(productA.data.countryOfOrigin) &&
-                    ukCountries.includes(productB.data.countryOfOrigin)
-                  )
-                    return 0;
-                  if (ukCountries.includes(productA.data.countryOfOrigin))
-                    return -1;
-                  if (ukCountries.includes(productB.data.countryOfOrigin))
-                    return 1;
-                  return 0;
-                })
-                .toSorted((productA, productB) => {
-                  if (!isEndOfStream) return 0;
-                  const isOneOfProductIsMadeInUk =
-                    (ukCountries.includes(productA.data.countryOfOrigin) &&
-                      !ukCountries.includes(productB.data.countryOfOrigin)) ||
-                    (!ukCountries.includes(productA.data.countryOfOrigin) &&
-                      ukCountries.includes(productB.data.countryOfOrigin));
-                  if (isOneOfProductIsMadeInUk) return 0;
-                  const productAPricing = Number(productA.data.price.slice(1));
-                  const productBPricing = Number(productB.data.price.slice(1));
-                  return productAPricing - productBPricing;
-                })
-                .toSorted((productA, productB) => {
-                  if (!isEndOfStream) return 0;
-                  const isOneOfProductIsMadeInUk =
-                    (ukCountries.includes(productA.data.countryOfOrigin) &&
-                      !ukCountries.includes(productB.data.countryOfOrigin)) ||
-                    (!ukCountries.includes(productA.data.countryOfOrigin) &&
-                      ukCountries.includes(productB.data.countryOfOrigin));
-                  if (isOneOfProductIsMadeInUk) return 0;
-                  const productAPricePerItem = productA.data.pricePerItem;
-                  const productBPricePerItem = productB.data.pricePerItem;
-                  if (!productAPricePerItem || !productBPricePerItem) return 0;
-                  const [productAPricing, , productAPricingUnit] =
-                    productAPricePerItem.split(' ');
-                  const [productBPricing, , productBPricingUnit] =
-                    productBPricePerItem.split(' ');
-                  if (productAPricingUnit !== productBPricingUnit) return 0;
-                  const parseProductPricingToNumber = (price: string) => {
-                    const isPenny = price.includes('p');
-                    if (isPenny) return Number(price.slice(0, -1)) / 100;
-                    return Number(price.slice(1));
-                  };
-                  return (
-                    parseProductPricingToNumber(productAPricing) -
-                    parseProductPricingToNumber(productBPricing)
+                  const countrySortResult = sortByCountryOfOrigin(
+                    productA,
+                    productB,
                   );
+                  if (countrySortResult !== 0) return countrySortResult;
+
+                  const pricePerItemSortResult = sortByPricePerItem(
+                    productA,
+                    productB,
+                  );
+                  if (pricePerItemSortResult !== 0)
+                    return pricePerItemSortResult;
+
+                  return sortByPrice(productA, productB);
                 })
                 .map(({ data: product }) => (
                   <li key={product.id}>

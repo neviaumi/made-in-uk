@@ -5,6 +5,15 @@ services:
       dockerfile: Dockerfile
       target: base
     command: ./scripts/docker/dev.sh
+    depends_on:
+      bg-product-detail:
+        condition: service_healthy
+      bg-product-search:
+        condition: service_healthy
+      cloud-tasks:
+        condition: service_started
+      firestore:
+        condition: service_started
     develop:
       watch:
         - action: sync+restart
@@ -31,7 +40,12 @@ services:
       target: base
     command: ./scripts/docker/dev.sh
     depends_on:
-      - llm
+      cloud-tasks:
+        condition: service_started
+      firestore:
+        condition: service_started
+      llm:
+        condition: service_started
     develop:
       watch:
         - action: sync+restart
@@ -51,6 +65,13 @@ services:
       dockerfile: Dockerfile
       target: base
     command: ./scripts/docker/dev.sh
+    depends_on:
+      bg-product-detail:
+        condition: service_healthy
+      cloud-tasks:
+        condition: service_started
+      firestore:
+        condition: service_started
     develop:
       watch:
         - action: sync+restart
@@ -95,7 +116,7 @@ services:
     command: ./scripts/docker/watch.sh
     depends_on:
       api:
-        condition: service_started
+        condition: service_healthy
     develop:
       watch:
         - action: sync

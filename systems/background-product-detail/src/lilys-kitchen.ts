@@ -1,18 +1,18 @@
 import playwright from 'playwright';
 
-import { APP_ENV } from '@/config.ts';
 import { extractTotalWeight } from '@/llm.ts';
-import { createLogger, type Logger } from '@/logger.ts';
+import { type Logger } from '@/logger.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
 
 export const baseUrl = 'https://www.lilyskitchen.co.uk/';
 export function createProductDetailsFetcher(
   page: playwright.Page,
-  options?: {
+  options: {
     logger: Logger;
+    requestId: string;
   },
 ) {
-  const logger = options?.logger ?? createLogger(APP_ENV);
+  const logger = options.logger;
   return async function fetchProductDetails(productUrl: string): Promise<
     | {
         error: { code: string; message: string; meta: Record<string, unknown> };
@@ -48,7 +48,7 @@ export function createProductDetailsFetcher(
       {
         description: productTitle!,
       },
-      { logger },
+      { logger, requestId: options.requestId },
     );
     const pricePerItem =
       productWeight.data.totalWeight === null

@@ -7,11 +7,15 @@ import {
   createBrowserPage,
   createChromiumBrowser,
 } from '@/browser.ts';
+import { APP_ENV } from '@/config.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
+import { createLogger } from '@/logger.ts';
 import { createLLMPromptHandler } from '@/mocks/handlers.ts';
 import { HttpResponse } from '@/mocks/msw.ts';
 import { server } from '@/mocks/node.ts';
 import { createProductDetailsFetcher } from '@/ocado.ts';
+
+const logger = createLogger(APP_ENV);
 
 describe('Ocado fetcher', () => {
   type ProductDetailsResp = Awaited<
@@ -54,9 +58,10 @@ describe('Ocado fetcher', () => {
         });
       },
     );
-    const resp = await createProductDetailsFetcher(page)(
-      '/products/blue-dragon-medium-egg-noodles-623907011',
-    );
+    const resp = await createProductDetailsFetcher(page, {
+      logger,
+      requestId: 'unused',
+    })('/products/blue-dragon-medium-egg-noodles-623907011');
     await closePage(page);
     await closeBrowser(browser);
     expect(resp.ok).toBeTruthy();
@@ -117,7 +122,10 @@ describe('Ocado fetcher', () => {
         status: 200,
       });
     });
-    const resp = await createProductDetailsFetcher(page)(url);
+    const resp = await createProductDetailsFetcher(page, {
+      logger,
+      requestId: 'unused',
+    })(url);
     await closePage(page);
     await closeBrowser(browser);
     expectFunctions(resp);

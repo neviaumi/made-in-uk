@@ -5,6 +5,17 @@ import { gql, useQuery } from 'urql';
 
 import { Page } from '@/components/Layout.tsx';
 import { Loader } from '@/components/Loader.tsx';
+import {
+  type AsyncProductError,
+  type AsyncProductSuccess,
+  isFailureProductResponse,
+  isSuccessProductResponse,
+  sortByPrice,
+  sortByPricePerItem,
+  sortFailureResponseToLatest,
+} from '@/product.ts';
+
+import { ErrorItem } from './error-item.tsx';
 
 export const meta: MetaFunction = () => {
   return [
@@ -25,15 +36,18 @@ const GetDealMonitorQuery = gql`
       }
       ... @defer {
         items {
-          id
-          countryOfOrigin
-          image
-          title
           type
-          url
-          price
-          pricePerItem
-          source
+          data {
+            id
+            countryOfOrigin
+            image
+            title
+            type
+            url
+            price
+            pricePerItem
+            source
+          }
         }
       }
     }
@@ -42,20 +56,11 @@ const GetDealMonitorQuery = gql`
 
 export default function GoodDealsMonitor() {
   const params = useParams();
+
   const [matchingResults] = useQuery<
     {
       dealMonitor: {
-        items: Array<{
-          countryOfOrigin: string;
-          id: string;
-          image: string;
-          price: string;
-          pricePerItem: string | null;
-          source: string;
-          title: string;
-          type: string;
-          url: string;
-        }>;
+        items: Array<AsyncProductError | AsyncProductSuccess>;
         monitor: {
           description: string;
           id: string;
@@ -118,11 +123,13 @@ export default function GoodDealsMonitor() {
         </Page.Main>
       </Page>
     );
-  const isEndofStream =
+  const isEndOfStream =
     // @ts-expect-error - `hasNext` is not defined in the type
     !matchingResults.fetching && !matchingResults['hasNext'];
   const monitor = matchingResults.data?.dealMonitor;
   if (!monitor) return;
+  const containProductWithError =
+    isEndOfStream && monitor.items.some(item => isFailureProductResponse(item));
   return (
     <Page className={'tw-mx-auto tw-pb-2'}>
       <Page.Header
@@ -133,6 +140,12 @@ export default function GoodDealsMonitor() {
         <section className={'tw-text-center'}>
           <h1 className={'tw-text-2xl'}>{monitor.monitor.name}</h1>
           <p>{monitor.monitor.description}</p>
+          <span className={'tw-block'}>
+            Contain {monitor.monitor.numberOfItems} items
+          </span>
+          {containProductWithError && (
+            <h2 className={'tw-block'}>Request Id: {monitor.requestId}</h2>
+          )}
         </section>
       </Page.Header>
       <Page.Main className={'tw-pt-2'}>
@@ -141,7 +154,7 @@ export default function GoodDealsMonitor() {
             'tw-grid tw-grid-cols-1 tw-gap-1 sm:tw-grid-cols-2 lg:tw-grid-cols-4 2xl:tw-grid-cols-8'
           }
         >
-          {!isEndofStream &&
+          {!isEndOfStream &&
             Array.from({ length: monitor.monitor.numberOfItems }).map(
               (_, index) => (
                 <li key={index}>
@@ -149,63 +162,77 @@ export default function GoodDealsMonitor() {
                 </li>
               ),
             )}
-          {isEndofStream &&
+          {isEndOfStream &&
             monitor.items
               .toSorted((productA, productB) => {
-                const productAPricing = Number(productA.price.slice(1));
-                const productBPricing = Number(productB.price.slice(1));
-                return productAPricing - productBPricing;
-              })
-              .toSorted((productA, productB) => {
-                const productAPricePerItem = productA.pricePerItem;
-                const productBPricePerItem = productB.pricePerItem;
-                if (!productAPricePerItem || !productBPricePerItem) return 0;
-                const [productAPricing, productAPricingUnit] =
-                  productAPricePerItem.split('/');
-                const [productBPricing, productBPricingUnit] =
-                  productBPricePerItem.split('/');
-                if (productAPricingUnit !== productBPricingUnit) return 0;
-                const parseProductPricingToNumber = (price: string) => {
-                  const isPenny = price.includes('p');
-                  if (isPenny) return Number(price.slice(0, -1)) / 100;
-                  return Number(price.slice(1));
-                };
-                return (
-                  parseProductPricingToNumber(productAPricing) -
-                  parseProductPricingToNumber(productBPricing)
+                const failureSortResult = sortFailureResponseToLatest(
+                  productA,
+                  productB,
                 );
+                if (failureSortResult !== 0) return failureSortResult;
+                if (
+                  !isSuccessProductResponse(productA) ||
+                  !isSuccessProductResponse(productB)
+                )
+                  return 0;
+                const pricePerItemSortResult = sortByPricePerItem(
+                  productA,
+                  productB,
+                );
+                if (pricePerItemSortResult !== 0) return pricePerItemSortResult;
+
+                return sortByPrice(productA, productB);
               })
               .map(item => {
                 return (
-                  <li key={item.id}>
-                    <a
-                      className={
-                        'tw-box-border tw-flex tw-flex-col tw-items-center tw-border tw-border-solid tw-border-transparent hover:tw-border-primary-user-action'
-                      }
-                      href={item.url}
-                      rel="noreferrer"
-                      target={'_blank'}
-                    >
-                      <img
-                        alt={item.title}
-                        className={'tw-h-16 tw-object-contain'}
-                        src={item.image}
-                      />
-                      <h1
-                        className={'tw-text-center tw-text-xl tw-font-semibold'}
+                  <li key={item.data.id}>
+                    {item.type === 'FETCH_PRODUCT_DETAIL' ? (
+                      <a
+                        className={
+                          'tw-box-border tw-flex tw-flex-col tw-items-center tw-border tw-border-solid tw-border-transparent hover:tw-border-primary-user-action'
+                        }
+                        href={item.data.url}
+                        rel="noreferrer"
+                        target={'_blank'}
                       >
-                        {item.title}
-                      </h1>
-                      <p className={'tw-py-0.5 tw-text-lg tw-font-semibold'}>
-                        {item.pricePerItem}
-                      </p>
-                      <p className={'tw-py-0.5 tw-text-base tw-font-semibold'}>
-                        {item.price}
-                      </p>
-                      <p className={'tw-py-0.5 tw-text-base tw-font-semibold'}>
-                        {item.source}
-                      </p>
-                    </a>
+                        <img
+                          alt={item.data.title}
+                          className={'tw-h-16 tw-object-contain'}
+                          src={item.data.image}
+                        />
+                        <h1
+                          className={
+                            'tw-text-center tw-text-xl tw-font-semibold'
+                          }
+                        >
+                          {item.data.title}
+                        </h1>
+                        <p className={'tw-py-0.5 tw-text-lg tw-font-semibold'}>
+                          {item.data.price}
+                        </p>
+                        <p
+                          className={'tw-py-0.5 tw-text-base tw-font-semibold'}
+                        >
+                          {item.data.pricePerItem}
+                        </p>
+                        <p
+                          className={'tw-py-0.5 tw-text-base tw-font-semibold'}
+                        >
+                          {item.data.source}
+                        </p>
+                      </a>
+                    ) : (
+                      <div className={'tw-group'}>
+                        <ErrorItem />
+                        <h1
+                          className={
+                            'tw-text-center tw-text-xl tw-font-semibold'
+                          }
+                        >
+                          Refresh or report to admin with requestId
+                        </h1>
+                      </div>
+                    )}
                   </li>
                 );
               })}

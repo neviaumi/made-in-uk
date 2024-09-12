@@ -54,8 +54,8 @@ export const schema = {
       monitorId: String!
     }
     enum ProductStreamType {
-      FETCH_PRODUCT_DETAIL_EOS
       FETCH_PRODUCT_DETAIL
+      FETCH_PRODUCT_DETAIL_FAILURE
     }
     type ProductStream {
       type: ProductStreamType!
@@ -73,10 +73,15 @@ export const schema = {
       numberOfItems: Int!
     }
 
+    type DealMonitorItem {
+      type: ProductStreamType!
+      data: Product
+    }
+
     type GetDealMonitorResult {
       requestId: String!
       monitor: DealMonitor
-      items: [Product!]!
+      items: [DealMonitorItem!]!
     }
 
     type ListDealMonitorsResult {
