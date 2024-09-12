@@ -55,7 +55,7 @@ export const schema = {
         const priceInString =
           pricePerUnitInPound < 1
             ? `${new Intl.NumberFormat('en-GB', {
-                maximumFractionDigits: 0,
+                maximumFractionDigits: 1,
               }).format(pricePerUnitInPound * 100)}p`
             : new Intl.NumberFormat('en-GB', {
                 currency: 'GBP',
