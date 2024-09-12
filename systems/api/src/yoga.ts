@@ -54,7 +54,9 @@ export const schema = {
         if (isNaN(pricePerUnitInPound)) return product.pricePerItem;
         const priceInString =
           pricePerUnitInPound < 1
-            ? `${pricePerUnitInPound}p`
+            ? `${new Intl.NumberFormat('en-GB', {
+                maximumFractionDigits: 0,
+              }).format(pricePerUnitInPound * 100)}p`
             : new Intl.NumberFormat('en-GB', {
                 currency: 'GBP',
                 style: 'currency',
