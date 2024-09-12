@@ -32,62 +32,63 @@ function generateMockProduct(
 
 describe('product', () => {
   describe('sorting', () => {
-    it('sort by country origin, price per item and price', () => {
-      const products = [
-        generateMockProduct({
-          countryOfOrigin: 'Spain',
-          id: '1',
-          price: '£1.00',
-          pricePerItem: '£0.50/kg',
-        }),
-        generateMockProduct({
-          countryOfOrigin: 'Spain',
-          id: '2',
-          price: '£1.00',
-          pricePerItem: '£0.50/kg',
-        }),
-        generateMockProduct({
-          countryOfOrigin: 'UK',
-          id: '3',
-          price: '£4.00',
-          pricePerItem: '£0.25/kg',
-        }),
-        generateMockProduct({
-          countryOfOrigin: 'Spain',
-          id: '4',
-          price: '£5.00',
-          pricePerItem: '£0.50/kg',
-        }),
-        generateMockProduct({
-          countryOfOrigin: 'Unknown',
-          id: '5',
-          price: '£10.00',
-          pricePerItem: '£0.50/kg',
-        }),
-        generateMockProduct({
-          countryOfOrigin: 'UK',
-          id: '6',
-          price: '£2.00',
-          pricePerItem: '£0.50/kg',
-        }),
-      ];
-      const sortedProducts = products.toSorted((productA, productB) => {
-        const countrySortResult = sortByCountryOfOrigin(productA, productB);
-        if (countrySortResult !== 0) return countrySortResult;
+    [
+      {
+        products: [
+          generateMockProduct({
+            countryOfOrigin: 'Spain',
+            id: '1',
+            price: '£1.00',
+            pricePerItem: '£0.50 per kg',
+          }),
+          generateMockProduct({
+            countryOfOrigin: 'Spain',
+            id: '2',
+            price: '£1.00',
+            pricePerItem: '£0.50 per kg',
+          }),
+          generateMockProduct({
+            countryOfOrigin: 'UK',
+            id: '3',
+            price: '£4.00',
+            pricePerItem: '£0.25 per kg',
+          }),
+          generateMockProduct({
+            countryOfOrigin: 'Spain',
+            id: '4',
+            price: '£5.00',
+            pricePerItem: '£0.50 per kg',
+          }),
+          generateMockProduct({
+            countryOfOrigin: 'Unknown',
+            id: '5',
+            price: '£10.00',
+            pricePerItem: '£0.50 per kg',
+          }),
+          generateMockProduct({
+            countryOfOrigin: 'UK',
+            id: '6',
+            price: '£2.00',
+            pricePerItem: '£0.50 per kg',
+          }),
+        ],
+        sortedProductIds: ['3', '6', '1', '2', '4', '5'],
+      },
+    ].forEach(({ products, sortedProductIds }) =>
+      it('sort by country origin, price per item and price', () => {
+        const sortedProducts = products.toSorted((productA, productB) => {
+          const countrySortResult = sortByCountryOfOrigin(productA, productB);
+          if (countrySortResult !== 0) return countrySortResult;
 
-        const pricePerItemSortResult = sortByPricePerItem(productA, productB);
-        if (pricePerItemSortResult !== 0) return pricePerItemSortResult;
+          const pricePerItemSortResult = sortByPricePerItem(productA, productB);
+          if (pricePerItemSortResult !== 0) return pricePerItemSortResult;
 
-        return sortByPrice(productA, productB);
-      });
-      expect(sortedProducts.map(({ data }) => data.id)).toEqual([
-        '3',
-        '6',
-        '1',
-        '2',
-        '4',
-        '5',
-      ]);
-    });
+          return sortByPrice(productA, productB);
+        });
+        expect(sortedProducts.map(({ data }) => data.id)).toEqual(
+          sortedProductIds,
+        );
+      }),
+    );
   });
 });
