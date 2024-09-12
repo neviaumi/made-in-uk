@@ -9,14 +9,10 @@ import {
   createProductsSearchHandler,
 } from '@/browser.ts';
 import {
-  computeScheduleSeconds,
   createCloudTaskClient,
-  createLowPriorityTaskId,
   createProductDetailScheduler,
   createTaskId,
-  ONE_HOUR,
   TASK_TYPE,
-  withTaskAlreadyExistsErrorHandler,
 } from '@/cloud-task.ts';
 import { APP_ENV, loadConfig } from '@/config.ts';
 import {
@@ -118,35 +114,12 @@ const server = createServer(async (req, res) => {
             data: product,
             type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
           });
-          await withTaskAlreadyExistsErrorHandler(
-            productDetailScheduler.scheduleProductDetailLowPriorityTask,
-          )(
-            {
-              product: {
-                productId,
-                productUrl,
-                source: 'ocado',
-              },
-              requestId: requestId,
-              type: TASK_TYPE.UPDATE_PRODUCT_DETAIL,
-            },
-            {
-              name: createLowPriorityTaskId(`ocado-${productId}`),
-              scheduleTime: {
-                seconds: computeScheduleSeconds(
-                  ONE_HOUR + numberOfProducts * 5,
-                ),
-              },
-            },
-          );
         })
         .catch((err: NodeJS.ErrnoException) => {
           if (err.code !== 'ERR_PRODUCT_NOT_FOUND') {
             throw err;
           }
-          withTaskAlreadyExistsErrorHandler(
-            productDetailScheduler.scheduleProductDetailTask,
-          )(
+          productDetailScheduler.scheduleProductDetailTask(
             {
               product: {
                 productId,
