@@ -11,7 +11,6 @@ import {
   onlyAllowServiceToServiceForInvokeAPI,
 } from './gcp/cloud-run.ts';
 import {
-  createProductDetailLowPriorityTaskQueue,
   createProductDetailTaskQueue,
   createProductSearchTaskQueue,
 } from './gcp/cloud-tasks.ts';
@@ -23,8 +22,6 @@ const { fullQualifiedQueueName: productSearchQueueName } =
   createProductSearchTaskQueue();
 const { fullQualifiedQueueName: productDetailQueueName } =
   createProductDetailTaskQueue();
-const { fullQualifiedQueueName: productDetailLowPriorityQueueName } =
-  createProductDetailLowPriorityTaskQueue();
 
 const { name: llmServiceName, url: llmUrl } = createCloudRunForLLM();
 
@@ -44,7 +41,6 @@ const {
 } = createCloudRunForBackgroundProductSearch({
   databaseName: databaseName,
   productDetailEndpoint: backgroundProductDetailUrl,
-  productDetailLowPriorityTaskQueue: productDetailLowPriorityQueueName,
   productDetailTaskQueue: productDetailQueueName,
 });
 const {

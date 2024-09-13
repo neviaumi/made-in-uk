@@ -10,10 +10,10 @@ import {
 } from '@/browser.ts';
 import { APP_ENV, loadConfig } from '@/config.ts';
 import {
-  connectToProductDatabase,
+  connectProductCacheOnDatabase,
+  connectReplyStreamOnDatabase,
   createDatabaseConnection,
   createLockHandlerOnDatabase,
-  createReplyStreamOnDatabase,
   databaseHealthCheck,
 } from '@/database.ts';
 import * as lilysKitchen from '@/lilys-kitchen.ts';
@@ -26,9 +26,6 @@ import * as zooplus from '@/zooplus.ts';
 
 const config = loadConfig(APP_ENV);
 const logger = createLogger(APP_ENV);
-enum TASK_TYPE {
-  FETCH_PRODUCT_DETAIL = 'FETCH_PRODUCT_DETAIL',
-}
 
 async function handleHealthCheck(res: Parameters<RequestListener>[1]) {
   const database = createDatabaseConnection();
@@ -59,30 +56,75 @@ async function handleHealthCheck(res: Parameters<RequestListener>[1]) {
   res.end();
 }
 
-async function handleFetchProductDetail(
-  database: ReturnType<typeof createDatabaseConnection>,
-  requestId: string,
-  payload: {
-    product: {
-      productId: string;
-      productUrl: string;
-    };
-  },
-) {
+// eslint-disable-next-line max-statements
+const server = createServer(async (req, res) => {
+  if (req.method === 'GET' && req.url === '/health') {
+    await handleHealthCheck(res);
+    return;
+  }
+  const verifiedIncomingMessage = await validateIncomingMessage(req);
+  if (!verifiedIncomingMessage.ok) {
+    res.statusCode = Number(verifiedIncomingMessage.error.code);
+    res.end(verifiedIncomingMessage.error.message);
+    return;
+  }
+  const requestId = verifiedIncomingMessage.requestId;
   const loggerWithRequestId = logger.child({
     requestId,
   });
-  const {
-    product: { productId, productUrl, source },
-  } = payload as {
+  const database = createDatabaseConnection();
+  const payload = verifiedIncomingMessage.data;
+  const { product } = payload as {
     product: {
       productId: string;
       productUrl: string;
       source: PRODUCT_SOURCE;
     };
   };
-  const replyStream = createReplyStreamOnDatabase(database);
 
+  if (!product.productId || !product.productUrl) {
+    loggerWithRequestId.error('Invalid message body', {
+      message: payload,
+    });
+    res.statusCode = 400;
+    res.end('Bad request');
+    return;
+  }
+  const { productId, productUrl, source } = product;
+  const lock = createLockHandlerOnDatabase(database, requestId, productId);
+  if (await lock.checkRequestLockExist()) {
+    loggerWithRequestId.info('Request already exist', {
+      product,
+      requestId,
+    });
+    res.statusCode = 409;
+    res.end('409 Conflict');
+    return;
+  }
+  await lock.acquireLock();
+  const replyStream = connectReplyStreamOnDatabase(
+    database,
+    requestId,
+    productId,
+  );
+  const cache = connectProductCacheOnDatabase(database, source, productId);
+  const cachedProduct = await cache.getCachedSearchData();
+
+  if (cachedProduct.ok) {
+    loggerWithRequestId.info('Response product from cache', {
+      product: cachedProduct.data,
+    });
+    const batchWrite = database.batch();
+    batchWrite.set(replyStream.repliesStream, {
+      data: cachedProduct.data,
+      type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
+    });
+    batchWrite.delete(lock.lock);
+    await batchWrite.commit();
+    res.statusCode = 204;
+    res.end();
+    return;
+  }
   const browser = await createChromiumBrowser();
   const page = await createBrowserPage(browser)();
   const fetchers = {
@@ -112,79 +154,27 @@ async function handleFetchProductDetail(
       await closeBrowser(browser);
     });
   if (!productInfo.ok) {
-    await replyStream(requestId, productId).set({
+    await replyStream.writeProductInfoToStream({
       error: productInfo.error,
       type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE,
     });
     return;
   }
   const batchWrite = database.batch();
-  batchWrite.set(replyStream(requestId, productId), {
+  batchWrite.set(replyStream.repliesStream, {
     data: productInfo.data,
     type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
   });
   batchWrite.set(
-    connectToProductDatabase(database)(source, productId),
+    cache.cachedProduct,
     Object.assign(productInfo.data, {
       // 1 day
       expiresAt: Timestamp.fromDate(new Date(Date.now() + 1000 * 60 * 60 * 24)),
     }),
   );
+  batchWrite.delete(lock.lock);
   await batchWrite.commit();
-}
 
-const server = createServer(async (req, res) => {
-  if (req.method === 'GET' && req.url === '/health') {
-    await handleHealthCheck(res);
-    return;
-  }
-  const verifiedIncomingMessage = await validateIncomingMessage(req);
-  if (!verifiedIncomingMessage.ok) {
-    res.statusCode = Number(verifiedIncomingMessage.error.code);
-    res.end(verifiedIncomingMessage.error.message);
-    return;
-  }
-  const requestId = verifiedIncomingMessage.requestId;
-  const loggerWithRequestId = logger.child({
-    requestId,
-  });
-  const database = createDatabaseConnection();
-  const lock = createLockHandlerOnDatabase(database);
-  const payload = verifiedIncomingMessage.data;
-  const { product, type } = payload as {
-    product: {
-      productId: string;
-      productUrl: string;
-      source: string;
-    };
-    type: TASK_TYPE;
-  };
-  if (!product.productId || !product.productUrl) {
-    loggerWithRequestId.error('Invalid message body', {
-      message: payload,
-    });
-    res.statusCode = 400;
-    res.end('Bad request');
-    return;
-  }
-  if (await lock.checkRequestLock(requestId, product.productId)) {
-    loggerWithRequestId.info('Request already exist', {
-      product,
-      requestId,
-    });
-    res.statusCode = 204;
-    res.end();
-    return;
-  }
-  await lock.acquireLock(requestId, product.productId, payload);
-  if (type === TASK_TYPE.FETCH_PRODUCT_DETAIL) {
-    await handleFetchProductDetail(database, requestId, { product });
-  } else {
-    loggerWithRequestId.error('Invalid message type', {
-      message: payload,
-    });
-  }
-  await lock.releaseLock(requestId, product.productId);
   res.statusCode = 204;
   res.end();
 });

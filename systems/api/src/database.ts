@@ -43,9 +43,9 @@ export function createDatabaseConnection(settings?: Settings) {
   return new Firestore(storeConfig);
 }
 
-export function connectToProductDatabase(database: Firestore) {
+export function connectToProductCacheOnDatabase(database: Firestore) {
   return {
-    async getProduct(source: string, productId: string) {
+    async getCachedProduct(source: string, productId: string) {
       const doc = await database
         .collection(`${source}.products`)
         .doc(productId)
@@ -93,12 +93,10 @@ export function handleProductStreamHeader(stream: Duplex) {
     change: FirebaseFirestore.DocumentChange,
   ) {
     const changedData = change.doc.data();
-    const isCompleted = changedData['type'] !== 'PRODUCT_SEARCH_LOCK';
-    if (!isCompleted) return null;
     const content = changedData['data'];
     if (changedData['type'] === 'PRODUCT_SEARCH_ERROR') {
       stream.end();
-      throw new Error(content.error.message);
+      throw new Error(content ? content.error.message : 'Product search error');
     }
     const total: number = content['total'];
     const hasNoData = total === 0;

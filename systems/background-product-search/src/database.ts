@@ -1,11 +1,10 @@
-import { Firestore, type Settings } from '@google-cloud/firestore';
+import { Firestore, type Settings, Timestamp } from '@google-cloud/firestore';
 
 import { APP_ENV, loadConfig } from '@/config.ts';
-import { createLogger, type Logger } from '@/logger.ts';
-import { REPLY_DATA_TYPE } from '@/types.ts';
+
+export { Timestamp } from '@google-cloud/firestore';
 
 const config = loadConfig(APP_ENV);
-const defaultLogger = createLogger(APP_ENV);
 export function databaseHealthCheck(database: Firestore) {
   return async function healthCheckByGetCollectionInfo(): Promise<
     | {
@@ -42,93 +41,84 @@ export function createDatabaseConnection(settings?: Settings) {
   return new Firestore(storeConfig);
 }
 
-class ProductNotFoundError extends Error implements NodeJS.ErrnoException {
-  code: string;
+export function connectProductSearchCacheOnDatabase(
+  database: Firestore,
+  source: string,
+  cacheId: string,
+) {
+  const cacheDoc = database.collection(`${source}.search`).doc(cacheId);
 
-  constructor(message: string) {
-    super(message);
-    this.name = 'ProductNotFoundError';
-    this.code = 'ERR_PRODUCT_NOT_FOUND';
-  }
+  return {
+    get cachedSearch() {
+      return cacheDoc;
+    },
+    async getCachedSearchData() {
+      const doc = await cacheDoc.get();
+      if (!doc.exists) {
+        return {
+          error: {
+            code: 'ERR_CACHE_NOT_FOUND',
+            message: `Cache ${cacheId} not found in caches`,
+          },
+          ok: false,
+        };
+      }
+      const docData = doc.data();
+      if (!docData || !docData['hits']) {
+        return {
+          error: {
+            code: 'ERR_CACHE_NOT_FOUND',
+            message: `Unexpected empty record for ${cacheId} in caches`,
+          },
+          ok: false,
+        };
+      }
+      return {
+        data: docData['hits'],
+        ok: true,
+      };
+    },
+  };
 }
 
-export function connectToProductDatabase(database: Firestore) {
+export function connectLockHandlerOnDatabase(
+  database: Firestore,
+  requestId: string,
+) {
+  const collectionPath = `product-search.request-lock`;
+
   return {
-    async getProductOrFail(source: string, productId: string) {
-      const doc = await database
-        .collection(`${source}.products`)
-        .doc(productId)
+    async acquireLock() {
+      return database
+        .collection(collectionPath)
+        .doc(requestId)
+        .set({
+          acquiredAt: Timestamp.now(),
+          // lock will expire after 10 minutes
+          expiresAt: Timestamp.fromDate(new Date(Date.now() + 1000 * 60 * 10)),
+        });
+    },
+    async checkRequestLockExist() {
+      const lock = await database
+        .collection(collectionPath)
+        .doc(requestId)
         .get();
-      if (!doc.exists) {
-        throw new ProductNotFoundError(`Product ${productId} not found`);
-      }
-      const record = doc.data();
-      if (!record) {
-        throw new ProductNotFoundError(
-          `Unexpected empty record for ${productId} in ${source}.products`,
-        );
-      }
-      return record;
+      return lock.exists;
+    },
+    get lock() {
+      return database.collection(collectionPath).doc(requestId);
     },
   };
 }
 
 export function connectReplyStreamOnDatabase(
   database: Firestore,
-  options: {
-    logger: Logger;
-  },
+  requestId: string,
 ) {
-  const logger = options?.logger ?? defaultLogger;
   return {
-    async checkRequestAlreadyExist(requestId: string) {
+    get repliesStreamHeader() {
       const collectionPath = `replies.${requestId}`;
-      const headers = await database
-        .collection(collectionPath)
-        .doc('headers')
-        .get();
-      return headers.exists;
-    },
-    writeToRepliesStream(
-      requestId: string,
-      productId: string,
-      reply: {
-        data: any;
-        type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL;
-      },
-    ) {
-      const collectionPath = `replies.${requestId}`;
-      return database.collection(collectionPath).doc(productId).set(reply);
-    },
-    writeToRepliesStreamHeader(
-      requestId: string,
-      headers:
-        | {
-            type: REPLY_DATA_TYPE.PRODUCT_SEARCH_LOCK;
-          }
-        | {
-            error?: {
-              code: string;
-              message: string;
-            };
-            search: {
-              keyword: string;
-            };
-            type: REPLY_DATA_TYPE.PRODUCT_SEARCH_ERROR;
-          }
-        | {
-            data: { total: number };
-            search: {
-              keyword: string;
-            };
-            type: REPLY_DATA_TYPE.PRODUCT_SEARCH;
-          },
-    ) {
-      const collectionPath = `replies.${requestId}`;
-      logger.info(`Set header to ${collectionPath}`, {
-        headers,
-      });
-      return database.collection(collectionPath).doc('headers').set(headers);
+      return database.collection(collectionPath).doc('headers');
     },
   };
 }

@@ -6,10 +6,6 @@ import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
 
 const config = loadConfig(APP_ENV);
 
-export enum TASK_TYPE {
-  FETCH_PRODUCT_DETAIL = 'FETCH_PRODUCT_DETAIL',
-}
-
 export function createCloudTaskClient(
   ...args: ConstructorParameters<typeof CloudTasksClient>
 ) {
@@ -28,34 +24,22 @@ export function createCloudTaskClient(
   return new CloudTasksClient(...args);
 }
 
-export function createTaskId(taskId: string) {
-  return `${String(config.get('cloudTasks.productDetailQueue'))}/tasks/${taskId}`;
-}
-
 export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
   return {
-    async scheduleProductDetailTask(
-      payload: {
-        product: {
-          productId: string;
-          productUrl: string;
-          source: string;
-        };
-        requestId: string;
-        type: TASK_TYPE;
-      },
-      options: {
-        name: NonNullable<
-          Parameters<CloudTasksClient['createTask']>[0]['task']
-        >['name'];
-      },
-    ) {
+    async scheduleProductDetailTask(payload: {
+      product: {
+        productId: string;
+        productUrl: string;
+        source: string;
+      };
+      requestId: string;
+    }) {
       return cloudTask.createTask({
         parent: String(config.get('cloudTasks.productDetailQueue')),
         task: {
           httpRequest: {
             body: Buffer.from(
-              JSON.stringify({ product: payload.product, type: payload.type }),
+              JSON.stringify({ product: payload.product }),
             ).toString('base64'),
             headers: {
               'Content-Type': 'application/json',
@@ -71,7 +55,6 @@ export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
               : null,
             url: String(config.get('productDetail.endpoint')),
           },
-          name: options.name,
         },
       });
     },

@@ -158,12 +158,10 @@ export function createCloudRunForApi({
 export function createCloudRunForBackgroundProductSearch({
   databaseName,
   productDetailEndpoint,
-  productDetailLowPriorityTaskQueue,
   productDetailTaskQueue,
 }: {
   databaseName: Output<string>;
   productDetailEndpoint: Output<string>;
-  productDetailLowPriorityTaskQueue: Output<string>;
   productDetailTaskQueue: Output<string>;
 }) {
   const bgProductSearchImage = appConfig.get('bg-product-search-image');
@@ -197,10 +195,6 @@ export function createCloudRunForBackgroundProductSearch({
                 {
                   name: 'BG_PRODUCT_SEARCH_PRODUCT_DETAIL_QUEUE',
                   value: productDetailTaskQueue,
-                },
-                {
-                  name: 'BG_PRODUCT_SEARCH_PRODUCT_DETAIL_LOW_PRIORITY_QUEUE',
-                  value: productDetailLowPriorityTaskQueue,
                 },
               ],
               image:

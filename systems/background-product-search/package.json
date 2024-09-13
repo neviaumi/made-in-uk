@@ -5,6 +5,7 @@
     "@google-cloud/tasks": "5.4.0",
     "@grpc/grpc-js": "1.10.9",
     "convict": "6.2.4",
+    "hash-object": "5.0.1",
     "playwright": "1.44.1",
     "ramda": "0.30.0",
     "winston": "3.13.0"

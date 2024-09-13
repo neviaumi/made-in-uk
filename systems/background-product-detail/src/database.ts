@@ -1,6 +1,7 @@
-import { Firestore, type Settings } from '@google-cloud/firestore';
+import { Firestore, type Settings, Timestamp } from '@google-cloud/firestore';
 
 import { APP_ENV, loadConfig } from '@/config.ts';
+import { type Product, REPLY_DATA_TYPE } from '@/types.ts';
 
 const config = loadConfig(APP_ENV);
 
@@ -40,44 +41,108 @@ export function createDatabaseConnection(settings?: Settings) {
   return new Firestore(storeConfig);
 }
 
-export function connectToProductDatabase(database: Firestore) {
-  return function cacheProduct(source: string, productId: string) {
-    return database.collection(`${source}.products`).doc(productId);
+export function connectProductCacheOnDatabase(
+  database: Firestore,
+  source: string,
+  productId: string,
+) {
+  const cacheDoc = database.collection(`${source}.products`).doc(productId);
+  return {
+    get cachedProduct() {
+      return cacheDoc;
+    },
+    async getCachedSearchData() {
+      const doc = await cacheDoc.get();
+      if (!doc.exists) {
+        return {
+          error: {
+            code: 'ERR_CACHE_NOT_FOUND',
+            message: `Cache ${productId} not found in caches`,
+          },
+          ok: false,
+        };
+      }
+      const docData = doc.data();
+      if (!docData) {
+        return {
+          error: {
+            code: 'ERR_CACHE_NOT_FOUND',
+            message: `Unexpected empty record for ${productId} in caches`,
+          },
+          ok: false,
+        };
+      }
+      return {
+        data: docData,
+        ok: true,
+      };
+    },
   };
 }
 
-export function createLockHandlerOnDatabase(database: Firestore) {
+export function createLockHandlerOnDatabase(
+  database: Firestore,
+  requestId: string,
+  productId: string,
+) {
   const collectionPath = `product-detail.request-lock`;
 
-  function formatDocPath(requestId: string, productId: string) {
+  function formatDocPath() {
     return `${requestId}.${productId}`;
   }
   return {
-    async acquireLock(requestId: string, productId: string, payload: any) {
+    async acquireLock() {
       return database
         .collection(collectionPath)
-        .doc(formatDocPath(requestId, productId))
-        .set(payload);
+        .doc(formatDocPath())
+        .set({
+          acquiredAt: Timestamp.fromDate(new Date()),
+          // lock will expire after 10 minutes
+          expiresAt: Timestamp.fromDate(new Date(Date.now() + 1000 * 60 * 10)),
+        });
     },
-    async checkRequestLock(requestId: string, productId: string) {
+    async checkRequestLockExist() {
       const lock = await database
         .collection(collectionPath)
-        .doc(formatDocPath(requestId, productId))
+        .doc(formatDocPath())
         .get();
       return lock.exists;
     },
-    async releaseLock(requestId: string, productId: string) {
-      await database
-        .collection(collectionPath)
-        .doc(formatDocPath(requestId, productId))
-        .delete();
+    get lock() {
+      return database.collection(collectionPath).doc(formatDocPath());
     },
   };
 }
 
-export function createReplyStreamOnDatabase(database: Firestore) {
-  return function writeToRepliesStream(requestId: string, productId: string) {
-    const collectionPath = `replies.${requestId}`;
-    return database.collection(collectionPath).doc(productId);
+export function connectReplyStreamOnDatabase(
+  database: Firestore,
+  requestId: string,
+  productId: string,
+) {
+  return {
+    get repliesStream() {
+      const collectionPath = `replies.${requestId}`;
+      return database.collection(collectionPath).doc(productId);
+    },
+    writeProductInfoToStream(
+      productInfo:
+        | {
+            error: {
+              code: string;
+              message: string;
+              meta: Record<string, unknown>;
+            };
+            type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE;
+          }
+        | {
+            data: Product;
+            type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL;
+          },
+    ) {
+      return database
+        .collection(`replies.${requestId}`)
+        .doc(productId)
+        .set(productInfo);
+    },
   };
 }
