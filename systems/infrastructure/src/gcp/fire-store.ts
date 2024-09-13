@@ -8,6 +8,24 @@ export function createFireStoreDB() {
     locationId: getLocation(),
     type: 'FIRESTORE_NATIVE',
   });
+  new firestore.Field(resourceName`product-search-lock-ttl`, {
+    collection: 'product-search.request-lock',
+    database: dbRef.name,
+    field: 'expiresAt',
+    ttlConfig: {},
+  });
+  new firestore.Field(resourceName`product-detail-lock-ttl`, {
+    collection: 'product-detail.request-lock',
+    database: dbRef.name,
+    field: 'expiresAt',
+    ttlConfig: {},
+  });
+  new firestore.Field(resourceName`ocado-search-cache-ttl`, {
+    collection: 'OCADO.search',
+    database: dbRef.name,
+    field: 'expiresAt',
+    ttlConfig: {},
+  });
   new firestore.Field(resourceName`ocado-cache-ttl`, {
     collection: 'OCADO.products',
     database: dbRef.name,

@@ -1,6 +1,8 @@
 import { createServer, type RequestListener } from 'node:http';
 import { Readable } from 'node:stream';
 
+import hashObject from 'hash-object';
+
 import {
   closeBrowser,
   closePage,
@@ -11,15 +13,15 @@ import {
 import {
   createCloudTaskClient,
   createProductDetailScheduler,
-  createTaskId,
-  TASK_TYPE,
 } from '@/cloud-task.ts';
 import { APP_ENV, loadConfig } from '@/config.ts';
 import {
+  connectLockHandlerOnDatabase,
+  connectProductSearchCacheOnDatabase,
   connectReplyStreamOnDatabase,
-  connectToProductDatabase,
   createDatabaseConnection,
   databaseHealthCheck,
+  Timestamp,
 } from '@/database.ts';
 import { createLogger } from '@/logger.ts';
 import { REPLY_DATA_TYPE } from '@/types.ts';
@@ -56,6 +58,9 @@ async function handleHealthCheck(res: Parameters<RequestListener>[1]) {
   res.end();
 }
 
+// TODO: Refactor this function to reduce complexity
+// Obvious the refactor can do when doing rate limit feature
+// eslint-disable-next-line max-statements
 const server = createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/health') {
     await handleHealthCheck(res);
@@ -67,80 +72,86 @@ const server = createServer(async (req, res) => {
     res.end(verifiedIncomingMessage.error.message);
     return;
   }
-  const cloudTask = createCloudTaskClient();
-
   const requestId = verifiedIncomingMessage.requestId;
   const loggerWithRequestId = logger.child({
     requestId: requestId,
   });
   const database = createDatabaseConnection();
-  const replyStream = connectReplyStreamOnDatabase(database, {
-    logger: loggerWithRequestId,
-  });
-  if (await replyStream.checkRequestAlreadyExist(requestId)) {
+  const lock = connectLockHandlerOnDatabase(database, requestId);
+  if (await lock.checkRequestLockExist()) {
     loggerWithRequestId.info('Request already processed');
-    res.statusCode = 204;
-    res.end();
+    res.statusCode = 409;
+    res.end('409 Conflict');
     return;
   }
-  const payload = verifiedIncomingMessage.data;
-  await replyStream.writeToRepliesStreamHeader(requestId, {
-    type: REPLY_DATA_TYPE.PRODUCT_SEARCH_LOCK,
-  });
-  const browser = await createChromiumBrowser();
-  const page = await createBrowserPage(browser)();
-  const search = payload['search'] as { keyword: string };
+  const cloudTask = createCloudTaskClient();
 
-  const matchProductStream = Readable.from(
-    createProductsSearchHandler(page, {
-      logger: loggerWithRequestId,
-    })(search.keyword),
+  const replyStream = connectReplyStreamOnDatabase(database, requestId);
+  const payload = verifiedIncomingMessage.data;
+  await lock.acquireLock();
+
+  const search = payload['search'] as { keyword: string };
+  const dbCache = connectProductSearchCacheOnDatabase(
+    database,
+    'OCADO',
+    hashObject(search),
   );
-  matchProductStream.on('end', async () => {
-    await closePage(page);
-    await closeBrowser(browser);
-  });
-  let numberOfProducts = 0;
+  const dbCachedResult = await dbCache.getCachedSearchData();
+
+  const matchProductStream = dbCachedResult.ok
+    ? Readable.from(Object.entries(dbCachedResult.data))
+    : await (async () => {
+        const browser = await createChromiumBrowser();
+        const page = await createBrowserPage(browser)();
+        const generator = createProductsSearchHandler(page, {
+          logger: loggerWithRequestId,
+        })(search.keyword);
+        const stream = Readable.from(generator);
+        stream.on('end', async () => {
+          await closePage(page);
+          await closeBrowser(browser);
+        });
+        return stream;
+      })();
+
+  if (dbCachedResult.ok) {
+    loggerWithRequestId.info('Product search cache hit', {
+      hitsLength: Object.entries(dbCachedResult.data).length,
+      source: 'OCADO',
+    });
+  }
+
+  const matchedProducts = [];
   const productDetailScheduler = createProductDetailScheduler(cloudTask);
   try {
     for await (const [productId, productUrl] of matchProductStream) {
-      await connectToProductDatabase(database)
-        .getProductOrFail('ocado', productId)
-        .then(async product => {
-          loggerWithRequestId.debug('Response product from cache', {
-            productId,
-          });
-          await replyStream.writeToRepliesStream(requestId, productId, {
-            data: product,
-            type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
-          });
-        })
-        .catch((err: NodeJS.ErrnoException) => {
-          if (err.code !== 'ERR_PRODUCT_NOT_FOUND') {
-            throw err;
-          }
-          productDetailScheduler.scheduleProductDetailTask(
-            {
-              product: {
-                productId,
-                productUrl,
-                source: 'OCADO',
-              },
-              requestId: requestId,
-              type: TASK_TYPE.FETCH_PRODUCT_DETAIL,
-            },
-            {
-              name: createTaskId(`${requestId}-ocado-${productId}`),
-            },
-          );
-        });
-      numberOfProducts += 1;
+      matchedProducts.push([productId, productUrl]);
+      await productDetailScheduler.scheduleProductDetailTask({
+        product: {
+          productId,
+          productUrl,
+          source: 'OCADO',
+        },
+        requestId: requestId,
+      });
     }
-    await replyStream.writeToRepliesStreamHeader(requestId, {
+    const numberOfProducts = matchedProducts.length;
+    const dbBatch = database.batch();
+    if (!dbCachedResult.ok)
+      dbBatch.set(dbCache.cachedSearch, {
+        expiresAt: Timestamp.fromDate(
+          // 3 days
+          new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
+        ),
+        hits: Object.fromEntries(matchedProducts),
+      });
+    dbBatch.set(replyStream.repliesStreamHeader, {
       data: { total: numberOfProducts },
       search: search,
       type: REPLY_DATA_TYPE.PRODUCT_SEARCH,
     });
+    dbBatch.delete(lock.lock);
+    await dbBatch.commit();
     loggerWithRequestId.info('Product search completed', {
       numberOfProducts,
     });
@@ -151,7 +162,8 @@ const server = createServer(async (req, res) => {
       loggerWithRequestId.error(e.message, {
         e,
       });
-      await replyStream.writeToRepliesStreamHeader(requestId, {
+      const dbBatch = database.batch();
+      dbBatch.set(replyStream.repliesStreamHeader, {
         error: {
           // @ts-expect-error code is not defined on Error
           code: e['code'] ?? 'ERR_UNEXPECTED_ERROR',
@@ -160,6 +172,8 @@ const server = createServer(async (req, res) => {
         search: search,
         type: REPLY_DATA_TYPE.PRODUCT_SEARCH_ERROR,
       });
+      dbBatch.delete(lock.lock);
+      await dbBatch.commit();
       res.statusCode = 500;
       res.end(e.message);
     }

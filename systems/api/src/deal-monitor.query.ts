@@ -3,11 +3,9 @@ import { Readable } from 'node:stream';
 import {
   createCloudTaskClient,
   createProductDetailScheduler,
-  TASK_TYPE,
 } from '@/cloud-task.ts';
 import {
   closeReplyStream,
-  connectToProductDatabase,
   createDatabaseConnection,
   createListenerToReplyStreamData,
   handleNoHeaderStream,
@@ -177,29 +175,18 @@ export const dealMonitorItemDefer: ResolverFunction<
   const database = createDatabaseConnection();
   const cloudTask = createCloudTaskClient();
   const productDetailScheduler = createProductDetailScheduler(cloudTask);
-  const productDatabase = connectToProductDatabase(database);
   const items: Array<unknown> = [];
   for (const item of monitor.items) {
-    const cachedRecord = await productDatabase.getProduct(item.source, item.id);
-
-    if (!cachedRecord.ok) {
-      await productDetailScheduler({
-        product: {
-          productId: item.id,
-          productUrl: item.url,
-          source: item.source,
-        },
-        requestId: requestId,
-        type: TASK_TYPE.FETCH_PRODUCT_DETAIL,
-      });
-    } else {
-      items.push({ data: cachedRecord.data, type: 'FETCH_PRODUCT_DETAIL' });
-    }
+    await productDetailScheduler({
+      product: {
+        productId: item.id,
+        productUrl: item.url,
+        source: item.source,
+      },
+      requestId: requestId,
+    });
   }
 
-  if (items.length === parent.monitor.numberOfItems) {
-    return items;
-  }
   const replyStream = createListenerToReplyStreamData(
     database,
     handleNoHeaderStream,
@@ -211,6 +198,7 @@ export const dealMonitorItemDefer: ResolverFunction<
     if (item.type === 'FETCH_PRODUCT_DETAIL_FAILURE') {
       logger.info('error when fetching product detail', {
         error: item.error,
+        payload: item.error.meta.payload,
       });
       items.push({
         data: {
