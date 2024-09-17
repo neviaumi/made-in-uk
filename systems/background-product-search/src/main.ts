@@ -208,6 +208,7 @@ fastify.post('/', {
           required: ['keyword'],
           type: 'object',
         },
+        taskId: { type: 'string' },
       },
       required: ['search'],
       type: 'object',
