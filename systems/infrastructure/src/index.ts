@@ -10,6 +10,7 @@ import {
   createCloudRunForWeb,
   onlyAllowServiceToServiceForInvokeAPI,
 } from './gcp/cloud-run.ts';
+import { createProductSearchCronJob } from './gcp/cloud-scheduler.ts';
 import {
   createProductDetailTaskQueue,
   createProductSearchTaskQueue,
@@ -53,6 +54,11 @@ const {
   productDetailTaskQueue: productDetailQueueName,
   productSearchEndpoint: backgroundProductSearchUrl,
   productSearchTaskQueue: productSearchQueueName,
+});
+
+createProductSearchCronJob({
+  productSearchEndpoint: backgroundProductSearchUrl,
+  serviceAccountEmail: productSearchCloudRunServiceAccount,
 });
 
 allowServiceAccountsToCallLLM({
