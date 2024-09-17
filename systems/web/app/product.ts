@@ -31,9 +31,18 @@ export function isFailureProductResponse(
   return product.type === 'FETCH_PRODUCT_DETAIL_FAILURE';
 }
 function isUkCountry(country: string) {
-  const ukCountries = ['United Kingdom', 'UK', 'England', 'Scotland', 'Wales'];
+  const ukCountries = [
+    'United Kingdom',
+    'UK',
+    'England',
+    'Scotland',
+    'Wales',
+    'Northern Ireland',
+    'U.K',
+    'Made In the UK',
+  ];
 
-  return ukCountries.includes(country);
+  return ukCountries.map(c => c.toLowerCase()).includes(country.toLowerCase());
 }
 
 export function isSuccessProductResponse(
