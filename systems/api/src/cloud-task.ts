@@ -39,7 +39,10 @@ export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
       task: {
         httpRequest: {
           body: Buffer.from(
-            JSON.stringify({ product: payload.product }),
+            JSON.stringify({
+              product: payload.product,
+              taskId: crypto.randomUUID(),
+            }),
           ).toString('base64'),
           headers: {
             'Content-Type': 'application/json',
@@ -71,6 +74,7 @@ export function createProductSearchScheduler(cloudTask: CloudTasksClient) {
         body: Buffer.from(
           JSON.stringify({
             search: payload.search,
+            taskId: crypto.randomUUID(),
           }),
         ).toString('base64'),
         headers: {
