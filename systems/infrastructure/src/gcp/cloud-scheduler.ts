@@ -13,7 +13,7 @@ export function createProductSearchCronJob({
   return new gcp.cloudscheduler.Job(
     resourceName`product-search-token-bucket-refill`,
     {
-      attemptDeadline: '10s',
+      attemptDeadline: '30s',
       description: 'Refill token bucket for product search',
       httpTarget: {
         httpMethod: 'POST',
