@@ -19,6 +19,7 @@ import {
   connectLockHandlerOnDatabase,
   connectProductSearchCacheOnDatabase,
   connectReplyStreamOnDatabase,
+  connectTokenBucketOnDatabase,
   createDatabaseConnection,
   databaseHealthCheck,
   Timestamp,
@@ -29,6 +30,11 @@ import { REPLY_DATA_TYPE } from '@/types.ts';
 const config = loadConfig(APP_ENV);
 
 const fastify = Fastify({
+  // We are using Winston for logging and fastify wasn't able to customize the request object on log
+  disableRequestLogging: true,
+  genReqId() {
+    return crypto.randomUUID();
+  },
   logger: adaptToFastifyLogger(createLogger(APP_ENV)),
   requestIdLogLabel: 'requestId',
 });
@@ -61,6 +67,7 @@ fastify.get('/health', async (_, reply) => {
 });
 
 fastify.post('/', {
+  // eslint-disable-next-line max-statements
   async handler(req, reply) {
     const requestId = req.id;
     const logger = req.log;
@@ -75,42 +82,70 @@ fastify.post('/', {
     const replyStream = connectReplyStreamOnDatabase(database, requestId);
     const payload = req.body as { search: { keyword: string } };
     await lock.acquireLock();
-
     const search = payload.search;
-    const dbCache = connectProductSearchCacheOnDatabase(
-      database,
-      'OCADO',
-      hashObject(search),
-    );
-    const dbCachedResult = await dbCache.getCachedSearchData();
-
-    const matchProductStream = dbCachedResult.ok
-      ? Readable.from(Object.entries(dbCachedResult.data))
-      : await (async () => {
-          const browser = await createChromiumBrowser();
-          const page = await createBrowserPage(browser)();
-          const generator = createProductsSearchHandler(page, {
-            logger,
-          })(search.keyword);
-          const stream = Readable.from(generator);
-          stream.on('end', async () => {
-            await closePage(page);
-            await closeBrowser(browser);
-          });
-          return stream;
-        })();
-
-    if (dbCachedResult.ok) {
-      logger.info('Product search cache hit', {
-        hitsLength: Object.entries(dbCachedResult.data).length,
-        source: 'OCADO',
-      });
-    }
-
     const matchedProducts = [];
     const productDetailScheduler = createProductDetailScheduler(cloudTask);
     try {
-      for await (const [productId, productUrl] of matchProductStream) {
+      const dbCache = connectProductSearchCacheOnDatabase(
+        database,
+        'OCADO',
+        hashObject(search),
+      );
+      const dbCachedResult = await dbCache.getCachedSearchData();
+
+      const requestProcessor:
+        | {
+            error: { code: string; message: string; status: number };
+            ok: false;
+          }
+        | {
+            data: Readable;
+            ok: true;
+          } = dbCachedResult.ok
+        ? { data: Readable.from(Object.entries(dbCachedResult.data)), ok: true }
+        : await (async () => {
+            const tokenBucket = connectTokenBucketOnDatabase(database);
+            if (!(await tokenBucket.consume('OCADO')).ok) {
+              return {
+                error: {
+                  code: 'ERR_RATE_LIMIT_EXCEEDED',
+                  message: 'Rate limit exceeded',
+                  status: 429,
+                },
+                ok: false,
+              };
+            }
+            logger.info('Consumed token from token bucket');
+            const browser = await createChromiumBrowser();
+            const page = await createBrowserPage(browser)();
+            const generator = createProductsSearchHandler(page, {
+              logger,
+            })(search.keyword);
+            const stream = Readable.from(generator);
+            stream.on('end', async () => {
+              await closePage(page);
+              await closeBrowser(browser);
+            });
+            return { data: stream, ok: true };
+          })();
+
+      if (dbCachedResult.ok) {
+        logger.info('Product search cache hit', {
+          hitsLength: Object.entries(dbCachedResult.data).length,
+          source: 'OCADO',
+        });
+      }
+
+      if (!requestProcessor.ok) {
+        const error = requestProcessor.error;
+        logger.error('Error when processing request', {
+          error,
+        });
+        await lock.releaseLock();
+        reply.code(error.status).send(error.message);
+        return;
+      }
+      for await (const [productId, productUrl] of requestProcessor.data) {
         matchedProducts.push([productId, productUrl]);
         await productDetailScheduler.scheduleProductDetailTask({
           product: {
@@ -187,20 +222,37 @@ fastify.post('/', {
   },
 });
 
+fastify.post('/token-bucket/refill', async (req, reply) => {
+  const logger = req.log;
+  const tokenBucket = connectTokenBucketOnDatabase(createDatabaseConnection());
+  await tokenBucket.refill('OCADO');
+  logger.info('Token bucket has been refilled');
+  reply.code(204).send('204 No Content');
+});
+
 fastify.listen(
   {
+    host: '0.0.0.0',
     port: config.get('port'),
   },
-  (err, address) => {
+  async (err, address) => {
     if (err) {
       fastify.log.error(err);
       throw err;
     }
+    const logger = fastify.log;
+    logger.info(`server listening on ${address}`);
+    await fetch(`${address}/token-bucket/refill`, {
+      method: 'POST',
+    });
     if (APP_ENV === AppEnvironment.DEV) {
-      fastify.addresses();
       setInterval(() => {
-        fastify.log.info('Server cron job is running', {
-          address,
+        fetch(`${address}/token-bucket/refill`, {
+          method: 'POST',
+        }).catch(e => {
+          logger.error('Error when refill the bucket', {
+            error: e,
+          });
         });
       }, 60000);
     }

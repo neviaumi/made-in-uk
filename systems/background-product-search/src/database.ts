@@ -1,4 +1,9 @@
-import { Firestore, type Settings, Timestamp } from '@google-cloud/firestore';
+import {
+  FieldValue,
+  Firestore,
+  type Settings,
+  Timestamp,
+} from '@google-cloud/firestore';
 
 import { APP_ENV, loadConfig } from '@/config.ts';
 
@@ -108,6 +113,9 @@ export function connectLockHandlerOnDatabase(
     get lock() {
       return database.collection(collectionPath).doc(requestId);
     },
+    async releaseLock() {
+      return database.collection(collectionPath).doc(requestId).delete();
+    },
   };
 }
 
@@ -119,6 +127,41 @@ export function connectReplyStreamOnDatabase(
     get repliesStreamHeader() {
       const collectionPath = `replies.${requestId}`;
       return database.collection(collectionPath).doc('headers');
+    },
+  };
+}
+
+export function connectTokenBucketOnDatabase(database: Firestore) {
+  // https://en.wikipedia.org/wiki/Token_bucket
+  const collectionPath = `token-buckets`;
+  return {
+    async consume(source: 'OCADO'): Promise<{ ok: boolean }> {
+      return database.runTransaction(async transaction => {
+        const docRef = database.collection(collectionPath).doc(source);
+        const doc = await transaction.get(docRef);
+        if (!doc.exists) {
+          return { ok: false };
+        }
+        const docData = doc.data();
+        if (!docData || !docData['tokens']) {
+          return { ok: false };
+        }
+        if (docData['tokens'] <= 0) {
+          return { ok: false };
+        }
+        transaction.update(docRef, {
+          tokens: FieldValue.increment(-1),
+        });
+        return { ok: true };
+      });
+    },
+    refill(source: 'OCADO') {
+      return database.collection(collectionPath).doc(source).set(
+        {
+          tokens: 1,
+        },
+        {},
+      ); // Expect that function will call every 1 minute , so we can fill 1 token every 1 minute
     },
   };
 }
