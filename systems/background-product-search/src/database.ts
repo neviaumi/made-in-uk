@@ -1,3 +1,5 @@
+import { Duplex } from 'node:stream';
+
 import {
   FieldValue,
   Firestore,
@@ -5,7 +7,10 @@ import {
   Timestamp,
 } from '@google-cloud/firestore';
 
+import { TASK_STATE } from '@/cloud-task.ts';
 import { APP_ENV, loadConfig } from '@/config.ts';
+import { withErrorCode } from '@/error.ts';
+import { PRODUCT_SOURCE, SUBTASK_RELY_DATA_TYPE } from '@/types.ts';
 
 export { Timestamp } from '@google-cloud/firestore';
 
@@ -46,9 +51,32 @@ export function createDatabaseConnection(settings?: Settings) {
   return new Firestore(storeConfig);
 }
 
+export function connectTaskStateOnDatabase(
+  database: Firestore,
+  taskId: string,
+) {
+  const taskStateDoc = database.collection('task-state').doc(taskId);
+  return {
+    async shouldTaskRun() {
+      const doc = await taskStateDoc.get();
+      if (!doc.exists) {
+        return true;
+      }
+      const docData = doc.data();
+      if (!docData) {
+        return true;
+      }
+      return ![TASK_STATE.DONE, TASK_STATE.ERROR].includes(docData['state']);
+    },
+    get taskState() {
+      return taskStateDoc;
+    },
+  };
+}
+
 export function connectProductSearchCacheOnDatabase(
   database: Firestore,
-  source: string,
+  source: PRODUCT_SOURCE,
   cacheId: string,
 ) {
   const cacheDoc = database.collection(`${source}.search`).doc(cacheId);
@@ -113,9 +141,6 @@ export function connectLockHandlerOnDatabase(
     get lock() {
       return database.collection(collectionPath).doc(requestId);
     },
-    async releaseLock() {
-      return database.collection(collectionPath).doc(requestId).delete();
-    },
   };
 }
 
@@ -124,9 +149,78 @@ export function connectReplyStreamOnDatabase(
   requestId: string,
 ) {
   return {
-    get repliesStreamHeader() {
+    get stream() {
       const collectionPath = `replies.${requestId}`;
-      return database.collection(collectionPath).doc('headers');
+      return database.collection(collectionPath).doc('search');
+    },
+  };
+}
+
+export function connectToProductSearchSubTasksReplyStreamOnDatabase(
+  database: Firestore,
+  requestId: string,
+) {
+  const collectionPath = `replies.${requestId}`;
+  return {
+    async closeStream() {
+      await database.recursiveDelete(database.collection(collectionPath));
+    },
+    getRepliesStreamDoc(messageId: string) {
+      return database.collection(collectionPath).doc(messageId);
+    },
+    init() {
+      return database.collection(collectionPath).doc('meta').set({
+        createdAt: Timestamp.now(),
+        createdBy: 'background-product-search',
+      });
+    },
+    subscribe() {
+      const duplexStream = new Duplex({
+        final() {
+          this.push(null);
+        },
+        objectMode: true,
+        read() {},
+      });
+      const totalDocsExpected: number = Object.keys(PRODUCT_SOURCE).length;
+      let docReceivedCount: number = 0;
+      const detachDBListener = database
+        .collection(collectionPath)
+        .onSnapshot(snapshot => {
+          snapshot.docChanges().forEach(change => {
+            if (change.type === 'removed' || change.type === 'modified') return;
+            const changedData = change.doc.data();
+            docReceivedCount += 1;
+            duplexStream.push(changedData);
+            if (docReceivedCount === totalDocsExpected) {
+              duplexStream.end();
+            }
+          });
+        });
+      duplexStream.on('end', () => detachDBListener());
+      return duplexStream;
+    },
+    get totalSearchMatchCount() {
+      return (async () => {
+        const documents = await Promise.all(
+          (await database.collection(collectionPath).listDocuments()).map(doc =>
+            doc.get().then(async doc => ({
+              data: await doc.data(),
+              id: doc.id,
+            })),
+          ),
+        );
+        return documents.reduce((acc, doc) => {
+          if (!doc.data) {
+            throw withErrorCode('ERR_UNEXPECTED_ERROR')(
+              new Error('Unexpected empty document'),
+            );
+          }
+          if (doc.id === 'meta') return acc;
+          if (doc.data['type'] === SUBTASK_RELY_DATA_TYPE.SEARCH_PRODUCT)
+            return acc + doc.data['data']['total'];
+        }, 0);
+      })();
     },
   };
 }
@@ -135,7 +229,7 @@ export function connectTokenBucketOnDatabase(database: Firestore) {
   // https://en.wikipedia.org/wiki/Token_bucket
   const collectionPath = `token-buckets`;
   return {
-    async consume(source: 'OCADO'): Promise<{ ok: boolean }> {
+    async consume(source: PRODUCT_SOURCE): Promise<{ ok: boolean }> {
       return database.runTransaction(async transaction => {
         const docRef = database.collection(collectionPath).doc(source);
         const doc = await transaction.get(docRef);
@@ -155,7 +249,7 @@ export function connectTokenBucketOnDatabase(database: Firestore) {
         return { ok: true };
       });
     },
-    refill(source: 'OCADO') {
+    refill(source: PRODUCT_SOURCE) {
       return database.collection(collectionPath).doc(source).set(
         {
           tokens: 1,

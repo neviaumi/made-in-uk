@@ -3,14 +3,13 @@ import { Readable } from 'node:stream';
 import { describe, expect, it } from 'vitest';
 
 import {
-  baseUrl,
   closeBrowser,
   closePage,
   createBrowserPage,
   createChromiumBrowser,
-  createProductsSearchHandler,
 } from '@/browser.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
+import { baseUrl, createProductsSearchHandler } from '@/ocado.ts';
 
 describe(
   'background-product-search',
