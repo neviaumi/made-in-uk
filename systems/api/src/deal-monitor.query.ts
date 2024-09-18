@@ -8,7 +8,6 @@ import {
   closeReplyStream,
   createDatabaseConnection,
   createListenerToReplyStreamData,
-  handleNoHeaderStream,
 } from '@/database.ts';
 import type { GraphqlContext, ResolverFunction } from '@/types.ts';
 
@@ -187,13 +186,9 @@ export const dealMonitorItemDefer: ResolverFunction<
     });
   }
 
-  const replyStream = createListenerToReplyStreamData(
-    database,
-    handleNoHeaderStream,
-    {
-      logger: logger,
-    },
-  )(requestId);
+  const replyStream = createListenerToReplyStreamData(database, {
+    logger: logger,
+  })(requestId);
   await Readable.from(replyStream).forEach(item => {
     if (item.type === 'FETCH_PRODUCT_DETAIL_FAILURE') {
       logger.info('error when fetching product detail', {

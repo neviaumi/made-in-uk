@@ -49,6 +49,11 @@ export function loadConfig(appEnv: AppEnvironment) {
         env: 'BG_PRODUCT_SEARCH_PRODUCT_DETAIL_QUEUE',
         format: String,
       },
+      productSearchQueue: {
+        default: null,
+        env: 'BG_PRODUCT_SEARCH_PRODUCT_SEARCH_QUEUE',
+        format: String,
+      },
       useEmulator: {
         default: shouldUseCloudTasksEmulator,
         format: Boolean,
@@ -86,9 +91,11 @@ export function loadConfig(appEnv: AppEnvironment) {
       },
     },
   });
-  configSchema.validate({
-    allowed: 'strict',
-  });
+  if (![AppEnvironment.TEST].includes(appEnv)) {
+    configSchema.validate({
+      allowed: 'strict',
+    });
+  }
   return configSchema;
 }
 

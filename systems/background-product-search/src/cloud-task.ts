@@ -3,8 +3,14 @@ import { credentials } from '@grpc/grpc-js';
 
 import { getInstanceServiceAccount } from '@/cloud-run.ts';
 import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
+import type { PRODUCT_SOURCE } from '@/types.ts';
 
 const config = loadConfig(APP_ENV);
+
+export enum TASK_STATE {
+  DONE = 'DONE',
+  ERROR = 'ERROR',
+}
 
 export function createCloudTaskClient(
   ...args: ConstructorParameters<typeof CloudTasksClient>
@@ -22,6 +28,48 @@ export function createCloudTaskClient(
     });
   }
   return new CloudTasksClient(...args);
+}
+
+export function createProductSearchSubTaskScheduler(
+  cloudTask: CloudTasksClient,
+  host: string,
+) {
+  return {
+    async scheduleProductSearchSubTask(payload: {
+      requestId: string;
+      search: {
+        keyword: string;
+        source: PRODUCT_SOURCE;
+      };
+    }) {
+      return cloudTask.createTask({
+        parent: String(config.get('cloudTasks.productSearchQueue')),
+        task: {
+          httpRequest: {
+            body: Buffer.from(
+              JSON.stringify({
+                search: payload.search,
+                taskId: crypto.randomUUID(),
+              }),
+            ).toString('base64'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Request-Id': payload.requestId,
+            },
+            httpMethod: 'POST',
+            oidcToken: ![AppEnvironment.DEV, AppEnvironment.TEST].includes(
+              APP_ENV,
+            )
+              ? {
+                  serviceAccountEmail: await getInstanceServiceAccount(),
+                }
+              : null,
+            url: new URL('/search', host).toString(),
+          },
+        },
+      });
+    },
+  };
 }
 
 export function createProductDetailScheduler(cloudTask: CloudTasksClient) {

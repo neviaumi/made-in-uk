@@ -10,7 +10,6 @@ import {
   closeReplyStream,
   createDatabaseConnection,
   createListenerToReplyStreamData,
-  handleProductStreamHeader,
 } from '@/database.ts';
 import type { GraphqlContext, ResolverFunction } from '@/types.ts';
 
@@ -37,28 +36,37 @@ export const searchProductStream: ResolverFunction<
       keyword: search,
     },
   });
-  const connectMatchProductStream = createListenerToReplyStreamData(
-    database,
-    handleProductStreamHeader,
-    {
-      logger: logger,
-    },
-  );
+  const connectMatchProductStream = createListenerToReplyStreamData(database, {
+    logger: logger,
+  });
   return new Repeater(async (push, stop) => {
     stop.then(() =>
       closeReplyStream(database, {
         logger: logger,
       })(requestId),
     );
+    let totalExpectedDocs = 0;
+    let documentReceived = 0;
+    const productStream = connectMatchProductStream(requestId);
     try {
-      await Readable.from(connectMatchProductStream(requestId)).forEach(
-        productDetail => {
-          if (productDetail.type === 'FETCH_PRODUCT_DETAIL_FAILURE') {
-            return;
-          }
-          push(productDetail);
-        },
-      );
+      await Readable.from(productStream).forEach(item => {
+        if (item.type === 'SEARCH_PRODUCT') {
+          totalExpectedDocs = item.data.total;
+          return;
+        }
+        if (item.type === 'SEARCH_PRODUCT_ERROR') {
+          productStream.end();
+          return;
+        }
+        if (item.type === 'FETCH_PRODUCT_DETAIL_FAILURE') {
+          return;
+        }
+        push(item);
+        documentReceived += 1;
+        if (totalExpectedDocs !== 0 && documentReceived >= totalExpectedDocs) {
+          productStream.end();
+        }
+      });
       stop();
     } catch (e) {
       logger.error('streaming product details error', { error: e });
