@@ -159,10 +159,12 @@ export function createCloudRunForBackgroundProductSearch({
   databaseName,
   productDetailEndpoint,
   productDetailTaskQueue,
+  productSearchTaskQueue,
 }: {
   databaseName: Output<string>;
   productDetailEndpoint: Output<string>;
   productDetailTaskQueue: Output<string>;
+  productSearchTaskQueue: Output<string>;
 }) {
   const bgProductSearchImage = appConfig.get('bg-product-search-image');
   const cloudRunService = new cloudrunv2.Service(
@@ -195,6 +197,10 @@ export function createCloudRunForBackgroundProductSearch({
                 {
                   name: 'BG_PRODUCT_SEARCH_PRODUCT_DETAIL_QUEUE',
                   value: productDetailTaskQueue,
+                },
+                {
+                  name: 'BG_PRODUCT_SEARCH_PRODUCT_SEARCH_QUEUE',
+                  value: productSearchTaskQueue,
                 },
               ],
               image:

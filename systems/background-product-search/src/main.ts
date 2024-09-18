@@ -84,7 +84,11 @@ fastify.post(`/search`, {
     const requestId = req.id;
     const logger = req.log;
     const payload = req.body as {
-      search: { keyword: string; source: PRODUCT_SOURCE };
+      parentRequestId: string;
+      search: {
+        keyword: string;
+        source: PRODUCT_SOURCE;
+      };
       taskId: string;
     };
     const database = createDatabaseConnection();
@@ -118,10 +122,11 @@ fastify.post(`/search`, {
       );
       const cachedSearchItems = await searchCache.getCachedSearchData();
       if (cachedSearchItems.ok) {
-        yield* Object.entries(cachedSearchItems.data).map(item => ({
-          ...item,
-          cached: true,
-        }));
+        const items = Object.entries(cachedSearchItems.data).map(
+          // @ts-expect-error no type here
+          ([key, item]) => [key, { ...item, cached: true }],
+        );
+        yield* items;
       } else {
         const tokenBucket = connectTokenBucketOnDatabase(database);
         if (!(await tokenBucket.consume(search.source)).ok) {
@@ -136,8 +141,8 @@ fastify.post(`/search`, {
         }
         const page = await createBrowserPage(browser)();
         const productModules = {
-          [PRODUCT_SOURCE.OCADO]: sainsbury,
-          [PRODUCT_SOURCE.SAINSBURY]: ocado,
+          [PRODUCT_SOURCE.OCADO]: ocado,
+          [PRODUCT_SOURCE.SAINSBURY]: sainsbury,
         };
         const generator = productModules[
           search.source
@@ -172,7 +177,7 @@ fastify.post(`/search`, {
             productUrl,
             source,
           },
-          requestId: requestId,
+          requestId: payload.parentRequestId,
         });
       }
       const numberOfProducts = matchedProducts.length;
@@ -256,12 +261,13 @@ fastify.post(`/search`, {
   schema: {
     body: {
       properties: {
+        parentRequestId: { type: 'string' },
         search: {
           properties: {
             keyword: { type: 'string' },
             source: { enum: Object.values(PRODUCT_SOURCE), type: 'string' },
           },
-          required: ['keyword'],
+          required: ['keyword', 'source'],
           type: 'object',
         },
         taskId: { type: 'string' },
@@ -291,6 +297,10 @@ fastify.post('/', {
       reply.code(400).send('400 Bad Request');
       return;
     }
+    logger.info(`Process search of ${payload.search.keyword}`, {
+      host,
+      payload,
+    });
     const database = createDatabaseConnection();
     const taskState = connectTaskStateOnDatabase(database, payload.taskId);
     if (!(await taskState.shouldTaskRun())) {
@@ -319,6 +329,7 @@ fastify.post('/', {
     );
     await subTaskReplyStream.init();
     await subTaskScheduler.scheduleProductSearchSubTask({
+      parentRequestId: requestId,
       requestId: subTaskRequestId,
       search: {
         keyword: payload.search.keyword,
@@ -334,6 +345,10 @@ fastify.post('/', {
     // });
     await Readable.from(subTaskReplyStream.subscribe()).toArray();
     const totalCount = await subTaskReplyStream.totalSearchMatchCount;
+    logger.info('All Search sub tasks completed', {
+      sources: [PRODUCT_SOURCE.OCADO],
+      totalCount,
+    });
     const batch = database.batch();
     if (totalCount && totalCount !== 0) {
       batch.set(replyStream.stream, {

@@ -43,6 +43,7 @@ const {
   databaseName: databaseName,
   productDetailEndpoint: backgroundProductDetailUrl,
   productDetailTaskQueue: productDetailQueueName,
+  productSearchTaskQueue: productSearchQueueName,
 });
 const {
   name: apiServiceName,
