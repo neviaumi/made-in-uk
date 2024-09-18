@@ -6,8 +6,8 @@ import {
 } from '@/cloud-task.ts';
 import {
   closeReplyStream,
+  connectToReplyStreamOnDatabase,
   createDatabaseConnection,
-  createListenerToReplyStreamData,
 } from '@/database.ts';
 import type { GraphqlContext, ResolverFunction } from '@/types.ts';
 
@@ -174,6 +174,9 @@ export const dealMonitorItemDefer: ResolverFunction<
   const database = createDatabaseConnection();
   const cloudTask = createCloudTaskClient();
   const productDetailScheduler = createProductDetailScheduler(cloudTask);
+  const replyStream = connectToReplyStreamOnDatabase(database, requestId);
+  await replyStream.init();
+
   const items: Array<unknown> = [];
   for (const item of monitor.items) {
     await productDetailScheduler({
@@ -185,11 +188,8 @@ export const dealMonitorItemDefer: ResolverFunction<
       requestId: requestId,
     });
   }
-
-  const replyStream = createListenerToReplyStreamData(database, {
-    logger: logger,
-  })(requestId);
-  await Readable.from(replyStream).forEach(item => {
+  const productStream = replyStream.listenToReplyStreamData();
+  await Readable.from(productStream).forEach(item => {
     if (item.type === 'FETCH_PRODUCT_DETAIL_FAILURE') {
       logger.info('error when fetching product detail', {
         error: item.error,
@@ -204,7 +204,7 @@ export const dealMonitorItemDefer: ResolverFunction<
     }
     items.push(item);
     if (items.length === parent.monitor.numberOfItems) {
-      replyStream.end();
+      productStream.end();
     }
   });
   await closeReplyStream(database, { logger: logger })(requestId);
