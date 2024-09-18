@@ -36,6 +36,7 @@ export function createProductSearchSubTaskScheduler(
 ) {
   return {
     async scheduleProductSearchSubTask(payload: {
+      parentRequestId: string;
       requestId: string;
       search: {
         keyword: string;
@@ -48,6 +49,7 @@ export function createProductSearchSubTaskScheduler(
           httpRequest: {
             body: Buffer.from(
               JSON.stringify({
+                parentRequestId: payload.parentRequestId,
                 search: payload.search,
                 taskId: crypto.randomUUID(),
               }),
@@ -64,7 +66,10 @@ export function createProductSearchSubTaskScheduler(
                   serviceAccountEmail: await getInstanceServiceAccount(),
                 }
               : null,
-            url: new URL('/search', host).toString(),
+            url: new URL(
+              '/search',
+              `${[AppEnvironment.DEV, AppEnvironment.TEST].includes(APP_ENV) ? 'http' : 'https'}://${host}`,
+            ).toString(),
           },
         },
       });

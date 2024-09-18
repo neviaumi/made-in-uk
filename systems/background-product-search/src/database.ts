@@ -10,11 +10,14 @@ import {
 import { TASK_STATE } from '@/cloud-task.ts';
 import { APP_ENV, loadConfig } from '@/config.ts';
 import { withErrorCode } from '@/error.ts';
+import { createLogger } from '@/logger.ts';
 import { PRODUCT_SOURCE, SUBTASK_RELY_DATA_TYPE } from '@/types.ts';
 
 export { Timestamp } from '@google-cloud/firestore';
 
 const config = loadConfig(APP_ENV);
+const logger = createLogger(APP_ENV);
+
 export function databaseHealthCheck(database: Firestore) {
   return async function healthCheckByGetCollectionInfo(): Promise<
     | {
@@ -182,7 +185,7 @@ export function connectToProductSearchSubTasksReplyStreamOnDatabase(
         objectMode: true,
         read() {},
       });
-      const totalDocsExpected: number = Object.keys(PRODUCT_SOURCE).length;
+      const totalDocsExpected: number = 1;
       let docReceivedCount: number = 0;
       const detachDBListener = database
         .collection(collectionPath)
@@ -190,6 +193,11 @@ export function connectToProductSearchSubTasksReplyStreamOnDatabase(
           snapshot.docChanges().forEach(change => {
             if (change.type === 'removed' || change.type === 'modified') return;
             const changedData = change.doc.data();
+            logger.info('Received item', {
+              item: changedData,
+              requestId,
+            });
+            if (!changedData['type']) return;
             docReceivedCount += 1;
             duplexStream.push(changedData);
             if (docReceivedCount === totalDocsExpected) {

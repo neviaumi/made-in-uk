@@ -50,11 +50,16 @@ export const searchProductStream: ResolverFunction<
     const productStream = replyStream.listenToReplyStreamData();
     try {
       await Readable.from(productStream).forEach(item => {
+        logger.info('Receive item from stream', {
+          item,
+        });
+        if (!item.type) return;
         if (item.type === 'SEARCH_PRODUCT') {
           totalExpectedDocs = item.data.total;
           return;
         }
         if (item.type === 'SEARCH_PRODUCT_ERROR') {
+          logger.error('search product error', { error: item.error });
           productStream.end();
           return;
         }
@@ -64,6 +69,10 @@ export const searchProductStream: ResolverFunction<
         push(item);
         documentReceived += 1;
         if (totalExpectedDocs !== 0 && documentReceived >= totalExpectedDocs) {
+          logger.info('search product finish', {
+            documentReceived,
+            totalExpectedDocs,
+          });
           productStream.end();
         }
       });
