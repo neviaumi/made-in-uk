@@ -8,8 +8,8 @@ import {
 } from '@/cloud-task.ts';
 import {
   closeReplyStream,
+  connectToReplyStreamOnDatabase,
   createDatabaseConnection,
-  createListenerToReplyStreamData,
 } from '@/database.ts';
 import type { GraphqlContext, ResolverFunction } from '@/types.ts';
 
@@ -30,15 +30,15 @@ export const searchProductStream: ResolverFunction<
   });
   const database = createDatabaseConnection();
   const cloudTask = createCloudTaskClient();
+  const replyStream = connectToReplyStreamOnDatabase(database, requestId);
+  await replyStream.init();
   await createProductSearchScheduler(cloudTask)({
     requestId: requestId,
     search: {
       keyword: search,
     },
   });
-  const connectMatchProductStream = createListenerToReplyStreamData(database, {
-    logger: logger,
-  });
+
   return new Repeater(async (push, stop) => {
     stop.then(() =>
       closeReplyStream(database, {
@@ -47,7 +47,7 @@ export const searchProductStream: ResolverFunction<
     );
     let totalExpectedDocs = 0;
     let documentReceived = 0;
-    const productStream = connectMatchProductStream(requestId);
+    const productStream = replyStream.listenToReplyStreamData();
     try {
       await Readable.from(productStream).forEach(item => {
         if (item.type === 'SEARCH_PRODUCT') {
