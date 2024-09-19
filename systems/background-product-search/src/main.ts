@@ -435,12 +435,10 @@ fastify.post('/', {
   },
 });
 
-fastify.post('/token-bucket/refill', async (req, reply) => {
-  const logger = req.log;
+fastify.post('/token-bucket/refill', async (_, reply) => {
   const tokenBucket = connectTokenBucketOnDatabase(createDatabaseConnection());
   await tokenBucket.refill(PRODUCT_SOURCE.OCADO);
   await tokenBucket.refill(PRODUCT_SOURCE.SAINSBURY);
-  logger.info('Token bucket has been refilled');
   reply.code(204).send('204 No Content');
 });
 
