@@ -34,6 +34,7 @@ const fastify = Fastify({
     return crypto.randomUUID();
   },
   loggerInstance: adaptToFastifyLogger(createLogger(APP_ENV)),
+  requestIdHeader: 'request-id',
   requestIdLogLabel: 'requestId',
 });
 fastify.get('/health', {
@@ -98,9 +99,7 @@ fastify.post('/', {
     logger.info(
       `Start process product detail of ${product.productId} on ${product.source}`,
       {
-        headers: req.headers,
         product: productId,
-        reqId: requestId,
       },
     );
     const replyStream = connectReplyStreamOnDatabase(

@@ -48,6 +48,7 @@ const fastify = Fastify({
     return crypto.randomUUID();
   },
   logger: adaptToFastifyLogger(createLogger(APP_ENV)),
+  requestIdHeader: 'request-id',
   requestIdLogLabel: 'requestId',
 });
 
