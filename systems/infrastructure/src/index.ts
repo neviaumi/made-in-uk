@@ -16,6 +16,7 @@ import {
 } from './gcp/cloud-scheduler.ts';
 import {
   createProductDetailTaskQueue,
+  createProductSearchSubTaskQueue,
   createProductSearchTaskQueue,
 } from './gcp/cloud-tasks.ts';
 import { createFireStoreDB } from './gcp/fire-store.ts';
@@ -26,6 +27,8 @@ const { fullQualifiedQueueName: productSearchQueueName } =
   createProductSearchTaskQueue();
 const { fullQualifiedQueueName: productDetailQueueName } =
   createProductDetailTaskQueue();
+const { fullQualifiedQueueName: productSearchSubTasksQueueName } =
+  createProductSearchSubTaskQueue();
 
 const { name: llmServiceName, url: llmUrl } = createCloudRunForLLM();
 
@@ -46,7 +49,7 @@ const {
   databaseName: databaseName,
   productDetailEndpoint: backgroundProductDetailUrl,
   productDetailTaskQueue: productDetailQueueName,
-  productSearchTaskQueue: productSearchQueueName,
+  productSearchSubTaskQueue: productSearchSubTasksQueueName,
 });
 const {
   name: apiServiceName,

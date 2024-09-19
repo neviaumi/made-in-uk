@@ -44,7 +44,7 @@ export function createProductSearchSubTaskScheduler(
       };
     }) {
       return cloudTask.createTask({
-        parent: String(config.get('cloudTasks.productSearchQueue')),
+        parent: String(config.get('cloudTasks.productSearchSubTaskQueue')),
         task: {
           httpRequest: {
             body: Buffer.from(
