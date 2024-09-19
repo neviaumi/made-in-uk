@@ -306,7 +306,7 @@ export function connectToProductSearchSubTasksReplyStreamOnDatabase(
 
 export function connectTokenBucketOnDatabase(database: Firestore) {
   // https://en.wikipedia.org/wiki/Token_bucket
-  const collectionPath = `token-buckets`;
+  const collectionPath = `product-search.token-buckets`;
   return {
     async consume(source: PRODUCT_SOURCE): Promise<{ ok: boolean }> {
       return database.runTransaction(async transaction => {
