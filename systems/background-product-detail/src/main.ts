@@ -228,6 +228,7 @@ fastify.post('/', {
                 message: e.message,
                 meta: {
                   payload: req.body,
+                  productId: productId,
                 },
               },
               type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE,
@@ -249,6 +250,7 @@ fastify.post('/', {
               message: error.isNativeError(e) ? e.message : 'Unknown error',
               meta: {
                 payload: req.body,
+                productId: productId,
               },
             },
             type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE,
