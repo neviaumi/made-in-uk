@@ -92,10 +92,13 @@ fastify.post(`/search`, {
       taskId: string;
     };
     const database = createDatabaseConnection();
-    const taskState = connectTaskStateOnDatabase(database, payload.taskId);
+    const taskState = connectTaskStateOnDatabase(
+      database,
+      requestId,
+      payload.taskId,
+    );
     const lock = connectLockHandlerOnDatabase(database, requestId);
     if (await lock.checkRequestLockExist()) {
-      logger.info('Request already processed');
       reply.code(409).send('409 Conflict');
       return;
     }
@@ -122,11 +125,7 @@ fastify.post(`/search`, {
       );
       const cachedSearchItems = await searchCache.getCachedSearchData();
       if (cachedSearchItems.ok) {
-        const items = Object.entries(cachedSearchItems.data).map(
-          // @ts-expect-error no type here
-          ([key, item]) => [key, { ...item, cached: true }],
-        );
-        yield* items;
+        yield* cachedSearchItems.data;
       } else {
         const tokenBucket = connectTokenBucketOnDatabase(database);
         if (!(await tokenBucket.consume(search.source)).ok) {
@@ -192,69 +191,83 @@ fastify.post(`/search`, {
           search.source,
           cacheKey,
         );
-        dbBatch.set(searchCache.cachedSearch, {
-          expiresAt: Timestamp.fromDate(
-            // 3 days
-            new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
-          ),
-          hits: Object.fromEntries(matchedProducts),
-        });
+        dbBatch.set(
+          searchCache.cachedSearch,
+          searchCache.shapeOfCachedProduct(matchedProducts),
+        );
       }
 
-      dbBatch.set(replyStream.getRepliesStreamDoc(search.source), {
-        data: { total: numberOfProducts },
-        search: search,
-        type: SUBTASK_RELY_DATA_TYPE.SEARCH_PRODUCT,
-      });
-      dbBatch.set(taskState.taskState, {
-        markedAt: Timestamp.now(),
-        state: TASK_STATE.DONE,
-      });
+      dbBatch.set(
+        replyStream.getRepliesStreamDoc(search.source),
+        replyStream.shapeOfReplyStreamItem({
+          data: { total: numberOfProducts },
+          type: SUBTASK_RELY_DATA_TYPE.SEARCH_PRODUCT,
+        }),
+      );
+      dbBatch.set(
+        taskState.taskState,
+        taskState.shapeOfTaskStateObject(TASK_STATE.DONE),
+      );
       dbBatch.delete(lock.lock);
       await dbBatch.commit();
-      logger.info('Product search completed', {
+      logger.info(`Product search of ${search.source} completed`, {
+        keyword: payload.search.keyword,
         numberOfProducts,
         source: search.source,
       });
       reply.code(204).send('204 No Content');
     } catch (e) {
-      if (error.isNativeError(e)) {
-        logger.error(e.message, {
-          e,
-        });
-        if (!error.isHTTPError(e)) {
-          const dbBatch = database.batch();
-          dbBatch.set(replyStream.getRepliesStreamDoc(search.source), {
+      logger.error(`Product search of ${search.source} failed`, {
+        error: Object.assign(
+          {
+            code: error.isNativeError(e) ? e.code : 'ERR_UNEXPECTED_ERROR',
+            message: error.isNativeError(e) ? e.message : 'Unknown error',
+          },
+          error.isNativeError(e) && e['code'] ? {} : { raw: e },
+        ),
+        payload: req.body,
+      });
+      const dbBatch = database.batch();
+      if (!error.isHTTPError(e)) {
+        dbBatch.set(
+          replyStream.getRepliesStreamDoc(search.source),
+          replyStream.shapeOfReplyStreamItem({
             error: {
-              code: e['code'] ?? 'ERR_UNEXPECTED_ERROR',
-              message: e.message,
+              code: error.isNativeError(e) ? e['code'] : 'ERR_UNEXPECTED_ERROR',
+              message: error.isNativeError(e) ? e['message'] : 'Unknown error',
             },
-            search: search,
             type: SUBTASK_RELY_DATA_TYPE.SEARCH_PRODUCT_ERROR,
-          });
-          dbBatch.delete(lock.lock);
-          await dbBatch.commit();
-          reply.code(500).send(e.message);
-        } else {
-          const dbBatch = database.batch();
-          if (!e.http.retryAble) {
-            dbBatch.set(replyStream.getRepliesStreamDoc(search.source), {
+          }),
+        );
+        dbBatch.set(
+          taskState.taskState,
+          taskState.shapeOfTaskStateObject(TASK_STATE.ERROR),
+        );
+      } else {
+        const dbBatch = database.batch();
+        if (!e.http.retryAble) {
+          dbBatch.set(
+            replyStream.getRepliesStreamDoc(search.source),
+            replyStream.shapeOfReplyStreamItem({
               error: {
                 code: e['code'] ?? 'ERR_UNEXPECTED_ERROR',
                 message: e.message,
               },
-              search: search,
               type: SUBTASK_RELY_DATA_TYPE.SEARCH_PRODUCT_ERROR,
-            });
-            dbBatch.set(taskState.taskState, {
-              markedAt: Timestamp.now(),
-              state: TASK_STATE.ERROR,
-            });
-          }
-          dbBatch.delete(lock.lock);
-          await dbBatch.commit();
-          reply.code(e.http.statusCode).send(e.http.message);
+            }),
+          );
+          dbBatch.set(
+            taskState.taskState,
+            taskState.shapeOfTaskStateObject(TASK_STATE.ERROR),
+          );
         }
+      }
+      dbBatch.delete(lock.lock);
+      await dbBatch.commit();
+      if (error.isHTTPError(e)) {
+        reply.code(e.http.statusCode).send(e.http.message);
+      } else {
+        reply.code(500).send('500 Internal Server Error');
       }
     }
   },
@@ -297,12 +310,12 @@ fastify.post('/', {
       reply.code(400).send('400 Bad Request');
       return;
     }
-    logger.info(`Process search of ${payload.search.keyword}`, {
-      host,
-      payload,
-    });
     const database = createDatabaseConnection();
-    const taskState = connectTaskStateOnDatabase(database, payload.taskId);
+    const taskState = connectTaskStateOnDatabase(
+      database,
+      requestId,
+      payload.taskId,
+    );
     if (!(await taskState.shouldTaskRun())) {
       logger.error("Task already done or shouldn't retry");
       reply.code(208).send('208 Already Reported');
@@ -322,6 +335,10 @@ fastify.post('/', {
         subTaskRequestId,
       );
     await lock.acquireLock();
+    logger.info(`Start process product search of ${payload.search.keyword}`, {
+      host,
+      payload,
+    });
     const cloudTask = createCloudTaskClient();
     const subTaskScheduler = createProductSearchSubTaskScheduler(
       cloudTask,
@@ -343,32 +360,38 @@ fastify.post('/', {
     //     source: PRODUCT_SOURCE.SAINSBURY,
     //   },
     // });
-    await Readable.from(subTaskReplyStream.subscribe()).toArray();
+    const streamItems = await Readable.from(
+      subTaskReplyStream.subscribe(),
+    ).toArray();
     const totalCount = await subTaskReplyStream.totalSearchMatchCount;
-    logger.info('All Search sub tasks completed', {
-      sources: [PRODUCT_SOURCE.OCADO],
-      totalCount,
-    });
     const batch = database.batch();
     if (totalCount && totalCount !== 0) {
-      batch.set(replyStream.stream, {
-        data: { total: totalCount },
-        search: payload.search,
-        type: REPLY_DATA_TYPE.SEARCH_PRODUCT,
-      });
-      batch.set(taskState.taskState, {
-        markedAt: Timestamp.now(),
-        state: TASK_STATE.DONE,
-      });
+      batch.set(
+        replyStream.stream,
+        replyStream.shapeOfReplyStreamItem({
+          data: { total: totalCount },
+          type: REPLY_DATA_TYPE.SEARCH_PRODUCT,
+        }),
+      );
+      batch.set(
+        taskState.taskState,
+        taskState.shapeOfTaskStateObject(TASK_STATE.DONE),
+      );
     } else {
-      batch.set(replyStream.stream, {
-        error: {
-          code: 'ERR_NO_SEARCH_RESULT',
-          message: 'No search result',
-        },
-        search: payload.search,
-        type: REPLY_DATA_TYPE.SEARCH_PRODUCT_ERROR,
+      logger.error('Error when searching the product, no search result', {
+        streamItems,
+        totalCount,
       });
+      batch.set(
+        replyStream.stream,
+        replyStream.shapeOfReplyStreamItem({
+          error: {
+            code: 'ERR_NO_SEARCH_RESULT',
+            message: 'No search result',
+          },
+          type: REPLY_DATA_TYPE.SEARCH_PRODUCT_ERROR,
+        }),
+      );
       batch.set(taskState.taskState, {
         markedAt: Timestamp.now(),
         state: TASK_STATE.ERROR,
@@ -380,6 +403,9 @@ fastify.post('/', {
       logger.error('Error when closing the stream', {
         error: e,
       });
+    });
+    logger.info(`Completed product search of ${payload.search.keyword}`, {
+      totalCount,
     });
     reply.code(204).send('204 No Content');
     return;

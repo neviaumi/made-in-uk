@@ -1,11 +1,8 @@
 import playwright from 'playwright';
 
-import { APP_ENV } from '@/config.ts';
-import { createLogger, type Logger } from '@/logger.ts';
 import { PRODUCT_SOURCE } from '@/types.ts';
 
 export const baseUrl = 'https://www.ocado.com';
-const defaultLogger = createLogger(APP_ENV);
 
 function loadMoreProducts(page: playwright.Page) {
   return async function loadMoreProducts() {
@@ -42,13 +39,7 @@ function loadMoreProducts(page: playwright.Page) {
   };
 }
 
-export function createProductsSearchHandler(
-  page: playwright.Page,
-  options?: {
-    logger: Logger;
-  },
-) {
-  const logger = options?.logger ?? defaultLogger;
+export function createProductsSearchHandler(page: playwright.Page) {
   return async function* searchProducts(keyword: string): AsyncGenerator<
     [
       string,
@@ -61,9 +52,6 @@ export function createProductsSearchHandler(
     const searchUrl = new URL(`/search?entry=${keyword}`, baseUrl);
     searchUrl.searchParams.set('display', '1024');
     let loadMorePageAttempt = 0;
-    logger.info(`Searching products that match ${keyword} ...`, {
-      searchUrl: searchUrl.toString(),
-    });
     await page.goto(searchUrl.toString(), {
       waitUntil: 'domcontentloaded',
     });

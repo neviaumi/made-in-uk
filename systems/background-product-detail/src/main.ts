@@ -1,6 +1,4 @@
-import { createServer, type RequestListener } from 'node:http';
-
-import { Timestamp } from '@google-cloud/firestore';
+import Fastify from 'fastify';
 
 import {
   closeBrowser,
@@ -8,239 +6,331 @@ import {
   createBrowserPage,
   createChromiumBrowser,
 } from '@/browser.ts';
-import { APP_ENV, loadConfig } from '@/config.ts';
+import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
 import {
   connectProductCacheOnDatabase,
   connectReplyStreamOnDatabase,
+  connectTaskStateOnDatabase,
+  connectTokenBucketOnDatabase,
   createDatabaseConnection,
   createLockHandlerOnDatabase,
   databaseHealthCheck,
 } from '@/database.ts';
+import * as error from '@/error.ts';
 import * as lilysKitchen from '@/lilys-kitchen.ts';
-import { createLogger } from '@/logger.ts';
+import { adaptToFastifyLogger, createLogger } from '@/logger.ts';
 import * as ocado from '@/ocado.ts';
 import * as petsAtHome from '@/pets-at-home.ts';
-import { PRODUCT_SOURCE, REPLY_DATA_TYPE } from '@/types.ts';
+import { PRODUCT_SOURCE, REPLY_DATA_TYPE, TASK_STATE } from '@/types.ts';
 import * as vetShop from '@/vet-shop.ts';
 import * as zooplus from '@/zooplus.ts';
 
 const config = loadConfig(APP_ENV);
-const logger = createLogger(APP_ENV);
 
-async function handleHealthCheck(res: Parameters<RequestListener>[1]) {
-  const database = createDatabaseConnection();
-  const [databaseHealthCheckResult] = await Promise.all([
-    databaseHealthCheck(database)(),
-  ]);
-  const info = [
-    ['database', databaseHealthCheckResult.ok ? { ok: true } : null],
-  ].filter(([, result]) => result);
-  const errors = [
-    [
-      'database',
-      databaseHealthCheckResult.ok ? null : databaseHealthCheckResult.error,
-    ],
-  ].filter(([, error]) => error);
-  const ok = errors.length === 0;
-  const healthCheckResult = {
-    errors: Object.fromEntries(errors),
-    info: Object.fromEntries(info),
-    ok,
-  };
-  if (!healthCheckResult.ok) {
-    res.statusCode = 503;
-    res.end(JSON.stringify(healthCheckResult));
-    return;
-  }
-  res.statusCode = 200;
-  res.end();
-}
-
-// eslint-disable-next-line max-statements
-const server = createServer(async (req, res) => {
-  if (req.method === 'GET' && req.url === '/health') {
-    await handleHealthCheck(res);
-    return;
-  }
-  const verifiedIncomingMessage = await validateIncomingMessage(req);
-  if (!verifiedIncomingMessage.ok) {
-    res.statusCode = Number(verifiedIncomingMessage.error.code);
-    res.end(verifiedIncomingMessage.error.message);
-    return;
-  }
-  const requestId = verifiedIncomingMessage.requestId;
-  const loggerWithRequestId = logger.child({
-    requestId,
-  });
-  const database = createDatabaseConnection();
-  const payload = verifiedIncomingMessage.data;
-  const { product } = payload as {
-    product: {
-      productId: string;
-      productUrl: string;
-      source: PRODUCT_SOURCE;
+const fastify = Fastify({
+  // We are using Winston for logging and fastify wasn't able to customize the request object on log
+  disableRequestLogging: true,
+  genReqId() {
+    return crypto.randomUUID();
+  },
+  loggerInstance: adaptToFastifyLogger(createLogger(APP_ENV)),
+  requestIdLogLabel: 'requestId',
+});
+fastify.get('/health', {
+  async handler(_, reply) {
+    const database = createDatabaseConnection();
+    const [databaseHealthCheckResult] = await Promise.all([
+      databaseHealthCheck(database)(),
+    ]);
+    const info = [
+      ['database', databaseHealthCheckResult.ok ? { ok: true } : null],
+    ].filter(([, result]) => result);
+    const errors = [
+      [
+        'database',
+        databaseHealthCheckResult.ok ? null : databaseHealthCheckResult.error,
+      ],
+    ].filter(([, error]) => error);
+    const ok = errors.length === 0;
+    const healthCheckResult = {
+      errors: Object.fromEntries(errors),
+      info: Object.fromEntries(info),
+      ok,
     };
-  };
+    if (!healthCheckResult.ok) {
+      reply.code(503).send(healthCheckResult);
 
-  if (!product.productId || !product.productUrl) {
-    loggerWithRequestId.error('Invalid message body', {
-      message: payload,
-    });
-    res.statusCode = 400;
-    res.end('Bad request');
+      return;
+    }
+    reply.code(200).send();
     return;
-  }
-  const { productId, productUrl, source } = product;
-  const lock = createLockHandlerOnDatabase(database, requestId, productId);
-  if (await lock.checkRequestLockExist()) {
-    loggerWithRequestId.info('Request already exist', {
-      product,
+  },
+});
+
+fastify.post('/', {
+  // eslint-disable-next-line max-statements
+  async handler(req, reply) {
+    const requestId = req.id;
+    const logger = req.log;
+    const database = createDatabaseConnection();
+    const { product, taskId } = req.body as {
+      product: {
+        productId: string;
+        productUrl: string;
+        source: PRODUCT_SOURCE;
+      };
+      taskId: string;
+    };
+
+    const { productId, productUrl, source } = product;
+    const taskState = connectTaskStateOnDatabase(database, requestId, taskId);
+    if (!(await taskState.shouldTaskRun())) {
+      logger.error("Task already done or shouldn't retry");
+      reply.code(208).send('208 Already Reported');
+      return;
+    }
+    const lock = createLockHandlerOnDatabase(database, requestId, productId);
+    if (await lock.checkRequestLockExist()) {
+      reply.send(409).send('409 Conflict');
+      return;
+    }
+    await lock.acquireLock();
+    logger.info(
+      `Start process product detail of ${product.productId} on ${product.source}`,
+      {
+        product: productId,
+      },
+    );
+    const replyStream = connectReplyStreamOnDatabase(
+      database,
       requestId,
-    });
-    res.statusCode = 409;
-    res.end('409 Conflict');
-    return;
-  }
-  await lock.acquireLock();
-  const replyStream = connectReplyStreamOnDatabase(
-    database,
-    requestId,
-    productId,
-  );
-  const cache = connectProductCacheOnDatabase(database, source, productId);
-  const cachedProduct = await cache.getCachedSearchData();
+      productId,
+    );
+    const cache = connectProductCacheOnDatabase(database, source, productId);
+    const cachedProduct = await cache.getCachedSearchData();
 
-  if (cachedProduct.ok) {
-    loggerWithRequestId.info('Response product from cache', {
-      product: cachedProduct.data,
-    });
-    const batchWrite = database.batch();
-    batchWrite.set(replyStream.repliesStream, {
-      data: cachedProduct.data,
-      type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
-    });
-    batchWrite.delete(lock.lock);
-    await batchWrite.commit();
-    res.statusCode = 204;
-    res.end();
-    return;
-  }
-  const browser = await createChromiumBrowser();
-  const page = await createBrowserPage(browser)();
-  const fetchers = {
-    [PRODUCT_SOURCE.LILYS_KITCHEN]: lilysKitchen,
-    [PRODUCT_SOURCE.OCADO]: ocado,
-    [PRODUCT_SOURCE.PETS_AT_HOME]: petsAtHome,
-    [PRODUCT_SOURCE.ZOOPLUS]: zooplus,
-    [PRODUCT_SOURCE.VET_SHOP]: vetShop,
-  };
-  const productInfo = await fetchers[source]
-    .createProductDetailsFetcher(page, {
-      logger: loggerWithRequestId,
-      requestId: requestId,
-    })(productUrl)
-    .catch(e => {
-      return {
-        error: {
-          code: 'ERR_UNHANDLED_EXCEPTION',
-          message: e.message,
-          meta: { payload },
+    if (cachedProduct.ok) {
+      logger.info(
+        `Complete process product detail of ${product.productId} on ${product.source}`,
+        {
+          product: cachedProduct.data,
         },
-        ok: false as const,
-      };
-    })
-    .finally(async () => {
-      await closePage(page);
-      await closeBrowser(browser);
-    });
-  if (!productInfo.ok) {
-    await replyStream.writeProductInfoToStream({
-      error: productInfo.error,
-      type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE,
-    });
-    return;
-  }
-  const batchWrite = database.batch();
-  batchWrite.set(replyStream.repliesStream, {
-    data: productInfo.data,
-    type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
-  });
-  batchWrite.set(
-    cache.cachedProduct,
-    Object.assign(productInfo.data, {
-      // 1 day
-      expiresAt: Timestamp.fromDate(new Date(Date.now() + 1000 * 60 * 60 * 24)),
-    }),
-  );
-  batchWrite.delete(lock.lock);
-  await batchWrite.commit();
-
-  res.statusCode = 204;
-  res.end();
-});
-
-server.listen(config.get('port'), () => {
-  logger.info(`Server is running on http://localhost:${config.get('port')}/`);
-});
-
-async function validateIncomingMessage(
-  req: Parameters<RequestListener>[0],
-): Promise<
-  | {
-      error: {
-        code: string;
-        message: string;
-      };
-      ok: false;
+      );
+      const batchWrite = database.batch();
+      batchWrite.set(
+        replyStream.repliesStream,
+        replyStream.shapeOfReplyStreamItem({
+          data: cachedProduct.data,
+          type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
+        }),
+      );
+      batchWrite.set(
+        taskState.taskState,
+        taskState.shapeOfTaskStateObject(TASK_STATE.DONE),
+      );
+      batchWrite.delete(lock.lock);
+      await batchWrite.commit();
+      reply.code(204).send();
+      return;
     }
-  | {
-      data: Record<string, unknown>;
-      ok: true;
-      requestId: string;
-    }
-> {
-  const requestId = String(req.headers['request-id']);
-  if (!requestId) {
-    return {
-      error: {
-        code: '400',
-        message: 'Bad request',
-      },
-      ok: false,
-    };
-  }
-  const body = (await req.toArray()).join('');
-  if (!body) {
-    return {
-      error: {
-        code: '400',
-        message: 'Bad request',
-      },
-      ok: false,
-    };
-  }
-  if (
-    (content => {
-      try {
-        JSON.parse(content);
-        return false;
-      } catch (e) {
-        return true;
+    const tokenBucket = connectTokenBucketOnDatabase(database);
+    try {
+      if (!(await tokenBucket.consume(source)).ok) {
+        throw error.withHTTPError(429, '429 Too Many Requests', {
+          retryAble: true,
+        })(
+          error.withErrorCode('ERR_RATE_LIMIT_EXCEEDED')(
+            new Error('Failed to fetch product details'),
+          ),
+        );
       }
-    })(body)
-  ) {
-    return {
-      error: {
-        code: '400',
-        message: 'Bad request',
+      const browser = await createChromiumBrowser();
+      const page = await createBrowserPage(browser)();
+      const fetchers = {
+        [PRODUCT_SOURCE.LILYS_KITCHEN]: lilysKitchen,
+        [PRODUCT_SOURCE.OCADO]: ocado,
+        [PRODUCT_SOURCE.PETS_AT_HOME]: petsAtHome,
+        [PRODUCT_SOURCE.ZOOPLUS]: zooplus,
+        [PRODUCT_SOURCE.VET_SHOP]: vetShop,
+        [PRODUCT_SOURCE.SAINSBURY]: {
+          createProductDetailsFetcher: () => {
+            throw new Error('Not implemented');
+          },
+        }, // This is a dummy value
+      };
+      const productInfo = await fetchers[source]
+        .createProductDetailsFetcher(page, {
+          logger: logger,
+          requestId: requestId,
+        })(productUrl)
+        .finally(async () => {
+          await closePage(page);
+          await closeBrowser(browser);
+        });
+      if (!productInfo.ok) {
+        throw error.withHTTPError(500, 'Failed to fetch product details', {
+          retryAble: true,
+        })(
+          error.withErrorCode('ERR_UNEXPECTED_ERROR')(
+            new Error('Failed to fetch product details'),
+          ),
+        );
+      }
+      const batchWrite = database.batch();
+      batchWrite.set(
+        replyStream.repliesStream,
+        replyStream.shapeOfReplyStreamItem({
+          data: productInfo.data,
+          type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
+        }),
+      );
+      batchWrite.set(
+        cache.cachedProduct,
+        cache.shapeOfCachedProduct(productInfo.data),
+      );
+      batchWrite.set(
+        taskState.taskState,
+        taskState.shapeOfTaskStateObject(TASK_STATE.DONE),
+      );
+      batchWrite.delete(lock.lock);
+      await batchWrite.commit();
+      logger.info(
+        `Complete process product detail of ${product.productId} on ${product.source}`,
+        {
+          product: productInfo.data,
+        },
+      );
+      reply.code(204).send();
+    } catch (e) {
+      logger.error(
+        `Failed process product detail of ${product.productId} on ${product.source}`,
+        {
+          error: Object.assign(
+            {
+              code: error.isNativeError(e) ? e['code'] : 'ERR_UNEXPECTED_ERROR',
+              message: error.isNativeError(e) ? e['message'] : 'Unknown error',
+            },
+            error.isNativeError(e) && e['code'] ? {} : { raw: e },
+          ),
+          payload: req.body,
+        },
+      );
+      const batchWrite = database.batch();
+      if (error.isHTTPError(e)) {
+        if (!e.http.retryAble) {
+          batchWrite.set(
+            taskState.taskState,
+            taskState.shapeOfTaskStateObject(TASK_STATE.ERROR),
+          );
+          batchWrite.set(
+            replyStream.repliesStream,
+            replyStream.shapeOfReplyStreamItem({
+              error: {
+                code: e.code ?? 'ERR_UNEXPECTED_ERROR',
+                message: e.message,
+                meta: {
+                  payload: req.body,
+                },
+              },
+              type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE,
+            }),
+          );
+        }
+      } else {
+        batchWrite.set(
+          taskState.taskState,
+          taskState.shapeOfTaskStateObject(TASK_STATE.ERROR),
+        );
+        batchWrite.set(
+          replyStream.repliesStream,
+          replyStream.shapeOfReplyStreamItem({
+            error: {
+              code: error.isNativeError(e)
+                ? e.code ?? 'ERR_UNEXPECTED_ERROR'
+                : 'ERR_UNEXPECTED_ERROR',
+              message: error.isNativeError(e) ? e.message : 'Unknown error',
+              meta: {
+                payload: req.body,
+              },
+            },
+            type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE,
+          }),
+        );
+      }
+      batchWrite.delete(lock.lock);
+      await batchWrite.commit();
+      if (error.isHTTPError(e)) {
+        reply.code(e.http.statusCode).send(e.http.message);
+        return;
+      }
+      reply.code(500).send('Internal Server Error');
+      return;
+    }
+
+    return;
+  },
+  schema: {
+    body: {
+      properties: {
+        product: {
+          properties: {
+            productId: { type: 'string' },
+            productUrl: { type: 'string' },
+            source: { enum: Object.values(PRODUCT_SOURCE), type: 'string' },
+          },
+          required: ['productId', 'productUrl', 'source'],
+          type: 'object',
+        },
+        taskId: { type: 'string' },
       },
-      ok: false,
-    };
+      required: ['product', 'taskId'],
+      type: 'object',
+    },
+    headers: {
+      properties: {
+        'request-id': { type: 'string' },
+      },
+      required: ['request-id'],
+      type: 'object',
+    },
+  },
+});
+
+fastify.post('/token-bucket/refill', async (req, reply) => {
+  const logger = req.log;
+  const tokenBucket = connectTokenBucketOnDatabase(createDatabaseConnection());
+  for (const source of Object.values(PRODUCT_SOURCE)) {
+    await tokenBucket.refill(source);
   }
-  const jsonBody = JSON.parse(body);
-  return {
-    data: jsonBody,
-    ok: true,
-    requestId,
-  };
-}
+  logger.info('Token bucket has been refilled');
+  reply.code(204).send('204 No Content');
+});
+
+fastify.listen(
+  {
+    host: '0.0.0.0',
+    port: config.get('port'),
+  },
+  async (err, address) => {
+    if (err) {
+      fastify.log.error(err);
+      throw err;
+    }
+    const logger = fastify.log;
+    logger.info(`server listening on ${address}`);
+    await fetch(`${address}/token-bucket/refill`, {
+      method: 'POST',
+    });
+    if (APP_ENV === AppEnvironment.DEV) {
+      setInterval(() => {
+        fetch(`${address}/token-bucket/refill`, {
+          method: 'POST',
+        }).catch(e => {
+          logger.error('Error when refill the bucket', {
+            error: e,
+          });
+        });
+      }, 60000);
+    }
+  },
+);

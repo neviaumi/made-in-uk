@@ -67,7 +67,7 @@ async function lookupCountryOfOrigin(
       if (extractedCountry && extractedCountry !== 'Unknown') {
         return String(extractedCountry);
       }
-      logger.warning(`Unable parse given address`, {
+      logger.warn(`Unable parse given address`, {
         address: value,
         extractedCountry,
         generatedContent: raw,
@@ -125,7 +125,7 @@ export function createProductDetailsFetcher(
       .split('/')
       .pop();
     if (!productId) {
-      logger.warning('Product no open graph meta', {
+      logger.warn('Product no open graph meta', {
         productOpenGraphMeta,
         url: fullUrl,
       });

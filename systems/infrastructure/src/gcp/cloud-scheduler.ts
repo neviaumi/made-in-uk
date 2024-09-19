@@ -29,3 +29,30 @@ export function createProductSearchCronJob({
     },
   );
 }
+
+export function createProductDetailCronJob({
+  productDetailEndpoint,
+  serviceAccountEmail,
+}: {
+  productDetailEndpoint: pulumi.Output<string>;
+  serviceAccountEmail: pulumi.Output<string>;
+}) {
+  return new gcp.cloudscheduler.Job(
+    resourceName`product-detail-token-bucket-refill`,
+    {
+      attemptDeadline: '30s',
+      description: 'Refill token bucket for product detail',
+      httpTarget: {
+        httpMethod: 'POST',
+        oidcToken: {
+          serviceAccountEmail: serviceAccountEmail,
+        },
+        uri: productDetailEndpoint.apply(baseUrl =>
+          new URL('/token-bucket/refill', baseUrl).toString(),
+        ),
+      },
+      schedule: '* * * * *',
+      timeZone: 'UTC',
+    },
+  );
+}

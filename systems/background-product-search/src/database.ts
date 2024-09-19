@@ -10,13 +10,16 @@ import {
 import { TASK_STATE } from '@/cloud-task.ts';
 import { APP_ENV, loadConfig } from '@/config.ts';
 import { withErrorCode } from '@/error.ts';
-import { createLogger } from '@/logger.ts';
-import { PRODUCT_SOURCE, SUBTASK_RELY_DATA_TYPE } from '@/types.ts';
+import {
+  PRODUCT_SOURCE,
+  REPLY_DATA_TYPE,
+  type SearchResultItem,
+  SUBTASK_RELY_DATA_TYPE,
+} from '@/types.ts';
 
 export { Timestamp } from '@google-cloud/firestore';
 
 const config = loadConfig(APP_ENV);
-const logger = createLogger(APP_ENV);
 
 export function databaseHealthCheck(database: Firestore) {
   return async function healthCheckByGetCollectionInfo(): Promise<
@@ -56,10 +59,19 @@ export function createDatabaseConnection(settings?: Settings) {
 
 export function connectTaskStateOnDatabase(
   database: Firestore,
+  requestId: string,
   taskId: string,
 ) {
   const taskStateDoc = database.collection('task-state').doc(taskId);
   return {
+    shapeOfTaskStateObject(status: TASK_STATE) {
+      return {
+        createdAt: Timestamp.fromDate(new Date()),
+        createdBy: 'background-product-search',
+        requestId,
+        state: status,
+      };
+    },
     async shouldTaskRun() {
       const doc = await taskStateDoc.get();
       if (!doc.exists) {
@@ -88,7 +100,10 @@ export function connectProductSearchCacheOnDatabase(
     get cachedSearch() {
       return cacheDoc;
     },
-    async getCachedSearchData() {
+    async getCachedSearchData(): Promise<
+      | { error: { code: string; message: string }; ok: false }
+      | { data: [string, SearchResultItem][]; ok: true }
+    > {
       const doc = await cacheDoc.get();
       if (!doc.exists) {
         return {
@@ -109,9 +124,31 @@ export function connectProductSearchCacheOnDatabase(
           ok: false,
         };
       }
+      try {
+        return {
+          data: Object.entries(docData['hits']).map(([key, item]) => [
+            key,
+            Object.assign(item as SearchResultItem, { cached: true }),
+          ]),
+          ok: true,
+        };
+      } catch (e) {
+        return {
+          error: {
+            code: 'ERR_CACHE_NOT_FOUND',
+            message: `Unexpected empty record for ${cacheId} in caches`,
+          },
+          ok: false,
+        };
+      }
+    },
+    shapeOfCachedProduct(cached: [string, SearchResultItem][]) {
       return {
-        data: docData['hits'],
-        ok: true,
+        expiresAt: Timestamp.fromDate(
+          // 3 days
+          new Date(Date.now() + 1000 * 60 * 60 * 24 * 3),
+        ),
+        hits: Object.fromEntries(cached),
       };
     },
   };
@@ -152,6 +189,25 @@ export function connectReplyStreamOnDatabase(
   requestId: string,
 ) {
   return {
+    shapeOfReplyStreamItem(
+      productInfo:
+        | {
+            error: {
+              code: string | undefined;
+              message: string;
+              meta?: Record<string, unknown>;
+            };
+            type: REPLY_DATA_TYPE.SEARCH_PRODUCT_ERROR;
+          }
+        | {
+            data: {
+              total: number;
+            };
+            type: REPLY_DATA_TYPE.SEARCH_PRODUCT;
+          },
+    ) {
+      return productInfo;
+    },
     get stream() {
       const collectionPath = `replies.${requestId}`;
       return database.collection(collectionPath).doc('search');
@@ -177,6 +233,25 @@ export function connectToProductSearchSubTasksReplyStreamOnDatabase(
         createdBy: 'background-product-search',
       });
     },
+    shapeOfReplyStreamItem(
+      productInfo:
+        | {
+            error: {
+              code: string | undefined;
+              message: string;
+              meta?: Record<string, unknown>;
+            };
+            type: SUBTASK_RELY_DATA_TYPE.SEARCH_PRODUCT_ERROR;
+          }
+        | {
+            data: {
+              total: number;
+            };
+            type: SUBTASK_RELY_DATA_TYPE.SEARCH_PRODUCT;
+          },
+    ) {
+      return productInfo;
+    },
     subscribe() {
       const duplexStream = new Duplex({
         final() {
@@ -193,10 +268,6 @@ export function connectToProductSearchSubTasksReplyStreamOnDatabase(
           snapshot.docChanges().forEach(change => {
             if (change.type === 'removed' || change.type === 'modified') return;
             const changedData = change.doc.data();
-            logger.info('Received item', {
-              item: changedData,
-              requestId,
-            });
             if (!changedData['type']) return;
             docReceivedCount += 1;
             duplexStream.push(changedData);

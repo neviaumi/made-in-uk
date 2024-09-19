@@ -3,6 +3,7 @@
   "dependencies": {
     "@google-cloud/firestore": "7.7.0",
     "convict": "6.2.4",
+    "fastify": "5.0.0",
     "google-auth-library": "9.13.0",
     "playwright": "1.44.1",
     "ramda": "0.30.0",
