@@ -25,7 +25,7 @@ export const searchProductStream: ResolverFunction<
   const logger = context.logger;
   const requestId = parent.requestId;
   const search = parent.argument.input.keyword;
-  logger.info(`Searching products that match ${search} ...`, {
+  logger.info(`Started stream product search that match ${search} ...`, {
     argument: parent.argument,
   });
   const database = createDatabaseConnection();
@@ -40,19 +40,16 @@ export const searchProductStream: ResolverFunction<
   });
 
   return new Repeater(async (push, stop) => {
-    stop.then(() =>
-      closeReplyStream(database, {
+    stop.then(() => {
+      return closeReplyStream(database, {
         logger: logger,
-      })(requestId),
-    );
+      })(requestId);
+    });
     let totalExpectedDocs = 0;
     let documentReceived = 0;
     const productStream = replyStream.listenToReplyStreamData();
     try {
       await Readable.from(productStream).forEach(item => {
-        logger.info('Receive item from stream', {
-          item,
-        });
         if (!item.type) return;
         if (item.type === 'SEARCH_PRODUCT') {
           totalExpectedDocs = item.data.total;
@@ -69,8 +66,9 @@ export const searchProductStream: ResolverFunction<
         push(item);
         documentReceived += 1;
         if (totalExpectedDocs !== 0 && documentReceived >= totalExpectedDocs) {
-          logger.info('search product finish', {
+          logger.info('Completed to stream product search result', {
             documentReceived,
+            search,
             totalExpectedDocs,
           });
           productStream.end();
@@ -78,7 +76,10 @@ export const searchProductStream: ResolverFunction<
       });
       stop();
     } catch (e) {
-      logger.error('streaming product details error', { error: e });
+      logger.error('Failed to stream product search result', {
+        error: e,
+        search,
+      });
       stop(e);
     }
   });

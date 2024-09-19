@@ -2,8 +2,14 @@ export enum PRODUCT_SOURCE {
   LILYS_KITCHEN = 'LILYS_KITCHEN',
   OCADO = 'OCADO',
   PETS_AT_HOME = 'PETS_AT_HOME',
+  SAINSBURY = 'SAINSBURY',
   VET_SHOP = 'VET_SHOP',
   ZOOPLUS = 'ZOOPLUS',
+}
+
+export enum TASK_STATE {
+  DONE = 'DONE',
+  ERROR = 'ERROR',
 }
 
 export type Product = {

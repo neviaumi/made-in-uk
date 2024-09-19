@@ -178,6 +178,7 @@ export const dealMonitorItemDefer: ResolverFunction<
   await replyStream.init();
 
   const items: Array<unknown> = [];
+  logger.info(`Started stream product detail for monitor ${monitor.name} ...`);
   for (const item of monitor.items) {
     await productDetailScheduler({
       product: {
@@ -190,11 +191,8 @@ export const dealMonitorItemDefer: ResolverFunction<
   }
   const productStream = replyStream.listenToReplyStreamData();
   await Readable.from(productStream).forEach(item => {
+    if (!item.type) return;
     if (item.type === 'FETCH_PRODUCT_DETAIL_FAILURE') {
-      logger.info('error when fetching product detail', {
-        error: item.error,
-        payload: item.error.meta.payload,
-      });
       items.push({
         data: {
           id: item.error.meta.payload.product.productId,
@@ -208,6 +206,12 @@ export const dealMonitorItemDefer: ResolverFunction<
     }
   });
   await closeReplyStream(database, { logger: logger })(requestId);
+  logger.info(
+    `Completed stream product detail for monitor ${monitor.name} ...`,
+    {
+      items,
+    },
+  );
   return items;
 };
 
@@ -249,8 +253,5 @@ export const getDealMonitorQuery: ResolverFunction<DealMonitorQueryArgument> = (
     },
     requestId: requestId,
   };
-  context.logger.info('getDealMonitorQuery', {
-    resp,
-  });
   return resp;
 };

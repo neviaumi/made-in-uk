@@ -1,7 +1,17 @@
-import { Firestore, type Settings, Timestamp } from '@google-cloud/firestore';
+import {
+  FieldValue,
+  Firestore,
+  type Settings,
+  Timestamp,
+} from '@google-cloud/firestore';
 
 import { APP_ENV, loadConfig } from '@/config.ts';
-import { type Product, REPLY_DATA_TYPE } from '@/types.ts';
+import {
+  type Product,
+  PRODUCT_SOURCE,
+  REPLY_DATA_TYPE,
+  TASK_STATE,
+} from '@/types.ts';
 
 const config = loadConfig(APP_ENV);
 
@@ -51,7 +61,13 @@ export function connectProductCacheOnDatabase(
     get cachedProduct() {
       return cacheDoc;
     },
-    async getCachedSearchData() {
+    async getCachedSearchData(): Promise<
+      | {
+          data: Product;
+          ok: true;
+        }
+      | { error: { code: string; message: string }; ok: false }
+    > {
       const doc = await cacheDoc.get();
       if (!doc.exists) {
         return {
@@ -73,9 +89,17 @@ export function connectProductCacheOnDatabase(
         };
       }
       return {
-        data: docData,
+        data: docData as Product,
         ok: true,
       };
+    },
+    shapeOfCachedProduct(product: Product) {
+      return Object.assign(product, {
+        // 1 day
+        expiresAt: Timestamp.fromDate(
+          new Date(Date.now() + 1000 * 60 * 60 * 24),
+        ),
+      });
     },
   };
 }
@@ -124,7 +148,7 @@ export function connectReplyStreamOnDatabase(
       const collectionPath = `replies.${requestId}`;
       return database.collection(collectionPath).doc(productId);
     },
-    writeProductInfoToStream(
+    shapeOfReplyStreamItem(
       productInfo:
         | {
             error: {
@@ -139,10 +163,74 @@ export function connectReplyStreamOnDatabase(
             type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL;
           },
     ) {
-      return database
-        .collection(`replies.${requestId}`)
-        .doc(productId)
-        .set(productInfo);
+      return productInfo;
+    },
+  };
+}
+
+export function connectTokenBucketOnDatabase(database: Firestore) {
+  // https://en.wikipedia.org/wiki/Token_bucket
+  const collectionPath = `product-detail.token-buckets`;
+  return {
+    async consume(source: PRODUCT_SOURCE): Promise<{ ok: boolean }> {
+      return database.runTransaction(async transaction => {
+        const docRef = database.collection(collectionPath).doc(source);
+        const doc = await transaction.get(docRef);
+        if (!doc.exists) {
+          return { ok: false };
+        }
+        const docData = doc.data();
+        if (!docData || !docData['tokens']) {
+          return { ok: false };
+        }
+        if (docData['tokens'] <= 0) {
+          return { ok: false };
+        }
+        transaction.update(docRef, {
+          tokens: FieldValue.increment(-1),
+        });
+        return { ok: true };
+      });
+    },
+    refill(source: PRODUCT_SOURCE) {
+      return database.collection(collectionPath).doc(source).set(
+        {
+          tokens: 4,
+        },
+        {},
+      ); // Expect that function will call every 1 minute , so we can fill 1 token every 1 minute
+    },
+  };
+}
+
+export function connectTaskStateOnDatabase(
+  database: Firestore,
+  requestId: string,
+  taskId: string,
+) {
+  const taskStateDoc = database.collection('task-state').doc(taskId);
+  return {
+    shapeOfTaskStateObject(status: TASK_STATE) {
+      return {
+        createdAt: Timestamp.fromDate(new Date()),
+        createdBy: 'background-product-detail',
+        requestId,
+        state: status,
+      };
+    },
+    async shouldTaskRun() {
+      const doc = await taskStateDoc.get();
+      if (!doc.exists) {
+        return true;
+      }
+      const docData = doc.data();
+      if (!docData) {
+        return true;
+      }
+      return ![TASK_STATE.DONE, TASK_STATE.ERROR].includes(docData['state']);
+    },
+    get taskState() {
+      return taskStateDoc;
     },
   };
 }
