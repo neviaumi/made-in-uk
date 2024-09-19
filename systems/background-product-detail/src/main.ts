@@ -98,7 +98,9 @@ fastify.post('/', {
     logger.info(
       `Start process product detail of ${product.productId} on ${product.source}`,
       {
+        headers: req.headers,
         product: productId,
+        reqId: requestId,
       },
     );
     const replyStream = connectReplyStreamOnDatabase(
@@ -296,13 +298,11 @@ fastify.post('/', {
   },
 });
 
-fastify.post('/token-bucket/refill', async (req, reply) => {
-  const logger = req.log;
+fastify.post('/token-bucket/refill', async (_, reply) => {
   const tokenBucket = connectTokenBucketOnDatabase(createDatabaseConnection());
   for (const source of Object.values(PRODUCT_SOURCE)) {
     await tokenBucket.refill(source);
   }
-  logger.info('Token bucket has been refilled');
   reply.code(204).send('204 No Content');
 });
 
