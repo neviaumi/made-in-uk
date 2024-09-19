@@ -200,9 +200,14 @@ export const dealMonitorItemDefer: ResolverFunction<
       )
     ) {
       if (item.type === 'FETCH_PRODUCT_DETAIL_FAILURE') {
+        if (!item.error.meta.productId) {
+          logger.warn('Error item missing productId', {
+            item,
+          });
+        }
         items.push({
           data: {
-            id: item.error.meta.payload.product.productId,
+            id: item.error.meta.productId,
           },
           type: 'FETCH_PRODUCT_DETAIL_FAILURE',
         });
