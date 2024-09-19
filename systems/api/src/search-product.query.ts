@@ -52,6 +52,10 @@ export const searchProductStream: ResolverFunction<
       await Readable.from(productStream).forEach(item => {
         if (!item.type) return;
         if (item.type === 'SEARCH_PRODUCT') {
+          logger.info('Received search product result', {
+            search,
+            total: item.data.total,
+          });
           totalExpectedDocs = item.data.total;
           return;
         }

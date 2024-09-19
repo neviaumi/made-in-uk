@@ -87,13 +87,11 @@ fastify.post('/', {
     const taskState = connectTaskStateOnDatabase(database, requestId, taskId);
     if (!(await taskState.shouldTaskRun())) {
       logger.error("Task already done or shouldn't retry");
-      reply.code(208).send('208 Already Reported');
-      return;
+      return reply.code(208).send('208 Already Reported');
     }
     const lock = createLockHandlerOnDatabase(database, requestId, productId);
     if (await lock.checkRequestLockExist()) {
-      reply.send(409).send('409 Conflict');
-      return;
+      return reply.send(409).send('409 Conflict');
     }
     await lock.acquireLock();
     logger.info(
@@ -131,8 +129,7 @@ fastify.post('/', {
       );
       batchWrite.delete(lock.lock);
       await batchWrite.commit();
-      reply.code(204).send();
-      return;
+      return reply.code(204).send();
     }
     const tokenBucket = connectTokenBucketOnDatabase(database);
     try {
@@ -201,7 +198,7 @@ fastify.post('/', {
           product: productInfo.data,
         },
       );
-      reply.code(204).send();
+      return reply.code(204).send();
     } catch (e) {
       logger.error(
         `Failed process product detail of ${product.productId} on ${product.source}`,
@@ -261,14 +258,10 @@ fastify.post('/', {
       batchWrite.delete(lock.lock);
       await batchWrite.commit();
       if (error.isHTTPError(e)) {
-        reply.code(e.http.statusCode).send(e.http.message);
-        return;
+        return reply.code(e.http.statusCode).send(e.http.message);
       }
-      reply.code(500).send('Internal Server Error');
-      return;
+      return reply.code(500).send('Internal Server Error');
     }
-
-    return;
   },
   schema: {
     body: {

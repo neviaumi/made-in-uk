@@ -165,6 +165,7 @@ export default function GoodDealsMonitor() {
               ),
             )}
           {isEndOfStream &&
+            monitor.items &&
             monitor.items
               .toSorted((productA, productB) => {
                 const failureSortResult = sortFailureResponseToLatest(
