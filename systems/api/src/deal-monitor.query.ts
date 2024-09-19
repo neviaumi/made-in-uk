@@ -178,7 +178,9 @@ export const dealMonitorItemDefer: ResolverFunction<
   await replyStream.init();
 
   const items: Array<unknown> = [];
-  logger.info(`Started stream product detail for monitor ${monitor.name} ...`);
+  logger.info(
+    `Started stream product detail for monitor ${monitor.id} (${monitor.name}) ...`,
+  );
   for (const item of monitor.items) {
     await productDetailScheduler({
       product: {
@@ -192,22 +194,33 @@ export const dealMonitorItemDefer: ResolverFunction<
   const productStream = replyStream.listenToReplyStreamData();
   await Readable.from(productStream).forEach(item => {
     if (!item.type) return;
-    if (item.type === 'FETCH_PRODUCT_DETAIL_FAILURE') {
-      items.push({
-        data: {
-          id: item.error.meta.payload.product.productId,
-        },
-        type: 'FETCH_PRODUCT_DETAIL_FAILURE',
+    if (
+      ['FETCH_PRODUCT_DETAIL_FAILURE', 'FETCH_PRODUCT_DETAIL'].includes(
+        item.type,
+      )
+    ) {
+      if (item.type === 'FETCH_PRODUCT_DETAIL_FAILURE') {
+        items.push({
+          data: {
+            id: item.error.meta.payload.product.productId,
+          },
+          type: 'FETCH_PRODUCT_DETAIL_FAILURE',
+        });
+      } else {
+        items.push(item);
+      }
+    } else {
+      logger.warn(`Unknown item : ${item}`, {
+        item,
       });
     }
-    items.push(item);
     if (items.length === parent.monitor.numberOfItems) {
       productStream.end();
     }
   });
   await closeReplyStream(database, { logger: logger })(requestId);
   logger.info(
-    `Completed stream product detail for monitor ${monitor.name} ...`,
+    `Completed stream product detail for monitor ${monitor.id} (${monitor.name})...`,
     {
       items,
     },
