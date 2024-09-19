@@ -49,9 +49,9 @@ export function loadConfig(appEnv: AppEnvironment) {
         env: 'BG_PRODUCT_SEARCH_PRODUCT_DETAIL_QUEUE',
         format: String,
       },
-      productSearchQueue: {
+      productSearchSubTaskQueue: {
         default: null,
-        env: 'BG_PRODUCT_SEARCH_PRODUCT_SEARCH_QUEUE',
+        env: 'BG_PRODUCT_SEARCH_PRODUCT_SEARCH_SUBTASKS_QUEUE',
         format: String,
       },
       useEmulator: {

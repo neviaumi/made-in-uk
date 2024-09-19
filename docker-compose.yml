@@ -87,7 +87,7 @@ services:
       - FIRESTORE_EMULATOR_HOST=firestore:8080
       - CLOUD_TASKS_EMULATOR_HOST=cloud-tasks:8080
       - GCLOUD_PROJECT=made-in-uk
-      - BG_PRODUCT_SEARCH_PRODUCT_SEARCH_QUEUE=projects/made-in-uk/locations/localhost/queues/emulator
+      - BG_PRODUCT_SEARCH_PRODUCT_SEARCH_SUBTASKS_QUEUE=projects/made-in-uk/locations/localhost/queues/emulator
   cloud-tasks:
     command: -host 0.0.0.0 -port 8080 -queue "projects/made-in-uk/locations/localhost/queues/emulator"
     image: ghcr.io/aertje/cloud-tasks-emulator:latest
