@@ -108,6 +108,8 @@ services:
     entrypoint: /bin/sh
     environment:
       - LLM_PORT=3000
+      - LLM_ENV=development
+      - FIRESTORE_EMULATOR_HOST=firestore:8080
   web:
     build:
       context: ./systems/web
