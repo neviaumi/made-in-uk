@@ -130,7 +130,7 @@ export default function GoodDealsMonitor() {
   if (!monitor) return;
   const containProductWithError =
     isEndOfStream &&
-    monitor.items &&
+    Array.isArray(monitor.items) &&
     monitor.items.some(item => isFailureProductResponse(item));
   return (
     <Page className={'tw-mx-auto tw-pb-2'}>
@@ -164,8 +164,13 @@ export default function GoodDealsMonitor() {
                 </li>
               ),
             )}
+          {isEndOfStream && !Array.isArray(monitor.items) && (
+            <li>
+              <pre>{JSON.stringify(monitor, null, 4)}</pre>
+            </li>
+          )}
           {isEndOfStream &&
-            monitor.items &&
+            Array.isArray(monitor.items) &&
             monitor.items
               .toSorted((productA, productB) => {
                 const failureSortResult = sortFailureResponseToLatest(
