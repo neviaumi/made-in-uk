@@ -1,7 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
-  baseUrl,
   closeBrowser,
   closePage,
   createBrowserPage,
@@ -13,7 +12,7 @@ import { createLogger } from '@/logger.ts';
 import { createLLMPromptHandler } from '@/mocks/handlers.ts';
 import { HttpResponse } from '@/mocks/msw.ts';
 import { server } from '@/mocks/node.ts';
-import { createProductDetailsFetcher } from '@/ocado.ts';
+import { baseUrl, createProductDetailsFetcher } from '@/ocado.ts';
 
 const logger = createLogger(APP_ENV);
 
