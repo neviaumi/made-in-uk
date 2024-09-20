@@ -22,6 +22,7 @@ import * as lilysKitchen from '@/lilys-kitchen.ts';
 import { adaptToFastifyLogger, createLogger } from '@/logger.ts';
 import * as ocado from '@/ocado.ts';
 import * as petsAtHome from '@/pets-at-home.ts';
+import * as sainsbury from '@/sainsbury.ts';
 import { PRODUCT_SOURCE, REPLY_DATA_TYPE, TASK_STATE } from '@/types.ts';
 import * as vetShop from '@/vet-shop.ts';
 import * as zooplus from '@/zooplus.ts';
@@ -154,11 +155,7 @@ fastify.post('/', {
         [PRODUCT_SOURCE.PETS_AT_HOME]: petsAtHome,
         [PRODUCT_SOURCE.ZOOPLUS]: zooplus,
         [PRODUCT_SOURCE.VET_SHOP]: vetShop,
-        [PRODUCT_SOURCE.SAINSBURY]: {
-          createProductDetailsFetcher: () => {
-            throw new Error('Not implemented');
-          },
-        }, // This is a dummy value
+        [PRODUCT_SOURCE.SAINSBURY]: sainsbury,
       };
       const productInfo = await fetchers[source]
         .createProductDetailsFetcher(page, {

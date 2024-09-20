@@ -5,17 +5,17 @@ import { type Logger } from '@/logger.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
 
 export const baseUrl = 'https://www.sainsburys.co.uk/';
-export function createProductDetailsFetcher(page: playwright.Page) {
-  return async function fetchProductDetails(
-    productUrl: string,
-    {
-      logger,
-      requestId,
-    }: {
-      logger: Logger;
-      requestId: string;
-    },
-  ): Promise<
+export function createProductDetailsFetcher(
+  page: playwright.Page,
+  {
+    logger,
+    requestId,
+  }: {
+    logger: Logger;
+    requestId: string;
+  },
+) {
+  return async function fetchProductDetails(productUrl: string): Promise<
     | {
         error: { code: string; message: string; meta: Record<string, unknown> };
         ok: false;

@@ -68,10 +68,10 @@ describe('Sainsbury', () => {
         })(),
       );
 
-      const data = await createProductDetailsFetcher(page)(url, {
+      const data = await createProductDetailsFetcher(page, {
         logger: logger,
         requestId: 'requestId',
-      });
+      })(url);
       expect(data.ok).toBeTruthy();
       if (data.ok) {
         expect(data.data).toEqual({
