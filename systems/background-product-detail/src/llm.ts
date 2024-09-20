@@ -22,6 +22,92 @@ function withTimeout(timeout: number) {
   };
 }
 
+export const convertMeasurement = withTimeout(DEFAULT_LLM_TIMEOUT)(
+  async (
+    input: { originalMeasureUnit: string; targetMeasureUnit: string },
+    options: {
+      logger: Logger;
+      requestId: string;
+    },
+  ) => {
+    const logger = options.logger;
+    const llmEndpoint = config.get('llm.endpoint');
+    if (!llmEndpoint) throw new Error('llm.endpoint is not defined');
+    const requestInit: RequestInit = {
+      body: JSON.stringify({
+        prompt: `<|user|>
+Given the original measure unit and target measurement unit, return the convertion rate for me.
+Response in JSON object with 3 keys - 
+target - the given target measurement i want
+source - the original measurement given
+rate - the convertion rate (flooring number with up to 4 decimal points)
+Given input: Response the convertion from ltr to per 100 ml<|end|>
+<|assistant|>${JSON.stringify({ rate: 10, source: 'ltr', target: 'per 100 ml' })}
+Explanation:
+1 ltr is equal to 1000ml and 1000ml equal to 10 times of 100ml<|end|>
+<|user|>Given Input: Response the convertion from per 100 ml to ltr<|end|>
+<|assistant|>${JSON.stringify({ rate: 0.01, source: 'per 100 ml', target: 'ltr' })}
+Explanation:
+1 ltr is equal to 1000ml and 1000ml equal to 0.01 times of 100ml<|end|>
+<|user|>Given Input: Response the convertion from ${input.originalMeasureUnit} to ${input.targetMeasureUnit}<|end|>`,
+        system:
+          'You are AI system that able return the convertion rate of difference measurement .',
+      }),
+      method: 'POST',
+    };
+    const requestInitHeaders: Array<[string, string]> = [
+      ['Content-Type', 'application/json'],
+      ['request-id', options.requestId],
+    ];
+    if (![AppEnvironment.DEV, AppEnvironment.TEST].includes(APP_ENV)) {
+      const auth = new GoogleAuth();
+      const idTokenClient = await auth.getIdTokenClient(llmEndpoint);
+      requestInit.headers = requestInitHeaders.concat(
+        Object.entries(await idTokenClient.getRequestHeaders()),
+      );
+    }
+
+    try {
+      return await fetch(new URL('/prompt', llmEndpoint), requestInit)
+        .then(res => res.json())
+        .then(jsonRes => {
+          return ((content: string) => {
+            try {
+              return { data: JSON.parse(content), raw: content };
+            } catch {
+              logger.error('Failed to parse JSON response from LLM', {
+                generatedContent: content,
+              });
+              return {
+                data: {
+                  rate: null,
+                  source: input.originalMeasureUnit,
+                  target: input.targetMeasureUnit,
+                },
+                raw: content,
+              };
+            }
+          })((jsonRes as { message: string })['message']);
+        });
+    } catch (e) {
+      return {
+        data: {
+          rate: null,
+          source: input.originalMeasureUnit,
+          target: input.targetMeasureUnit,
+        },
+      };
+    }
+  },
+  {
+    data: {
+      rate: null,
+      source: '',
+      target: '',
+    },
+  },
+);
+
 async function _extractTotalWeight(
   input: { description: string },
   options: { logger: Logger; requestId: string },
@@ -146,6 +232,20 @@ ${JSON.stringify({ extractedCountry: 'Netherlands', withInUK: false })}<|end|>
 Given Address: Brewed & canned by:Camden Town Brewery,55-59 Wilkin Street,Mews,NW5 3NN,London,UK.<|end|>
 <|assistant|>
 ${JSON.stringify({ extractedCountry: 'England', withInUK: true })}<|end|>
+<|user|>
+Given Address: Brewed and bottled by:
+Birra Peroni S.r.l.,
+Via Birolli, 8,
+Roma.
+
+Asahi UK Ltd,
+Asahi House,
+88-100 Chertsey Road,
+Woking,
+GU21 5BJ,
+UK.<|end|>
+<|assistant|>
+${JSON.stringify({ extractedCountry: 'Italy', withInUK: false })}<|end|>
 <|user|>
 Given Address: ${address}<|end|>`,
       system:

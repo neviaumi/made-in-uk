@@ -8,6 +8,8 @@
     "fastify": "4.28.1",
     "hash-object": "5.0.1",
     "playwright": "1.44.1",
+    "playwright-extra": "4.3.6",
+    "puppeteer-extra-plugin-stealth": "2.11.2",
     "ramda": "0.30.0",
     "winston": "3.13.0"
   },

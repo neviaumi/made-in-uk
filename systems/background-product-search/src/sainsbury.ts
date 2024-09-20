@@ -51,7 +51,7 @@ export function createProductsSearchHandler(
     );
     (await page
       .getByRole('button', {
-        name: 'Accept',
+        name: 'Accept all cookies',
       })
       .isVisible()) &&
       (await page.getByRole('button', { name: 'Accept all cookies' }).click());

@@ -3,6 +3,7 @@ import Fastify from 'fastify';
 import {
   closeBrowser,
   closePage,
+  createAntiDetectionChromiumBrowser,
   createBrowserPage,
   createChromiumBrowser,
 } from '@/browser.ts';
@@ -142,7 +143,10 @@ fastify.post('/', {
           ),
         );
       }
-      const browser = await createChromiumBrowser();
+      const browser =
+        source === PRODUCT_SOURCE.SAINSBURY
+          ? await createAntiDetectionChromiumBrowser()
+          : await createChromiumBrowser();
       const page = await createBrowserPage(browser)();
       const fetchers = {
         [PRODUCT_SOURCE.LILYS_KITCHEN]: lilysKitchen,
