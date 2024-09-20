@@ -30,7 +30,9 @@ const { fullQualifiedQueueName: productDetailQueueName } =
 const { fullQualifiedQueueName: productSearchSubTasksQueueName } =
   createProductSearchSubTaskQueue();
 
-const { name: llmServiceName, url: llmUrl } = createCloudRunForLLM();
+const { name: llmServiceName, url: llmUrl } = createCloudRunForLLM({
+  databaseName: databaseName,
+});
 
 const {
   name: backgroundProductDetailServiceName,
