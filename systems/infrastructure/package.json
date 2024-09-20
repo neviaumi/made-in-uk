@@ -37,5 +37,5 @@
     "build": "npx babel --out-dir ./bin --extensions .ts --ignore ./src/gcp/**/node_modules --copy-files --no-copy-ignored ./src"
   },
   "type": "module",
-  "version": "2024.9.20-alpha.1300"
+  "version": "2024.9.20-alpha.2351"
 }
