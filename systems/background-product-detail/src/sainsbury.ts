@@ -111,7 +111,7 @@ export function createProductDetailsFetcher(page: playwright.Page) {
           ? `${pricePerUnit} per ${product.unit_price.measure}`
           : null,
         source: PRODUCT_SOURCE.SAINSBURY,
-        title: product.name,
+        title: `${product.name} | Sainsbury`,
         type: 'product',
         url: product.full_url,
       },

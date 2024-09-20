@@ -81,7 +81,8 @@ describe('Sainsbury', () => {
           price: '£15.00',
           pricePerItem: '3.79 per ltr',
           source: 'SAINSBURY',
-          title: 'Peroni Nastro Azzurro Beer Lager Bottles 12x330ml',
+          title:
+            'Peroni Nastro Azzurro Beer Lager Bottles 12x330ml | Sainsbury',
           type: 'product',
           url: expect.any(String),
         });
