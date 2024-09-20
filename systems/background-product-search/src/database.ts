@@ -252,7 +252,11 @@ export function connectToProductSearchSubTasksReplyStreamOnDatabase(
     ) {
       return productInfo;
     },
-    subscribe() {
+    subscribe({
+      numberOfSubTasksCreated,
+    }: {
+      numberOfSubTasksCreated: number;
+    }) {
       const duplexStream = new Duplex({
         final() {
           this.push(null);
@@ -260,7 +264,6 @@ export function connectToProductSearchSubTasksReplyStreamOnDatabase(
         objectMode: true,
         read() {},
       });
-      const totalDocsExpected: number = 1;
       let docReceivedCount: number = 0;
       const detachDBListener = database
         .collection(collectionPath)
@@ -271,7 +274,7 @@ export function connectToProductSearchSubTasksReplyStreamOnDatabase(
             if (!changedData['type']) return;
             docReceivedCount += 1;
             duplexStream.push(changedData);
-            if (docReceivedCount === totalDocsExpected) {
+            if (docReceivedCount === numberOfSubTasksCreated) {
               duplexStream.end();
             }
           });
