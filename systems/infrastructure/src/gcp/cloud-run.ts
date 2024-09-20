@@ -314,7 +314,11 @@ export function createCloudRunForBackgroundProductDetail({
   };
 }
 
-export function createCloudRunForLLM() {
+export function createCloudRunForLLM({
+  databaseName,
+}: {
+  databaseName: Output<string>;
+}) {
   const llmImage = appConfig.get('llm-image');
   const cloudRunService = new cloudrunv2.Service(resourceName`llm`, {
     ingress: 'INGRESS_TRAFFIC_ALL',
@@ -327,6 +331,14 @@ export function createCloudRunForLLM() {
               {
                 name: 'LLM_PORT',
                 value: '8080',
+              },
+              {
+                name: 'LLM_DATABASE_ID',
+                value: databaseName,
+              },
+              {
+                name: 'LLM_ENV',
+                value: 'production',
               },
             ],
             image: llmImage ?? 'us-docker.pkg.dev/cloudrun/container/hello',

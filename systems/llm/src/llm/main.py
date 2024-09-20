@@ -7,6 +7,7 @@ import datetime
 import time
 import uvicorn
 import app_logging
+import database
 
 llm_model = llm_engine.create_interface()
 
@@ -18,7 +19,16 @@ async def prompt(request):
     resp_start = time.time()
     system = api_body['system']
     prompt_str = api_body['prompt']
-    resp = llm_model.prompt(system, prompt_str)
+    cache_control_header = request.headers.get('Cache-Control', '')
+    use_cache = cache_control_header not in ['no-cache', 'no-store']
+    should_cache_response = cache_control_header not in ['no-store']
+    cached_response = database.get_cached_llm_prompt(system, prompt_str) if use_cache else None
+    if cached_response is None:
+        resp = llm_model.prompt(system, prompt_str)
+        if should_cache_response:
+            database.cache_llm_prompt(system, prompt_str, resp)
+    else:
+        resp = cached_response
     resp_end = time.time()
     logger.info("Response from LLM", extra={
         "system": system,
