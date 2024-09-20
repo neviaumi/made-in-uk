@@ -100,13 +100,13 @@ fastify.post(`/search`, {
       payload.taskId,
     );
     const lock = connectLockHandlerOnDatabase(database, requestId);
-    if (await lock.checkRequestLockExist()) {
-      reply.code(409).send('409 Conflict');
-      return;
-    }
     if (!(await taskState.shouldTaskRun())) {
       logger.error("Task already done or shouldn't retry");
       reply.code(208).send('208 Already Reported');
+      return;
+    }
+    if (await lock.checkRequestLockExist()) {
+      reply.code(409).send('409 Conflict');
       return;
     }
     const cloudTask = createCloudTaskClient();
