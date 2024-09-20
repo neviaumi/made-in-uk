@@ -73,7 +73,7 @@ export function createProductsSearchHandler(
         yield [
           product.product_uid,
           {
-            productUrl: product.product_url,
+            productUrl: new URL(product.full_url).pathname,
             source: PRODUCT_SOURCE.SAINSBURY,
           },
         ];

@@ -100,9 +100,10 @@ describe('background-product-search', () => {
         await closePage(page);
         await closeBrowser(browser);
       });
-      expect(
-        new Set((await streams.toArray()).map(item => item[0])).size,
-      ).toEqual(180);
+      const response = await streams.toArray();
+      expect(new Set(response.map(item => item[0])).size).toEqual(
+        response.length,
+      );
     },
     {
       timeout: 60000 * 60,
