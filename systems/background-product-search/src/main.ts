@@ -366,7 +366,9 @@ fastify.post('/', {
       },
     });
     const streamItems = await Readable.from(
-      subTaskReplyStream.subscribe(),
+      subTaskReplyStream.subscribe({
+        numberOfSubTasksCreated: 2,
+      }),
     ).toArray();
     const totalCount = await subTaskReplyStream.totalSearchMatchCount;
     const batch = database.batch();
