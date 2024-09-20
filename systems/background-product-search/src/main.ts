@@ -7,6 +7,7 @@ import hashObject from 'hash-object';
 import {
   closeBrowser,
   closePage,
+  createAntiDetectionChromiumBrowser,
   createBrowserPage,
   createChromiumBrowser,
 } from '@/browser.ts';
@@ -116,7 +117,6 @@ fastify.post(`/search`, {
     await lock.acquireLock();
     const search = payload.search;
     const cacheKey = hashObject(search);
-    const browser = await createChromiumBrowser();
     const productDetailScheduler = createProductDetailScheduler(cloudTask);
     async function* createSearchGenerator() {
       const searchCache = connectProductSearchCacheOnDatabase(
@@ -139,6 +139,11 @@ fastify.post(`/search`, {
             ),
           );
         }
+        const browser =
+          search.source === PRODUCT_SOURCE.SAINSBURY
+            ? await createAntiDetectionChromiumBrowser()
+            : await createChromiumBrowser();
+
         const page = await createBrowserPage(browser)();
         const productModules = {
           [PRODUCT_SOURCE.OCADO]: ocado,
@@ -153,6 +158,7 @@ fastify.post(`/search`, {
           yield* generator;
         } finally {
           await closePage(page);
+          await closeBrowser(browser);
         }
       }
     }
@@ -164,9 +170,6 @@ fastify.post(`/search`, {
         ]
       > = [];
       const requestProcessor = Readable.from(createSearchGenerator());
-      requestProcessor.on('end', () => {
-        closeBrowser(browser);
-      });
 
       for await (const [productId, productInfo] of requestProcessor) {
         const { productUrl, source } = productInfo;
@@ -354,13 +357,14 @@ fastify.post('/', {
         source: PRODUCT_SOURCE.OCADO,
       },
     });
-    // await subTaskScheduler.scheduleProductSearchSubTask({
-    //   requestId: subTaskRequestId,
-    //   search: {
-    //     keyword: payload.search.keyword,
-    //     source: PRODUCT_SOURCE.SAINSBURY,
-    //   },
-    // });
+    await subTaskScheduler.scheduleProductSearchSubTask({
+      parentRequestId: requestId,
+      requestId: subTaskRequestId,
+      search: {
+        keyword: payload.search.keyword,
+        source: PRODUCT_SOURCE.SAINSBURY,
+      },
+    });
     const streamItems = await Readable.from(
       subTaskReplyStream.subscribe(),
     ).toArray();

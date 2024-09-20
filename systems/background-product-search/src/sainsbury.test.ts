@@ -5,8 +5,8 @@ import { describe, expect, it } from 'vitest';
 import {
   closeBrowser,
   closePage,
+  createAntiDetectionChromiumBrowser,
   createBrowserPage,
-  createChromiumBrowser,
 } from '@/browser.ts';
 import { APP_ENV } from '@/config.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
@@ -19,11 +19,11 @@ describe('background-product-search', () => {
   it(
     'fetch until no more product found',
     async () => {
-      const browser = await createChromiumBrowser({
+      const browser = await createAntiDetectionChromiumBrowser({
         headless: true,
       });
       const page = await createBrowserPage(browser)({
-        javaScriptEnabled: true,
+        javaScriptEnabled: false,
         offline: true,
       });
       await page.route(
