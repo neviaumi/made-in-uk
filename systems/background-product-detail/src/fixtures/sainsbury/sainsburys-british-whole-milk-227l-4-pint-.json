@@ -1,0 +1,387 @@
+{
+  "ads": {
+    "sponsored_products": {
+      "product_ads": [
+        {
+          "ad_id": "display_rsu6zXtCaYELOSTh4mUw8bQe7Q4KCQoHMjA2MDgzNRIAGgwI667XtwYQlbS7hQMiAggB",
+          "product": {
+            "alternatives": [
+              "2060859",
+              "130530",
+              "2570303",
+              "3512913"
+            ],
+            "assets": {
+              "images": null,
+              "plp_image": "https://assets.sainsburys-groceries.co.uk/gol/2060835/image.jpg",
+              "video": null
+            },
+            "associations": [],
+            "attachments": [],
+            "attributes": {
+              "brand": [
+                "Weetabix"
+              ]
+            },
+            "badges": [],
+            "breadcrumbs": null,
+            "categories": [
+              {
+                "id": "135652",
+                "name": "All cereals"
+              },
+              {
+                "id": "281327",
+                "name": "Low sugar \u0026 no added sugar"
+              },
+              {
+                "id": "355376",
+                "name": "Stock up"
+              },
+              {
+                "id": "442361",
+                "name": "Food cupboard essentials"
+              },
+              {
+                "id": "448366",
+                "name": "Wheat biscuits"
+              },
+              {
+                "id": "410380",
+                "name": "Special offers"
+              },
+              {
+                "id": "448363",
+                "name": "Wheats"
+              },
+              {
+                "id": "447852",
+                "name": "Family favourites"
+              },
+              {
+                "id": "618856",
+                "name": "Back to Routine"
+              },
+              {
+                "id": "577863",
+                "name": "Special offers"
+              },
+              {
+                "id": "498359",
+                "name": "10x Nectar points"
+              },
+              {
+                "id": "611354",
+                "name": "Win with Weetabix"
+              },
+              {
+                "id": "557363",
+                "name": "All everyday cereals"
+              },
+              {
+                "id": "557361",
+                "name": "All healthier cereals"
+              },
+              {
+                "id": "577864",
+                "name": "Nectar Prices"
+              },
+              {
+                "id": "474591",
+                "name": "Food cupboard essentials"
+              }
+            ],
+            "department": null,
+            "description": null,
+            "display_icons": null,
+            "eans": [
+              "5010029000801",
+              "5010029000887",
+              "5010029003239"
+            ],
+            "favourite_uid": null,
+            "full_url": "https://www.sainsburys.co.uk/gol-ui/product/weetabix-cereal-x48",
+            "header": {
+              "text": "Sponsored",
+              "type": "SPONSORED"
+            },
+            "hfss_restriction": [
+              {
+                "country": "ENG",
+                "hfss_category": "Breakfast cereal",
+                "hfss_score": -5,
+                "last_change_date": "2022-09-20T19:08:42.653Z",
+                "restricted": false
+              },
+              {
+                "country": "SCT",
+                "hfss_category": "Breakfast cereal",
+                "hfss_score": -5,
+                "last_change_date": "2022-09-20T19:08:42.653Z",
+                "restricted": false
+              },
+              {
+                "country": "WLS",
+                "hfss_category": "Breakfast cereal",
+                "hfss_score": -5,
+                "last_change_date": "2022-09-20T19:08:42.653Z",
+                "restricted": false
+              },
+              {
+                "country": "NIR",
+                "hfss_category": "Breakfast cereal",
+                "hfss_score": -5,
+                "last_change_date": "2022-09-20T19:08:42.653Z",
+                "restricted": false
+              }
+            ],
+            "image": null,
+            "image_thumbnail": null,
+            "image_thumbnail_small": null,
+            "image_zoom": null,
+            "important_information": null,
+            "is_alcoholic": false,
+            "is_available": true,
+            "is_intolerant": false,
+            "is_mhra": false,
+            "is_spotlight": false,
+            "is_supply_chain_orderable": false,
+            "labels": [],
+            "name": "Weetabix Cereal x48",
+            "pdp_deep_link": "",
+            "product_type": "BASIC",
+            "product_uid": "2060835",
+            "promotions": [],
+            "retail_price": {
+              "measure": "ea",
+              "price": 5.5
+            },
+            "reviews": {
+              "average_rating": 4.3962,
+              "is_enabled": true,
+              "product_uid": "2060835",
+              "total": 53
+            },
+            "unit_price": {
+              "measure": "bisc",
+              "measure_amount": 1,
+              "price": 0.11
+            },
+            "zone": null
+          },
+          "type": "Citrus",
+          "variation": ""
+        }
+      ]
+    }
+  },
+  "products": [
+    {
+      "assets": {
+        "images": [
+          {
+            "id": "1",
+            "sizes": [
+              {
+                "height": 100,
+                "url": "https://assets.sainsburys-groceries.co.uk/gol/181402/1/100x100.jpg",
+                "width": 100
+              },
+              {
+                "height": 140,
+                "url": "https://assets.sainsburys-groceries.co.uk/gol/181402/1/140x140.jpg",
+                "width": 140
+              },
+              {
+                "height": 300,
+                "url": "https://assets.sainsburys-groceries.co.uk/gol/181402/1/300x300.jpg",
+                "width": 300
+              },
+              {
+                "height": 640,
+                "url": "https://assets.sainsburys-groceries.co.uk/gol/181402/1/640x640.jpg",
+                "width": 640
+              },
+              {
+                "height": 1500,
+                "url": "https://assets.sainsburys-groceries.co.uk/gol/181402/1/1500x1500.jpg",
+                "width": 1500
+              },
+              {
+                "height": 2365,
+                "url": "https://assets.sainsburys-groceries.co.uk/gol/181402/1/2365x2365.jpg",
+                "width": 2365
+              }
+            ]
+          }
+        ],
+        "plp_image": "https://assets.sainsburys-groceries.co.uk/gol/181402/image.jpg",
+        "video": []
+      },
+      "associations": [],
+      "attachments": [],
+      "attributes": {
+        "brand": [
+          "Sainsbury's"
+        ]
+      },
+      "badges": [],
+      "breadcrumbs": [
+        {
+          "label": "Dairy, eggs \u0026 chilled",
+          "url": "gb/groceries/dairy-eggs-and-chilled"
+        },
+        {
+          "label": "Dairy \u0026 chilled essentials",
+          "url": "/gol-ui/groceries/dairy-eggs-and-chilled/dairy-and-chilled-essentials/c:1019022"
+        }
+      ],
+      "categories": [
+        {
+          "id": "538853",
+          "name": "Your break, your way with Nestle"
+        },
+        {
+          "id": "502859",
+          "name": "Aldi Price Match"
+        },
+        {
+          "id": "607854",
+          "name": "Aldi Price Match"
+        },
+        {
+          "id": "604354",
+          "name": "Best of British"
+        },
+        {
+          "id": "558855",
+          "name": "Back to uni"
+        },
+        {
+          "id": "474592",
+          "name": "Dairy \u0026 chilled essentials"
+        },
+        {
+          "id": "12431",
+          "name": "Fresh milk"
+        },
+        {
+          "id": "355438",
+          "name": "Pancake Day"
+        },
+        {
+          "id": "428869",
+          "name": "Fresh milk"
+        },
+        {
+          "id": "463861",
+          "name": "Price Lock"
+        }
+      ],
+      "department": null,
+      "description": [
+        "Pasteurised homogenised standardised whole milk",
+        "3.7% Fat Milk by Sainsbury's",
+        "We source 97% of our milk from the Sainsbury's Dairy Development Group (SDDG). Supporting farmers that adhere to our specific welfare standards. www.sainsburys.co.uk"
+      ],
+      "details_html": "PFByb2R1Y3RDb250ZW50IHhtbG5zOmE9Imh0dHA6Ly93d3cuaW5zcGlyZS1qcy5jb20vU09MIj4KPEhUTUxDb250ZW50IGNvbnRlbnRQYXRoPSIvQ29udGVudC9tZWRpYS9odG1sL3Byb2R1Y3RzL2xhYmVsLy9fbGFiZWxfaW5zcGlyZS5odG1sIiBvdXRwdXRNZXRob2Q9InhodG1sIj4KPGRpdiBpZD0iYWNjb3JkaW9uLWNvbnRlbnQiPgo8aDMgY2xhc3M9InByb2R1Y3REYXRhSXRlbUhlYWRlciI+RGVzY3JpcHRpb248L2gzPgo8ZGl2IGNsYXNzPSJwcm9kdWN0VGV4dCI+CjxwPlBhc3RldXJpc2VkIGhvbW9nZW5pc2VkIHN0YW5kYXJkaXNlZCB3aG9sZSBtaWxrPC9wPgo8cD4KICAgICAgICAgICAgJm5ic3A7CiAgICAgICAgICAgIDwvcD4KPHA+CjxwPjMuNyUgRmF0IE1pbGsgYnkgU2FpbnNidXJ5J3MmbmJzcDs8L3A+Cgo8cD5XZSBzb3VyY2UgOTclIG9mIG91ciBtaWxrIGZyb20gdGhlIFNhaW5zYnVyeSdzIERhaXJ5IERldmVsb3BtZW50IEdyb3VwIChTRERHKS4gU3VwcG9ydGluZyBmYXJtZXJzIHRoYXQgYWRoZXJlIHRvIG91ciBzcGVjaWZpYyB3ZWxmYXJlIHN0YW5kYXJkcy4gd3d3LnNhaW5zYnVyeXMuY28udWs8L3A+CjwvcD4KPC9kaXY+CjwvZGl2PgoKPGRpdiBpZD0iYWNjb3JkaW9uLWNvbnRlbnQiPgo8aDMgY2xhc3M9InByb2R1Y3REYXRhSXRlbUhlYWRlciI+TnV0cml0aW9uPC9oMz4KPGRpdiBjbGFzcz0icHJvZHVjdFRleHQiPgo8ZGl2IGNsYXNzPSJudXRyaXRpb25hbENvbnRlbnRTdW1tYXJ5Ij4KPGgyIGNsYXNzPSJyZWZlcmVuY2UiPlBlciAyMDBtbCBUeXBpY2FsIFZhbHVlczwvaDI+Cjx1bCBjbGFzcz0ibG96ZW5nZUJsb2NrIj4KPGxpIGNsYXNzPSJsb3plbmdlIGVuZXJneSBlbmVyZ3kiPgo8ZGl2IGNsYXNzPSJsb3plbmdlSGVhZGVyU2VjdGlvbiI+CjxoMyBjbGFzcz0ibG96ZW5nZVRpdGxlIj5FTkVSR1k8L2gzPgo8cD41NTNrSjwvcD4KPHA+MTMya2NhbDwvcD4KPC9kaXY+CjxkaXYgY2xhc3M9InBlcmNlbnRhZ2UiPgo8cD43JTwvcD4KPC9kaXY+CjxwIGNsYXNzPSJhY2Nlc3MiPndoaXRlPC9wPgo8L2xpPgo8bGkgY2xhc3M9ImxvemVuZ2UgbWVkaXVtIGZhdCI+CjxkaXYgY2xhc3M9ImxvemVuZ2VIZWFkZXJTZWN0aW9uIj4KPGgzIGNsYXNzPSJsb3plbmdlVGl0bGUiPkZBVDwvaDM+CjxwPjcuNGc8L3A+CjwvZGl2Pgo8ZGl2IGNsYXNzPSJwZXJjZW50YWdlIj4KPHA+MTElPC9wPgo8L2Rpdj4KPHAgY2xhc3M9ImFjY2VzcyI+YW1iZXI8L3A+CjwvbGk+CjxsaSBjbGFzcz0ibG96ZW5nZSBoaWdoIHNhdHVyYXRlcyI+CjxkaXYgY2xhc3M9ImxvemVuZ2VIZWFkZXJTZWN0aW9uIj4KPGgzIGNsYXNzPSJsb3plbmdlVGl0bGUiPlNBVFVSQVRFUzwvaDM+CjxwPjQuOGc8L3A+CjwvZGl2Pgo8ZGl2IGNsYXNzPSJwZXJjZW50YWdlIj4KPHA+MjQlPC9wPgo8L2Rpdj4KPHAgY2xhc3M9ImFjY2VzcyI+cmVkPC9wPgo8L2xpPgo8bGkgY2xhc3M9ImxvemVuZ2UgbWVkaXVtIHN1Z2FycyI+CjxkaXYgY2xhc3M9ImxvemVuZ2VIZWFkZXJTZWN0aW9uIj4KPGgzIGNsYXNzPSJsb3plbmdlVGl0bGUiPlNVR0FSUzwvaDM+CjxwPjkuNGc8L3A+CjwvZGl2Pgo8ZGl2IGNsYXNzPSJwZXJjZW50YWdlIj4KPHA+MTAlPC9wPgo8L2Rpdj4KPHAgY2xhc3M9ImFjY2VzcyI+YW1iZXI8L3A+CjwvbGk+CjxsaSBjbGFzcz0ibG96ZW5nZSBsb3cgc2FsdCI+CjxkaXYgY2xhc3M9ImxvemVuZ2VIZWFkZXJTZWN0aW9uIj4KPGgzIGNsYXNzPSJsb3plbmdlVGl0bGUiPlNBTFQ8L2gzPgo8cD4wLjIyZzwvcD4KPC9kaXY+CjxkaXYgY2xhc3M9InBlcmNlbnRhZ2UiPgo8cD40JTwvcD4KPC9kaXY+CjxwIGNsYXNzPSJhY2Nlc3MiPmdyZWVuPC9wPgo8L2xpPgo8L3VsPgo8ZGl2IGNsYXNzPSJsb3plbmdlRm9vdGVyIj4KPHA+JSBvZiB0aGUgUmVmZXJlbmNlIEludGFrZXM8L3A+CjxwPlR5cGljYWwgVmFsdWVzIFBlciAxMDBtbCA6IEVuZXJneSAyNzYga0ovNjYga2NhbDwvcD4KPHA+Ukk9IFJlZmVyZW5jZSBpbnRha2Ugb2YgYW4gYXZlcmFnZSBhZHVsdCAoODQwMCBrSi8yMDAwIGtjYWwpPC9wPgo8L2Rpdj4KPC9kaXY+CjxkaXY+CjxwPgo8c3Ryb25nPlRhYmxlIG9mIE51dHJpdGlvbmFsIEluZm9ybWF0aW9uPC9zdHJvbmc+CjwvcD4KPGRpdiBjbGFzcz0idGFibGVXcmFwcGVyIj4KPHRhYmxlIGNsYXNzPSJudXRyaXRpb25UYWJsZSI+Cjx0aGVhZD4KPHRyIGNsYXNzPSJ0YWJsZVRpdGxlUm93Ij4KPHRoIHNjb3BlPSJjb2wiPlR5cGljYWwgVmFsdWVzPC90aD48dGggc2NvcGU9ImNvbCI+UGVyIDEwMG1sJm5ic3A7PC90aD48dGggc2NvcGU9ImNvbCI+UGVyIDIwMG1sJm5ic3A7PC90aD48dGggc2NvcGU9ImNvbCI+JSBiYXNlZCBvbiBSSSBmb3IgQXZlcmFnZSBBZHVsdDwvdGg+CjwvdHI+CjwvdGhlYWQ+Cjx0ciBjbGFzcz0idGFibGVSb3cxIj4KPHRoIHNjb3BlPSJyb3ciIGNsYXNzPSJyb3dIZWFkZXIiIHJvd3NwYW49IjIiPkVuZXJneTwvdGg+PHRkIGNsYXNzPSJ0YWJsZVJvdzEiPjI3NmtKPC90ZD48dGQgY2xhc3M9InRhYmxlUm93MSI+NTUza0o8L3RkPjx0ZCBjbGFzcz0idGFibGVSb3cxIj4tPC90ZD4KPC90cj4KPHRyIGNsYXNzPSJ0YWJsZVJvdzAiPgo8dGQgY2xhc3M9InRhYmxlUm93MCI+NjZrY2FsPC90ZD48dGQgY2xhc3M9IiI+MTMya2NhbDwvdGQ+PHRkIGNsYXNzPSIiPjclPC90ZD4KPC90cj4KPHRyIGNsYXNzPSJ0YWJsZVJvdzEiPgo8dGggc2NvcGU9InJvdyIgY2xhc3M9InJvd0hlYWRlciI+RmF0PC90aD48dGQgY2xhc3M9InRhYmxlUm93MSI+My43ZzwvdGQ+PHRkIGNsYXNzPSJudXRyaXRpb25MZXZlbDIiPjcuNGc8L3RkPjx0ZCBjbGFzcz0ibnV0cml0aW9uTGV2ZWwyIj4xMSU8L3RkPgo8L3RyPgo8dHIgY2xhc3M9InRhYmxlUm93MCI+Cjx0aCBzY29wZT0icm93IiBjbGFzcz0icm93SGVhZGVyIj5TYXR1cmF0ZXM8L3RoPjx0ZCBjbGFzcz0idGFibGVSb3cwIj4yLjRnPC90ZD48dGQgY2xhc3M9Im51dHJpdGlvbkxldmVsMyI+NC44ZzwvdGQ+PHRkIGNsYXNzPSJudXRyaXRpb25MZXZlbDMiPjI0JTwvdGQ+CjwvdHI+Cjx0ciBjbGFzcz0idGFibGVSb3cxIj4KPHRoIHNjb3BlPSJyb3ciIGNsYXNzPSJyb3dIZWFkZXIiPkNhcmJvaHlkcmF0ZTwvdGg+PHRkIGNsYXNzPSJ0YWJsZVJvdzEiPjQuN2c8L3RkPjx0ZCBjbGFzcz0iIj45LjRnPC90ZD48dGQgY2xhc3M9IiI+NCU8L3RkPgo8L3RyPgo8dHIgY2xhc3M9InRhYmxlUm93MCI+Cjx0aCBzY29wZT0icm93IiBjbGFzcz0icm93SGVhZGVyIj5TdWdhcnM8L3RoPjx0ZCBjbGFzcz0idGFibGVSb3cwIj40LjdnPC90ZD48dGQgY2xhc3M9Im51dHJpdGlvbkxldmVsMiI+OS40ZzwvdGQ+PHRkIGNsYXNzPSJudXRyaXRpb25MZXZlbDIiPjEwJTwvdGQ+CjwvdHI+Cjx0ciBjbGFzcz0idGFibGVSb3cxIj4KPHRoIHNjb3BlPSJyb3ciIGNsYXNzPSJyb3dIZWFkZXIiPkZpYnJlPC90aD48dGQgY2xhc3M9InRhYmxlUm93MSI+Jmx0OzAuNWc8L3RkPjx0ZCBjbGFzcz0iIj4mbHQ7MC41ZzwvdGQ+PHRkIGNsYXNzPSIiPi08L3RkPgo8L3RyPgo8dHIgY2xhc3M9InRhYmxlUm93MCI+Cjx0aCBzY29wZT0icm93IiBjbGFzcz0icm93SGVhZGVyIj5Qcm90ZWluPC90aD48dGQgY2xhc3M9InRhYmxlUm93MCI+My41ZzwvdGQ+PHRkIGNsYXNzPSIiPjcuMGc8L3RkPjx0ZCBjbGFzcz0iIj4xNCU8L3RkPgo8L3RyPgo8dHIgY2xhc3M9InRhYmxlUm93MSI+Cjx0aCBzY29wZT0icm93IiBjbGFzcz0icm93SGVhZGVyIj5TYWx0PC90aD48dGQgY2xhc3M9InRhYmxlUm93MSI+MC4xMWc8L3RkPjx0ZCBjbGFzcz0ibnV0cml0aW9uTGV2ZWwxIj4wLjIyZzwvdGQ+PHRkIGNsYXNzPSJudXRyaXRpb25MZXZlbDEiPjQlPC90ZD4KPC90cj4KPC90YWJsZT4KPC9kaXY+CjxwPlJlZmVyZW5jZSBpbnRha2Ugb2YgYW4gYXZlcmFnZSBhZHVsdCAoODQwMCBrSiAvIDIwMDAga2NhbCk8L3A+CjxwPlRoaXMgcGFjayBjb250YWlucyBhcHByb3guIDExIHNlcnZpbmdzPC9wPgo8L2Rpdj4KPGRpdj4KPHA+CjxzdHJvbmc+VGFibGUgb2YgVml0YW1pbnMgYW5kIE1pbmVyYWxzIEluZm9ybWF0aW9uPC9zdHJvbmc+CjwvcD4KPGRpdiBjbGFzcz0idGFibGVXcmFwcGVyIj4KPHRhYmxlIGNsYXNzPSJudXRyaXRpb25UYWJsZSI+Cjx0aGVhZD4KPHRyIGNsYXNzPSJ0YWJsZVRpdGxlUm93Ij4KPHRoIHNjb3BlPSJjb2wiPlR5cGljYWwgVmFsdWVzPC90aD48dGggc2NvcGU9ImNvbCI+UGVyIDEwMG1sJm5ic3A7PC90aD48dGggc2NvcGU9ImNvbCI+JSBOUlYmbmJzcDtQZXIgMTAwbWwmbmJzcDs8L3RoPjx0aCBzY29wZT0iY29sIj5QZXIgMjAwbWwmbmJzcDs8L3RoPjx0aCBzY29wZT0iY29sIj4lIE5SViZuYnNwO1BlciAyMDBtbCZuYnNwOzwvdGg+CjwvdHI+CjwvdGhlYWQ+Cjx0ciBjbGFzcz0idGFibGVSb3cwIj4KPHRoIHNjb3BlPSJyb3ciIGNsYXNzPSJyb3dIZWFkZXIiPlJpYm9mbGF2aW48L3RoPjx0ZCBjbGFzcz0idGFibGVSb3cwIj4wLjE0bWc8L3RkPjx0ZCBjbGFzcz0idGFibGVSb3cwIj4tPC90ZD48dGQgY2xhc3M9IiI+MC4yOG1nPC90ZD48dGQgY2xhc3M9IiI+LTwvdGQ+CjwvdHI+Cjx0ciBjbGFzcz0idGFibGVSb3cxIj4KPHRoIHNjb3BlPSJyb3ciIGNsYXNzPSJyb3dIZWFkZXIiPlBvdGFzc2l1bTwvdGg+PHRkIGNsYXNzPSJ0YWJsZVJvdzEiPjE2Mm1nPC90ZD48dGQgY2xhc3M9InRhYmxlUm93MSI+LTwvdGQ+PHRkIGNsYXNzPSIiPjMyNG1nPC90ZD48dGQgY2xhc3M9IiI+MTY8L3RkPgo8L3RyPgo8dHIgY2xhc3M9InRhYmxlUm93MCI+Cjx0aCBzY29wZT0icm93IiBjbGFzcz0icm93SGVhZGVyIj5DYWxjaXVtPC90aD48dGQgY2xhc3M9InRhYmxlUm93MCI+MTI0bWc8L3RkPjx0ZCBjbGFzcz0idGFibGVSb3cwIj4xNTwvdGQ+PHRkIGNsYXNzPSIiPjI0OG1nPC90ZD48dGQgY2xhc3M9IiI+MzAuMjU8L3RkPgo8L3RyPgo8dHIgY2xhc3M9InRhYmxlUm93MSI+Cjx0aCBzY29wZT0icm93IiBjbGFzcz0icm93SGVhZGVyIj5Jb2RpbmUgPC90aD48dGQgY2xhc3M9InRhYmxlUm93MSI+MzIuMMK1ZzwvdGQ+PHRkIGNsYXNzPSJ0YWJsZVJvdzEiPi08L3RkPjx0ZCBjbGFzcz0iIj42NC4wwrVnPC90ZD48dGQgY2xhc3M9IiI+LTwvdGQ+CjwvdHI+CjwvdGFibGU+CjwvZGl2Pgo8cD5OUlYgPSBOdXRyaWVudCBSZWZlcmVuY2UgVmFsdWU8L3A+CjwvZGl2Pgo8L2Rpdj4KPC9kaXY+Cgo8ZGl2IGlkPSJhY2NvcmRpb24tY29udGVudCI+CjxoMyBjbGFzcz0icHJvZHVjdERhdGFJdGVtSGVhZGVyIj5EaWV0YXJ5IEluZm9ybWF0aW9uPC9oMz4KPGRpdiBjbGFzcz0icHJvZHVjdFRleHQiPgo8cD5BbGxlcmd5IGFkdmljZSBDb250YWlucyAgbWlsay5BbGxlcmd5IGFkdmljZSBTdWl0YWJsZSBmb3I6IFRoaXMgcHJvZHVjdCBpcyBzdWl0YWJsZSBmb3IgVmVnZXRhcmlhbnMuQWxsZXJneSBhZHZpY2UgQ29udGFpbnMgIG1pbGsuQWxsZXJneSBhZHZpY2UgU3VpdGFibGUgZm9yOiBUaGlzIHByb2R1Y3QgaXMgc3VpdGFibGUgZm9yIFZlZ2V0YXJpYW5zLjwvcD4KPHA+QWxsZXJneSBhZHZpY2UgQ29udGFpbnMgIG1pbGsuQWxsZXJneSBhZHZpY2UgU3VpdGFibGUgZm9yOiBUaGlzIHByb2R1Y3QgaXMgc3VpdGFibGUgZm9yIFZlZ2V0YXJpYW5zLkFsbGVyZ3kgYWR2aWNlIENvbnRhaW5zICBtaWxrLkFsbGVyZ3kgYWR2aWNlIFN1aXRhYmxlIGZvcjogVGhpcyBwcm9kdWN0IGlzIHN1aXRhYmxlIGZvciBWZWdldGFyaWFucy48L3A+CjwvZGl2Pgo8L2Rpdj4KCjxoMyBjbGFzcz0icHJvZHVjdERhdGFJdGVtSGVhZGVyIj5IZWFsdGg8L2gzPgo8ZGl2IGNsYXNzPSJwcm9kdWN0VGV4dCI+CjxwPldlbGZhcmUgUHJvbWlzZSBGYXJtZXJzIGluIHBhcnRuZXJzaGlwIHdpdGggU2FpbnNidXJ5J3M8L3A+CjwvZGl2PgoKCjxkaXYgaWQ9ImFjY29yZGlvbi1jb250ZW50Ij4KPGgzIGNsYXNzPSJwcm9kdWN0RGF0YUl0ZW1IZWFkZXIiPkNvdW50cnkgb2YgT3JpZ2luPC9oMz4KPGRpdiBjbGFzcz0icHJvZHVjdFRleHQiPgo8cD5Qcm9kdWNlZCBpbiBVbml0ZWQgS2luZ2RvbTwvcD4KPHA+UGFja2VkIGluIFVuaXRlZCBLaW5nZG9tPC9wPgo8L2Rpdj4KPC9kaXY+Cgo8ZGl2IGlkPSJhY2NvcmRpb24tY29udGVudCI+CjxoMyBjbGFzcz0icHJvZHVjdERhdGFJdGVtSGVhZGVyIj5TaXplPC9oMz4KPGRpdiBjbGFzcz0icHJvZHVjdFRleHQiPgo8cD4yLjI3MmwgNCBwaW50czwvcD4KPC9kaXY+CjwvZGl2PgoKPGRpdiBpZD0iYWNjb3JkaW9uLWNvbnRlbnQiPgo8aDMgY2xhc3M9InByb2R1Y3REYXRhSXRlbUhlYWRlciI+U3RvcmFnZTwvaDM+CjxkaXYgY2xhc3M9InByb2R1Y3RUZXh0Ij4KPHA+Rm9yIGJlc3QgYmVmb3JlOiBzZWUgZnJvbnQgb2YgYm90dGxlIEtlZXAgcmVmcmlnZXJhdGVkIGJlbG93IDXCsEMgT25jZSBvcGVuZWQsIGNvbnN1bWUgd2l0aGluIDMgZGF5cy4gS2VlcCB1cHJpZ2h0IDwvcD4KPC9kaXY+CjwvZGl2PgoKPGRpdiBpZD0iYWNjb3JkaW9uLWNvbnRlbnQiPgo8aDMgY2xhc3M9InByb2R1Y3REYXRhSXRlbUhlYWRlciI+UGFja2FnaW5nPC9oMz4KPGRpdiBjbGFzcz0icHJvZHVjdFRleHQiPgo8cD5SZWN5Y2xlIGJvdHRsZTwvcD4KPC9kaXY+CjwvZGl2PgoKPGRpdiBpZD0iYWNjb3JkaW9uLWNvbnRlbnQiPgo8aDMgY2xhc3M9InByb2R1Y3REYXRhSXRlbUhlYWRlciI+TWFudWZhY3R1cmVyPC9oMz4KPGRpdiBjbGFzcz0icHJvZHVjdFRleHQiPgo8cD5XZSBhcmUgaGFwcHkgdG8gcmVwbGFjZSB0aGlzIGl0ZW0gaWYgaXQgaXMgbm90IHNhdGlzZmFjdG9yeTwvcD4KPHA+U2FpbnNidXJ5J3MgU3VwZXJtYXJrZXRzIEx0ZC48L3A+CjxwPjMzIEhvbGJvcm4sIExvbmRvbiBFQzFOIDJIVDwvcD4KPHA+Q3VzdG9tZXIgc2VydmljZXMgMDgwMCA2MzYyNjI8L3A+CjwvZGl2Pgo8L2Rpdj4KCjwvSFRNTENvbnRlbnQ+CjwvUHJvZHVjdENvbnRlbnQ+Cg==",
+      "display_icons": [
+        "British",
+        "Aldi Price Match"
+      ],
+      "eans": [
+        "0000000487429",
+        "0000050181100",
+        "0000000181402"
+      ],
+      "favourite_uid": null,
+      "full_url": "https://www.sainsburys.co.uk/shop/gb/groceries/product/details/sainsburys-british-whole-milk-227l-4-pint-",
+      "hfss_restriction": [
+        {
+          "country": "ENG",
+          "hfss_category": "Out of scope or Product not in a legislative category",
+          "hfss_score": 0,
+          "last_change_date": "2022-09-23T11:46:56.547Z",
+          "restricted": false
+        },
+        {
+          "country": "SCT",
+          "hfss_category": "Out of scope or Product not in a legislative category",
+          "hfss_score": 0,
+          "last_change_date": "2022-09-23T11:46:56.547Z",
+          "restricted": false
+        },
+        {
+          "country": "WLS",
+          "hfss_category": "Out of scope or Product not in a legislative category",
+          "hfss_score": 0,
+          "last_change_date": "2022-09-23T11:46:56.547Z",
+          "restricted": false
+        },
+        {
+          "country": "NIR",
+          "hfss_category": "Out of scope or Product not in a legislative category",
+          "hfss_score": 0,
+          "last_change_date": "2022-09-23T11:46:56.547Z",
+          "restricted": false
+        }
+      ],
+      "image": "https://www.sainsburys.co.uk/wcsstore/ExtendedSitesCatalogAssetStore/images/catalog/productImages/02/0000000181402/0000000181402_L.jpeg",
+      "image_thumbnail": "https://www.sainsburys.co.uk/wcsstore/ExtendedSitesCatalogAssetStore/images/catalog/productImages/02/0000000181402/0000000181402_M.jpeg",
+      "image_thumbnail_small": "https://www.sainsburys.co.uk/wcsstore/ExtendedSitesCatalogAssetStore/images/catalog/productImages/02/0000000181402/0000000181402_S.jpeg",
+      "image_zoom": null,
+      "important_information": [
+        "The above details have been prepared to help you select suitable products. Products and their ingredients are liable to change.",
+        "\u003cstrong\u003eYou should always read the label before consuming or using the product and never rely solely on the information presented here.",
+        "If you require specific advice on any Sainsbury's branded product, please contact our Customer Careline on 0800 636262. For all other products, please contact the manufacturer, whose details will appear on the packaging or label. Sainsbury's is therefore unable to accept liability for any incorrect information.",
+        "You should also note that the picture / images show only our serving suggestions of how to serve or prepare your food – all accessories and additional items and/or ingredients pictured with the product you are purchasing are not included.",
+        "This information is supplied for your personal use only. It may not be reproduced in any way without the prior consent of Sainsbury's Supermarkets Ltd and due acknowledgement"
+      ],
+      "is_alcoholic": false,
+      "is_available": true,
+      "is_intolerant": false,
+      "is_mhra": false,
+      "is_spotlight": false,
+      "is_supply_chain_orderable": false,
+      "labels": [
+        {
+          "alt_text": "BRITISH",
+          "color": "#4c4c4c",
+          "label_uid": "British",
+          "link_opens_in_new_window": false,
+          "text": "BRITISH"
+        },
+        {
+          "alt_text": "ALDI PRICE MATCH*",
+          "color": "#D70000",
+          "label_uid": "Aldi Price Match",
+          "link": "https://www.sainsburys.co.uk/shop/gb/groceries/new---trending/aldi-price-match",
+          "link_opens_in_new_window": false,
+          "text": "ALDI PRICE MATCH*"
+        }
+      ],
+      "name": "Sainsbury's British Whole Milk 2.27L (4 pint)",
+      "not_for_eu": true,
+      "pdp_deep_link": "/shop/ProductDisplay?storeId=10151\u0026langId=44\u0026productId=109822",
+      "product_type": "BASIC",
+      "product_uid": "181402",
+      "promotions": [],
+      "retail_price": {
+        "measure": "unit",
+        "price": 1.45
+      },
+      "reviews": {
+        "average_rating": 4.5845,
+        "is_enabled": true,
+        "product_uid": "181402",
+        "total": 284
+      },
+      "unit_price": {
+        "measure": "ltr",
+        "measure_amount": 1,
+        "price": 0.64
+      },
+      "zone": "Dairy, eggs \u0026 chilled"
+    }
+  ]
+}

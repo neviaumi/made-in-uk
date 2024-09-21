@@ -62,6 +62,16 @@ export function createProductDetailsFetcher(
     const pricePerUnit = hasNectarPrice
       ? product.nectar_price.unit_price
       : product.unit_price?.price ?? null;
+    const pricePerUnitString = ((priceNumber: number | null) => {
+      if (!priceNumber) return null;
+      if (priceNumber < 1) {
+        return `${priceNumber * 100}p`;
+      }
+      return new Intl.NumberFormat('en-GB', {
+        currency: 'GBP',
+        style: 'currency',
+      }).format(priceNumber);
+    })(pricePerUnit);
     const productDetailHtml = Buffer.from(
       product.details_html,
       'base64',
@@ -71,25 +81,37 @@ export function createProductDetailsFetcher(
     if (productDetailHtml.includes('Country of Origin')) {
       countryOfOrigin = await page
         .locator('#accordion-content', {
-          has: page.getByText('Country of Origin'),
+          has: page.getByRole('heading', { name: 'Country of Origin' }),
         })
-        .locator('.itemTypeGroup')
         .textContent()
         .then(text => {
           if (!text) return null;
-          const [countryOfOriginLine] = text
+          const countryOfOriginText = text
+            .trim()
             .split('\n')
-            .filter(line => line.includes('Country of origin'));
-          if (!countryOfOriginLine) return text.trim();
+            .map(line => line.trim())
+            .filter(line => line.length > 0 && line !== 'Country of Origin');
+          const [countryOfOriginLine] = countryOfOriginText.filter(line =>
+            line.includes('Country of origin'),
+          );
+          if (!countryOfOriginLine) return countryOfOriginText.join('\n');
           return countryOfOriginLine.split(':')[1].trim();
         });
-    } else {
+    } else if (productDetailHtml.includes('Manufacturer')) {
       const manufacturer = await page
         .locator('#accordion-content', {
           has: page.getByRole('heading', { name: 'Manufacturer' }),
         })
-        .locator('.itemTypeGroup')
-        .textContent();
+        .textContent()
+        .then(text => {
+          if (!text) return null;
+          return text
+            .trim()
+            .split('\n')
+            .map(line => line.trim())
+            .filter(line => line.length > 0 && line !== 'Manufacturer')
+            .join('\n');
+        });
       if (manufacturer) {
         countryOfOrigin = await extractCountryFromAddress(manufacturer, {
           logger,
@@ -106,8 +128,8 @@ export function createProductDetailsFetcher(
           currency: 'GBP',
           style: 'currency',
         }).format(Number(price)),
-        pricePerItem: pricePerUnit
-          ? `${pricePerUnit} per ${product.unit_price.measure}`
+        pricePerItem: pricePerUnitString
+          ? `${pricePerUnitString} per ${product.unit_price.measure}`
           : null,
         source: PRODUCT_SOURCE.SAINSBURY,
         title: `${product.name} | Sainsbury`,
