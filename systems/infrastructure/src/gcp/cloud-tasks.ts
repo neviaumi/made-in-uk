@@ -8,8 +8,8 @@ export function createProductSearchTaskQueue() {
   const queue = new cloudtasks.Queue(resourceName`product-search`, {
     location: getLocation(),
     rateLimits: {
-      maxConcurrentDispatches: 1,
-      maxDispatchesPerSecond: 1,
+      maxConcurrentDispatches: 4,
+      maxDispatchesPerSecond: 2,
     },
     retryConfig: {
       maxAttempts: 16,
@@ -26,8 +26,8 @@ export function createProductSearchSubTaskQueue() {
   const queue = new cloudtasks.Queue(resourceName`product-search-sub-tasks`, {
     location: getLocation(),
     rateLimits: {
-      maxConcurrentDispatches: 4,
-      maxDispatchesPerSecond: 2,
+      maxConcurrentDispatches: 16,
+      maxDispatchesPerSecond: 8,
     },
     retryConfig: {
       maxAttempts: 16,
@@ -44,8 +44,8 @@ export function createProductDetailTaskQueue() {
   const queue = new cloudtasks.Queue(resourceName`product-detail`, {
     location: getLocation(),
     rateLimits: {
-      maxConcurrentDispatches: 4,
-      maxDispatchesPerSecond: 2,
+      maxConcurrentDispatches: 32,
+      maxDispatchesPerSecond: 16,
     },
     retryConfig: {
       maxAttempts: 16,
