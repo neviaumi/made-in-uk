@@ -61,8 +61,7 @@ export function createProductDetailsFetcher(
       : product.retail_price.price;
     const pricePerUnit = hasNectarPrice
       ? product.nectar_price.unit_price
-      : product.unit_price.price;
-    const isPricePerUnitAvailable = pricePerUnit < price;
+      : product.unit_price?.price ?? null;
     const productDetailHtml = Buffer.from(
       product.details_html,
       'base64',
@@ -107,7 +106,7 @@ export function createProductDetailsFetcher(
           currency: 'GBP',
           style: 'currency',
         }).format(Number(price)),
-        pricePerItem: isPricePerUnitAvailable
+        pricePerItem: pricePerUnit
           ? `${pricePerUnit} per ${product.unit_price.measure}`
           : null,
         source: PRODUCT_SOURCE.SAINSBURY,
