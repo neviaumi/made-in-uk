@@ -80,7 +80,7 @@ export function createProductDetailsFetcher(
           const [countryOfOriginLine] = text
             .split('\n')
             .filter(line => line.includes('Country of origin'));
-          if (!countryOfOriginLine) return null;
+          if (!countryOfOriginLine) return text.trim();
           return countryOfOriginLine.split(':')[1].trim();
         });
     } else {
