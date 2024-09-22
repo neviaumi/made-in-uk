@@ -30,39 +30,40 @@ export function createCloudTaskClient(
   return new CloudTasksClient(...args);
 }
 
-export function createProductSearchSubTaskScheduler(
+export function createProductDetailSubTaskScheduler(
   cloudTask: CloudTasksClient,
+  requestId: string,
   host: string,
 ) {
   return {
     async scheduleProductSearchSubTask(
       source: PRODUCT_SOURCE,
       payload: {
-        parentRequestId: string;
-        requestId: string;
-        search: {
-          keyword: string;
-        };
+        productId: string;
+        productUrl: string;
       },
     ) {
-      const targetQueue = config.get(`cloudTasks.${source}.queueName`);
-      if (!targetQueue) {
-        throw new Error(`Invalid queue name for ${source}`);
+      const queueName = config.get(`cloudTasks.${source}.queueName`);
+      if (!queueName) {
+        throw new Error(`Queue name for ${source} is not configured`);
       }
-      return cloudTask.createTask({
-        parent: String(targetQueue),
+      const taskId = crypto.randomUUID();
+      await cloudTask.createTask({
+        parent: String(queueName),
         task: {
           httpRequest: {
             body: Buffer.from(
               JSON.stringify({
-                parentRequestId: payload.parentRequestId,
-                search: payload.search,
-                taskId: crypto.randomUUID(),
+                product: {
+                  productId: payload.productId,
+                  productUrl: payload.productUrl,
+                },
+                taskId: taskId,
               }),
             ).toString('base64'),
             headers: {
               'Content-Type': 'application/json',
-              'Request-Id': payload.requestId,
+              'Request-Id': requestId,
             },
             httpMethod: 'POST',
             oidcToken: ![AppEnvironment.DEV, AppEnvironment.TEST].includes(
@@ -73,52 +74,13 @@ export function createProductSearchSubTaskScheduler(
                 }
               : null,
             url: new URL(
-              `/${source}/product/search`,
+              '/:source/product/detail',
               `${[AppEnvironment.DEV, AppEnvironment.TEST].includes(APP_ENV) ? 'http' : 'https'}://${host}`,
             ).toString(),
           },
         },
       });
-    },
-  };
-}
-
-export function createProductDetailScheduler(cloudTask: CloudTasksClient) {
-  return {
-    async scheduleProductDetailTask(payload: {
-      product: {
-        productId: string;
-        productUrl: string;
-        source: string;
-      };
-      requestId: string;
-    }) {
-      return cloudTask.createTask({
-        parent: String(config.get('cloudTasks.productDetailQueue')),
-        task: {
-          httpRequest: {
-            body: Buffer.from(
-              JSON.stringify({
-                product: payload.product,
-                taskId: crypto.randomUUID(),
-              }),
-            ).toString('base64'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Request-Id': payload.requestId,
-            },
-            httpMethod: 'POST',
-            oidcToken: ![AppEnvironment.DEV, AppEnvironment.TEST].includes(
-              APP_ENV,
-            )
-              ? {
-                  serviceAccountEmail: await getInstanceServiceAccount(),
-                }
-              : null,
-            url: String(config.get('productDetail.endpoint')),
-          },
-        },
-      });
+      return { id: taskId };
     },
   };
 }

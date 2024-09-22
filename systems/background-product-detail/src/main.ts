@@ -7,6 +7,10 @@ import {
   createBrowserPage,
   createChromiumBrowser,
 } from '@/browser.ts';
+import {
+  createCloudTaskClient,
+  createProductDetailSubTaskScheduler,
+} from '@/cloud-task.ts';
 import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
 import {
   connectProductCacheOnDatabase,
@@ -70,34 +74,35 @@ fastify.get('/health', {
   },
 });
 
-fastify.post('/', {
+fastify.post('/:source/product/detail', {
   // eslint-disable-next-line max-statements
   async handler(req, reply) {
     const requestId = req.id;
-    const logger = req.log;
-    const database = createDatabaseConnection();
     const { product, taskId } = req.body as {
       product: {
         productId: string;
         productUrl: string;
-        source: PRODUCT_SOURCE;
       };
       taskId: string;
     };
+    const { source } = req.params as { source: PRODUCT_SOURCE };
+    const { productId, productUrl } = product;
 
-    const { productId, productUrl, source } = product;
+    const logger = req.log.child({ taskId });
+    const database = createDatabaseConnection();
+
     const taskState = connectTaskStateOnDatabase(database, requestId, taskId);
     if (!(await taskState.shouldTaskRun())) {
       logger.error("Task already done or shouldn't retry");
       return reply.code(208).send('208 Already Reported');
     }
-    const lock = createLockHandlerOnDatabase(database, requestId, productId);
+    const lock = createLockHandlerOnDatabase(database, requestId, taskId);
     if (await lock.checkRequestLockExist()) {
       return reply.send(409).send('409 Conflict');
     }
     await lock.acquireLock();
     logger.info(
-      `Start process product detail of ${product.productId} on ${product.source}`,
+      `Start process product detail of ${product.productId} on ${source}`,
       {
         product: productId,
       },
@@ -112,7 +117,7 @@ fastify.post('/', {
 
     if (cachedProduct.ok) {
       logger.info(
-        `Complete process product detail of ${product.productId} on ${product.source}`,
+        `Complete process product detail of ${product.productId} on ${source}`,
         {
           product: cachedProduct.data,
         },
@@ -149,7 +154,11 @@ fastify.post('/', {
           ? await createAntiDetectionChromiumBrowser()
           : await createChromiumBrowser();
       const page = await createBrowserPage(browser)();
-      const fetchers = {
+      const fetchers: {
+        [key in PRODUCT_SOURCE]: {
+          createProductDetailsFetcher: typeof ocado.createProductDetailsFetcher;
+        };
+      } = {
         [PRODUCT_SOURCE.LILYS_KITCHEN]: lilysKitchen,
         [PRODUCT_SOURCE.OCADO]: ocado,
         [PRODUCT_SOURCE.PETS_AT_HOME]: petsAtHome,
@@ -194,7 +203,7 @@ fastify.post('/', {
       batchWrite.delete(lock.lock);
       await batchWrite.commit();
       logger.info(
-        `Complete process product detail of ${product.productId} on ${product.source}`,
+        `Complete process product detail of ${product.productId} on ${source}`,
         {
           product: productInfo.data,
         },
@@ -202,7 +211,7 @@ fastify.post('/', {
       return reply.code(204).send();
     } catch (e) {
       logger.error(
-        `Failed process product detail of ${product.productId} on ${product.source}`,
+        `Failed process product detail of ${product.productId} on ${source}`,
         {
           error: Object.assign(
             {
@@ -256,6 +265,139 @@ fastify.post('/', {
             },
             type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE,
           }),
+        );
+      }
+      batchWrite.delete(lock.lock);
+      await batchWrite.commit();
+      if (error.isHTTPError(e)) {
+        return reply.code(e.http.statusCode).send(e.http.message);
+      }
+      return reply.code(500).send('Internal Server Error');
+    }
+  },
+  schema: {
+    body: {
+      properties: {
+        product: {
+          properties: {
+            productId: { type: 'string' },
+            productUrl: { type: 'string' },
+          },
+          required: ['productId', 'productUrl'],
+          type: 'object',
+        },
+        taskId: { type: 'string' },
+      },
+      required: ['product', 'taskId'],
+      type: 'object',
+    },
+    headers: {
+      properties: {
+        'request-id': { type: 'string' },
+      },
+      required: ['request-id'],
+      type: 'object',
+    },
+    params: {
+      properties: {
+        source: { enum: Object.values(PRODUCT_SOURCE), type: 'string' },
+      },
+      required: ['source'],
+      type: 'object',
+    },
+  },
+});
+
+fastify.post('/', {
+  async handler(req, reply) {
+    const requestId = req.id;
+    const logger = req.log;
+    const host = req.headers.host;
+    if (!host) {
+      logger.error('Host header is missing');
+      reply.code(400).send('400 Bad Request');
+      return;
+    }
+    const database = createDatabaseConnection();
+    const { product, taskId } = req.body as {
+      product: {
+        productId: string;
+        productUrl: string;
+        source: PRODUCT_SOURCE;
+      };
+      taskId: string;
+    };
+
+    const { productId, productUrl, source } = product;
+    const taskState = connectTaskStateOnDatabase(database, requestId, taskId);
+
+    if (!(await taskState.shouldTaskRun())) {
+      logger.error("Task already done or shouldn't retry");
+      return reply.code(208).send('208 Already Reported');
+    }
+    const lock = createLockHandlerOnDatabase(database, requestId, taskId);
+    if (await lock.checkRequestLockExist()) {
+      return reply.send(409).send('409 Conflict');
+    }
+    await lock.acquireLock();
+    const productDetailSubTaskScheduler = createProductDetailSubTaskScheduler(
+      createCloudTaskClient(),
+      requestId,
+      host,
+    );
+
+    logger.info(
+      `Start re-routing product detail task of ${product.productId} on ${product.source}`,
+      {
+        product: productId,
+      },
+    );
+    try {
+      const { id: taskId } =
+        await productDetailSubTaskScheduler.scheduleProductSearchSubTask(
+          source,
+          {
+            productId,
+            productUrl,
+          },
+        );
+      logger.info(
+        `Complete re-routing product detail task of ${product.productId} on ${product.source}`,
+        { taskId },
+      );
+      const batchWrite = database.batch();
+      batchWrite.set(
+        taskState.taskState,
+        taskState.shapeOfTaskStateObject(TASK_STATE.DONE),
+      );
+      batchWrite.delete(lock.lock);
+      return reply.code(204).send();
+    } catch (e) {
+      logger.error(
+        `Failed re-routing product detail task of ${product.productId} on ${product.source}`,
+        {
+          error: Object.assign(
+            {
+              code: error.isNativeError(e) ? e['code'] : 'ERR_UNEXPECTED_ERROR',
+              message: error.isNativeError(e) ? e['message'] : 'Unknown error',
+            },
+            error.isNativeError(e) && e['code'] ? {} : { raw: e },
+          ),
+          payload: req.body,
+        },
+      );
+      const batchWrite = database.batch();
+      if (error.isHTTPError(e)) {
+        if (!e.http.retryAble) {
+          batchWrite.set(
+            taskState.taskState,
+            taskState.shapeOfTaskStateObject(TASK_STATE.ERROR),
+          );
+        }
+      } else {
+        batchWrite.set(
+          taskState.taskState,
+          taskState.shapeOfTaskStateObject(TASK_STATE.ERROR),
         );
       }
       batchWrite.delete(lock.lock);

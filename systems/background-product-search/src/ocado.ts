@@ -1,5 +1,6 @@
 import playwright from 'playwright';
 
+import type { Logger } from '@/logger.ts';
 import { PRODUCT_SOURCE } from '@/types.ts';
 
 export const baseUrl = 'https://www.ocado.com';
@@ -39,16 +40,23 @@ function loadMoreProducts(page: playwright.Page) {
   };
 }
 
-export function createProductsSearchHandler(page: playwright.Page) {
+export function createProductsSearchHandler(
+  page: playwright.Page,
+  options?: {
+    logger: Logger;
+  },
+) {
   return async function* searchProducts(keyword: string): AsyncGenerator<
     [
       string,
       {
         productUrl: string;
-        source: PRODUCT_SOURCE.OCADO;
+        source: PRODUCT_SOURCE;
       },
     ]
   > {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const logger = options?.logger;
     const searchUrl = new URL(`/search?entry=${keyword}`, baseUrl);
     searchUrl.searchParams.set('display', '1024');
     let loadMorePageAttempt = 0;

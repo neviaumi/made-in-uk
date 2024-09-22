@@ -1,6 +1,7 @@
 import convict from 'convict';
 
 import { Level } from '@/logger.types.ts';
+import { PRODUCT_SOURCE } from '@/types.ts';
 
 export enum AppEnvironment {
   DEV = 'development',
@@ -32,7 +33,73 @@ export function loadConfig(appEnv: AppEnvironment) {
   const shouldUseFirestoreEmulator =
     [AppEnvironment.TEST, AppEnvironment.DEV].includes(appEnv) &&
     process.env['FIRESTORE_EMULATOR_HOST'];
+  const shouldUseCloudTasksEmulator =
+    [AppEnvironment.TEST, AppEnvironment.DEV].includes(appEnv) &&
+    process.env['CLOUD_TASKS_EMULATOR_HOST'] !== undefined;
+
+  const taskQueueConfigs: {
+    [key in PRODUCT_SOURCE]: { queueName: convict.SchemaObj<string> };
+  } = {
+    [PRODUCT_SOURCE.SAINSBURY]: {
+      queueName: {
+        default: null,
+        env: 'BG_PRODUCT_DETAIL_SAINSBURY_PRODUCT_DETAIL_QUEUE',
+        format: String,
+      },
+    },
+    [PRODUCT_SOURCE.OCADO]: {
+      queueName: {
+        default: null,
+        env: 'BG_PRODUCT_DETAIL_OCADO_PRODUCT_DETAIL_QUEUE',
+        format: String,
+      },
+    },
+    [PRODUCT_SOURCE.ZOOPLUS]: {
+      queueName: {
+        default: null,
+        env: 'BG_PRODUCT_DETAIL_ZOOPLUS_PRODUCT_DETAIL_QUEUE',
+        format: String,
+      },
+    },
+    [PRODUCT_SOURCE.LILYS_KITCHEN]: {
+      queueName: {
+        default: null,
+        env: 'BG_PRODUCT_DETAIL_LILYS_KITCHEN_PRODUCT_DETAIL_QUEUE',
+        format: String,
+      },
+    },
+    [PRODUCT_SOURCE.PETS_AT_HOME]: {
+      queueName: {
+        default: null,
+        env: 'BG_PRODUCT_DETAIL_PETS_AT_HOME_PRODUCT_DETAIL_QUEUE',
+        format: String,
+      },
+    },
+    [PRODUCT_SOURCE.VET_SHOP]: {
+      queueName: {
+        default: null,
+        env: 'BG_PRODUCT_DETAIL_VET_SHOP_PRODUCT_DETAIL_QUEUE',
+        format: String,
+      },
+    },
+  };
   const configSchema = convict({
+    cloudTasks: Object.assign(
+      {
+        emulatorHost: {
+          default: shouldUseCloudTasksEmulator ? null : '',
+          env: shouldUseCloudTasksEmulator
+            ? 'CLOUD_TASKS_EMULATOR_HOST'
+            : 'UNUSED',
+          format: String,
+        },
+        useEmulator: {
+          default: shouldUseCloudTasksEmulator,
+          format: Boolean,
+        },
+      },
+      taskQueueConfigs,
+    ),
     database: {
       id: {
         default: shouldUseFirestoreEmulator ? 'unused' : null,
