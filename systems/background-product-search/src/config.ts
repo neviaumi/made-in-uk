@@ -1,6 +1,7 @@
 import convict from 'convict';
 
 import { Level } from '@/logger.types.ts';
+import { PRODUCT_SOURCE } from '@/types.ts';
 
 export enum AppEnvironment {
   DEV = 'development',
@@ -35,30 +36,46 @@ export function loadConfig(appEnv: AppEnvironment) {
   const shouldUseCloudTasksEmulator =
     [AppEnvironment.TEST, AppEnvironment.DEV].includes(appEnv) &&
     process.env['CLOUD_TASKS_EMULATOR_HOST'] !== undefined;
-  const configSchema = convict({
-    cloudTasks: {
-      emulatorHost: {
-        default: shouldUseCloudTasksEmulator ? null : '',
-        env: shouldUseCloudTasksEmulator
-          ? 'CLOUD_TASKS_EMULATOR_HOST'
-          : 'UNUSED',
-        format: String,
-      },
-      productDetailQueue: {
+  const taskQueueConfigs: {
+    [key in PRODUCT_SOURCE]: { queueName: convict.SchemaObj<string> };
+  } = {
+    [PRODUCT_SOURCE.SAINSBURY]: {
+      queueName: {
         default: null,
-        env: 'BG_PRODUCT_SEARCH_PRODUCT_DETAIL_QUEUE',
+        env: 'BG_PRODUCT_SEARCH_SAINSBURY_PRODUCT_SEARCH_QUEUE',
         format: String,
-      },
-      productSearchSubTaskQueue: {
-        default: null,
-        env: 'BG_PRODUCT_SEARCH_PRODUCT_SEARCH_SUBTASKS_QUEUE',
-        format: String,
-      },
-      useEmulator: {
-        default: shouldUseCloudTasksEmulator,
-        format: Boolean,
       },
     },
+    [PRODUCT_SOURCE.OCADO]: {
+      queueName: {
+        default: null,
+        env: 'BG_PRODUCT_SEARCH_OCADO_PRODUCT_SEARCH_QUEUE',
+        format: String,
+      },
+    },
+  };
+  const configSchema = convict({
+    cloudTasks: Object.assign(
+      {
+        emulatorHost: {
+          default: shouldUseCloudTasksEmulator ? null : '',
+          env: shouldUseCloudTasksEmulator
+            ? 'CLOUD_TASKS_EMULATOR_HOST'
+            : 'UNUSED',
+          format: String,
+        },
+        productDetailQueue: {
+          default: null,
+          env: 'BG_PRODUCT_SEARCH_PRODUCT_DETAIL_QUEUE',
+          format: String,
+        },
+        useEmulator: {
+          default: shouldUseCloudTasksEmulator,
+          format: Boolean,
+        },
+      },
+      taskQueueConfigs,
+    ),
     database: {
       id: {
         default: shouldUseFirestoreEmulator ? 'unused' : null,

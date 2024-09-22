@@ -107,12 +107,12 @@ export function connectProductCacheOnDatabase(
 export function createLockHandlerOnDatabase(
   database: Firestore,
   requestId: string,
-  productId: string,
+  taskId: string,
 ) {
   const collectionPath = `product-detail.request-lock`;
 
   function formatDocPath() {
-    return `${requestId}.${productId}`;
+    return taskId;
   }
   return {
     async acquireLock() {
@@ -123,6 +123,8 @@ export function createLockHandlerOnDatabase(
           acquiredAt: Timestamp.fromDate(new Date()),
           // lock will expire after 10 minutes
           expiresAt: Timestamp.fromDate(new Date(Date.now() + 1000 * 60 * 10)),
+
+          requestId: requestId,
         });
     },
     async checkRequestLockExist() {
@@ -134,6 +136,9 @@ export function createLockHandlerOnDatabase(
     },
     get lock() {
       return database.collection(collectionPath).doc(formatDocPath());
+    },
+    async releaseLock() {
+      return database.collection(collectionPath).doc(formatDocPath()).delete();
     },
   };
 }

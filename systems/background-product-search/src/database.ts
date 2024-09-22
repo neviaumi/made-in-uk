@@ -157,6 +157,7 @@ export function connectProductSearchCacheOnDatabase(
 export function connectLockHandlerOnDatabase(
   database: Firestore,
   requestId: string,
+  taskId: string,
 ) {
   const collectionPath = `product-search.request-lock`;
 
@@ -164,22 +165,21 @@ export function connectLockHandlerOnDatabase(
     async acquireLock() {
       return database
         .collection(collectionPath)
-        .doc(requestId)
+        .doc(taskId)
         .set({
           acquiredAt: Timestamp.now(),
           // lock will expire after 10 minutes
           expiresAt: Timestamp.fromDate(new Date(Date.now() + 1000 * 60 * 10)),
+
+          requestId,
         });
     },
     async checkRequestLockExist() {
-      const lock = await database
-        .collection(collectionPath)
-        .doc(requestId)
-        .get();
+      const lock = await database.collection(collectionPath).doc(taskId).get();
       return lock.exists;
     },
     get lock() {
-      return database.collection(collectionPath).doc(requestId);
+      return database.collection(collectionPath).doc(taskId);
     },
   };
 }

@@ -80,26 +80,32 @@ fastify.get('/health', async (_, reply) => {
   reply.code(200);
 });
 
-fastify.post(`/search`, {
+fastify.post(`/:source/product/search`, {
   // eslint-disable-next-line max-statements
   async handler(req, reply) {
     const requestId = req.id;
-    const logger = req.log;
     const payload = req.body as {
       parentRequestId: string;
       search: {
         keyword: string;
-        source: PRODUCT_SOURCE;
       };
       taskId: string;
     };
+    const { source } = req.params as { source: PRODUCT_SOURCE };
+    const logger = req.log.child({
+      taskId: payload.taskId,
+    });
     const database = createDatabaseConnection();
     const taskState = connectTaskStateOnDatabase(
       database,
       requestId,
       payload.taskId,
     );
-    const lock = connectLockHandlerOnDatabase(database, requestId);
+    const lock = connectLockHandlerOnDatabase(
+      database,
+      requestId,
+      payload.taskId,
+    );
     if (!(await taskState.shouldTaskRun())) {
       logger.error("Task already done or shouldn't retry");
       reply.code(208).send('208 Already Reported');
@@ -121,7 +127,7 @@ fastify.post(`/search`, {
     async function* createSearchGenerator() {
       const searchCache = connectProductSearchCacheOnDatabase(
         database,
-        search.source,
+        source,
         cacheKey,
       );
       const cachedSearchItems = await searchCache.getCachedSearchData();
@@ -129,7 +135,7 @@ fastify.post(`/search`, {
         yield* cachedSearchItems.data;
       } else {
         const tokenBucket = connectTokenBucketOnDatabase(database);
-        if (!(await tokenBucket.consume(search.source)).ok) {
+        if (!(await tokenBucket.consume(source)).ok) {
           throw error.withHTTPError(
             429,
             'Rate limit exceeded',
@@ -140,20 +146,25 @@ fastify.post(`/search`, {
           );
         }
         const browser =
-          search.source === PRODUCT_SOURCE.SAINSBURY
+          source === PRODUCT_SOURCE.SAINSBURY
             ? await createAntiDetectionChromiumBrowser()
             : await createChromiumBrowser();
 
         const page = await createBrowserPage(browser)();
-        const productModules = {
+        const productModules: {
+          [key in PRODUCT_SOURCE]: {
+            createProductsSearchHandler: typeof ocado.createProductsSearchHandler;
+          };
+        } = {
           [PRODUCT_SOURCE.OCADO]: ocado,
           [PRODUCT_SOURCE.SAINSBURY]: sainsbury,
         };
-        const generator = productModules[
-          search.source
-        ].createProductsSearchHandler(page, {
-          logger,
-        })(search.keyword);
+        const generator = productModules[source].createProductsSearchHandler(
+          page,
+          {
+            logger,
+          },
+        )(search.keyword);
         try {
           yield* generator;
         } finally {
@@ -192,7 +203,7 @@ fastify.post(`/search`, {
       if (!isCached && matchedProducts.length > 0) {
         const searchCache = connectProductSearchCacheOnDatabase(
           database,
-          search.source,
+          source,
           cacheKey,
         );
         dbBatch.set(
@@ -202,7 +213,7 @@ fastify.post(`/search`, {
       }
 
       dbBatch.set(
-        replyStream.getRepliesStreamDoc(search.source),
+        replyStream.getRepliesStreamDoc(source),
         replyStream.shapeOfReplyStreamItem({
           data: { total: numberOfProducts },
           type: SUBTASK_RELY_DATA_TYPE.SEARCH_PRODUCT,
@@ -214,14 +225,14 @@ fastify.post(`/search`, {
       );
       dbBatch.delete(lock.lock);
       await dbBatch.commit();
-      logger.info(`Product search of ${search.source} completed`, {
+      logger.info(`Product search of ${source} completed`, {
         keyword: payload.search.keyword,
         numberOfProducts,
-        source: search.source,
+        source: source,
       });
       reply.code(204).send('204 No Content');
     } catch (e) {
-      logger.error(`Product search of ${search.source} failed`, {
+      logger.error(`Product search of ${source} failed`, {
         error: Object.assign(
           {
             code: error.isNativeError(e) ? e.code : 'ERR_UNEXPECTED_ERROR',
@@ -234,7 +245,7 @@ fastify.post(`/search`, {
       const dbBatch = database.batch();
       if (!error.isHTTPError(e)) {
         dbBatch.set(
-          replyStream.getRepliesStreamDoc(search.source),
+          replyStream.getRepliesStreamDoc(source),
           replyStream.shapeOfReplyStreamItem({
             error: {
               code: error.isNativeError(e) ? e['code'] : 'ERR_UNEXPECTED_ERROR',
@@ -251,7 +262,7 @@ fastify.post(`/search`, {
         const dbBatch = database.batch();
         if (!e.http.retryAble) {
           dbBatch.set(
-            replyStream.getRepliesStreamDoc(search.source),
+            replyStream.getRepliesStreamDoc(source),
             replyStream.shapeOfReplyStreamItem({
               error: {
                 code: e['code'] ?? 'ERR_UNEXPECTED_ERROR',
@@ -306,8 +317,10 @@ fastify.post('/', {
   // eslint-disable-next-line max-statements
   async handler(req, reply) {
     const requestId = req.id;
-    const logger = req.log;
     const payload = req.body as { search: { keyword: string }; taskId: string };
+    const logger = req.log.child({
+      taskId: payload.taskId,
+    });
     const host = req.headers.host;
     if (!host) {
       logger.error('Host header is missing');
@@ -325,7 +338,11 @@ fastify.post('/', {
       reply.code(208).send('208 Already Reported');
       return;
     }
-    const lock = connectLockHandlerOnDatabase(database, requestId);
+    const lock = connectLockHandlerOnDatabase(
+      database,
+      requestId,
+      payload.taskId,
+    );
     if (await lock.checkRequestLockExist()) {
       logger.info('Request already processed');
       reply.code(409).send('409 Conflict');
@@ -349,22 +366,23 @@ fastify.post('/', {
       host!,
     );
     await subTaskReplyStream.init();
-    await subTaskScheduler.scheduleProductSearchSubTask({
+    await subTaskScheduler.scheduleProductSearchSubTask(PRODUCT_SOURCE.OCADO, {
       parentRequestId: requestId,
       requestId: subTaskRequestId,
       search: {
         keyword: payload.search.keyword,
-        source: PRODUCT_SOURCE.OCADO,
       },
     });
-    await subTaskScheduler.scheduleProductSearchSubTask({
-      parentRequestId: requestId,
-      requestId: subTaskRequestId,
-      search: {
-        keyword: payload.search.keyword,
-        source: PRODUCT_SOURCE.SAINSBURY,
+    await subTaskScheduler.scheduleProductSearchSubTask(
+      PRODUCT_SOURCE.SAINSBURY,
+      {
+        parentRequestId: requestId,
+        requestId: subTaskRequestId,
+        search: {
+          keyword: payload.search.keyword,
+        },
       },
-    });
+    );
     const streamItems = await Readable.from(
       subTaskReplyStream.subscribe({
         numberOfSubTasksCreated: 2,

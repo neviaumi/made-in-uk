@@ -39,7 +39,7 @@ export function createProductsSearchHandler(
       string,
       {
         productUrl: string;
-        source: PRODUCT_SOURCE.SAINSBURY;
+        source: PRODUCT_SOURCE;
       },
     ]
   > {
