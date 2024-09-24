@@ -74,7 +74,7 @@ export function createProductDetailSubTaskScheduler(
                 }
               : null,
             url: new URL(
-              '/:source/product/detail',
+              `/${source}/product/detail`,
               `${[AppEnvironment.DEV, AppEnvironment.TEST].includes(APP_ENV) ? 'http' : 'https'}://${host}`,
             ).toString(),
           },
