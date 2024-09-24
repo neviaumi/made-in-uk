@@ -72,7 +72,10 @@ const {
       ([source, { fullQualifiedQueueName }]) =>
         [source, fullQualifiedQueueName] as const,
     ),
-  ) as { [key in PRODUCT_SOURCE]: pulumi.Output<string> },
+  ) as Record<
+    PRODUCT_SOURCE.SAINSBURY | PRODUCT_SOURCE.OCADO,
+    pulumi.Output<string>
+  >,
 });
 const {
   name: apiServiceName,
@@ -127,4 +130,3 @@ onlyAllowServiceToServiceForInvokeAPI({
 
 export const WEB_HOST = webUrl;
 export const DOCKER_REGISTRY = dockerRepository;
-// export const LLM_STORAGE_BUCKET = llmStorageBucket;
