@@ -293,9 +293,8 @@ fastify.post(`/:source/product/search`, {
         search: {
           properties: {
             keyword: { type: 'string' },
-            source: { enum: Object.values(PRODUCT_SOURCE), type: 'string' },
           },
-          required: ['keyword', 'source'],
+          required: ['keyword'],
           type: 'object',
         },
         taskId: { type: 'string' },

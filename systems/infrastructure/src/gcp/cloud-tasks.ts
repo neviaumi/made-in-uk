@@ -31,8 +31,8 @@ export function createProductSearchTaskQueue(
     {
       location: getLocation(),
       rateLimits: {
-        maxConcurrentDispatches: 8,
-        maxDispatchesPerSecond: 4,
+        maxConcurrentDispatches: 2,
+        maxDispatchesPerSecond: 1,
       },
       retryConfig: {
         maxAttempts: 16,
@@ -70,8 +70,8 @@ export function createProductDetailTaskQueue(productSource: PRODUCT_SOURCE) {
     {
       location: getLocation(),
       rateLimits: {
-        maxConcurrentDispatches: 16,
-        maxDispatchesPerSecond: 8,
+        maxConcurrentDispatches: 4,
+        maxDispatchesPerSecond: 2,
       },
       retryConfig: {
         maxAttempts: 16,
