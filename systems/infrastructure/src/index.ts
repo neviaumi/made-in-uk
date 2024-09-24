@@ -1,3 +1,5 @@
+import pulumi from '@pulumi/pulumi';
+
 import { createDockerRepository } from './gcp/artifact-registry.ts';
 import {
   allowAPIToCallBackgroundProductSearch,
@@ -15,20 +17,28 @@ import {
   createProductSearchCronJob,
 } from './gcp/cloud-scheduler.ts';
 import {
+  createProductDetailMainTaskQueue,
   createProductDetailTaskQueue,
-  createProductSearchSubTaskQueue,
+  createProductSearchMainTaskQueue,
   createProductSearchTaskQueue,
 } from './gcp/cloud-tasks.ts';
 import { createFireStoreDB } from './gcp/fire-store.ts';
+import { PRODUCT_SOURCE } from './types.ts';
 
 const { name: databaseName } = createFireStoreDB();
 const { repositoryUrl: dockerRepository } = createDockerRepository();
-const { fullQualifiedQueueName: productSearchQueueName } =
-  createProductSearchTaskQueue();
-const { fullQualifiedQueueName: productDetailQueueName } =
-  createProductDetailTaskQueue();
-const { fullQualifiedQueueName: productSearchSubTasksQueueName } =
-  createProductSearchSubTaskQueue();
+const { fullQualifiedQueueName: productSearchMainQueueName } =
+  createProductSearchMainTaskQueue();
+const { fullQualifiedQueueName: productDetailMainQueueName } =
+  createProductDetailMainTaskQueue();
+const productSearchSubTaskQueues = (
+  [PRODUCT_SOURCE.SAINSBURY, PRODUCT_SOURCE.OCADO] as const
+).map(source => {
+  return [source, createProductSearchTaskQueue(source)] as const;
+});
+const productDetailSubTaskQueues = Object.values(PRODUCT_SOURCE).map(
+  source => [source, createProductDetailTaskQueue(source)] as const,
+);
 
 const { name: llmServiceName, url: llmUrl } = createCloudRunForLLM({
   databaseName: databaseName,
@@ -41,6 +51,12 @@ const {
 } = createCloudRunForBackgroundProductDetail({
   databaseName: databaseName,
   llmEndpoint: llmUrl,
+  subTaskQueues: Object.fromEntries(
+    productDetailSubTaskQueues.map(
+      ([source, { fullQualifiedQueueName }]) =>
+        [source, fullQualifiedQueueName] as const,
+    ),
+  ) as { [key in PRODUCT_SOURCE]: pulumi.Output<string> },
 });
 
 const {
@@ -50,8 +66,13 @@ const {
 } = createCloudRunForBackgroundProductSearch({
   databaseName: databaseName,
   productDetailEndpoint: backgroundProductDetailUrl,
-  productDetailTaskQueue: productDetailQueueName,
-  productSearchSubTaskQueue: productSearchSubTasksQueueName,
+  productDetailTaskQueue: productDetailMainQueueName,
+  subTaskQueues: Object.fromEntries(
+    productSearchSubTaskQueues.map(
+      ([source, { fullQualifiedQueueName }]) =>
+        [source, fullQualifiedQueueName] as const,
+    ),
+  ) as { [key in PRODUCT_SOURCE]: pulumi.Output<string> },
 });
 const {
   name: apiServiceName,
@@ -60,9 +81,9 @@ const {
 } = createCloudRunForApi({
   databaseName: databaseName,
   productDetailEndpoint: backgroundProductDetailUrl,
-  productDetailTaskQueue: productDetailQueueName,
+  productDetailTaskQueue: productDetailMainQueueName,
   productSearchEndpoint: backgroundProductSearchUrl,
-  productSearchTaskQueue: productSearchQueueName,
+  productSearchTaskQueue: productSearchMainQueueName,
 });
 
 createProductSearchCronJob({

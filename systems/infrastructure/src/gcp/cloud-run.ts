@@ -1,6 +1,7 @@
 import { cloudrun, cloudrunv2 } from '@pulumi/gcp';
 import pulumi, { type Output } from '@pulumi/pulumi';
 
+import { PRODUCT_SOURCE } from '../types.ts';
 import { getLocation } from '../utils/get-gcp-config.ts';
 import { resourceName } from '../utils/resourceName.ts';
 
@@ -159,12 +160,15 @@ export function createCloudRunForBackgroundProductSearch({
   databaseName,
   productDetailEndpoint,
   productDetailTaskQueue,
-  productSearchSubTaskQueue,
+  subTaskQueues,
 }: {
   databaseName: Output<string>;
   productDetailEndpoint: Output<string>;
   productDetailTaskQueue: Output<string>;
-  productSearchSubTaskQueue: Output<string>;
+  subTaskQueues: {
+    [PRODUCT_SOURCE.SAINSBURY]: Output<string>;
+    [PRODUCT_SOURCE.OCADO]: Output<string>;
+  };
 }) {
   const bgProductSearchImage = appConfig.get('bg-product-search-image');
   const cloudRunService = new cloudrunv2.Service(
@@ -199,8 +203,12 @@ export function createCloudRunForBackgroundProductSearch({
                   value: productDetailTaskQueue,
                 },
                 {
-                  name: 'BG_PRODUCT_SEARCH_PRODUCT_SEARCH_SUBTASKS_QUEUE',
-                  value: productSearchSubTaskQueue,
+                  name: 'BG_PRODUCT_SEARCH_SAINSBURY_PRODUCT_SEARCH_QUEUE',
+                  value: subTaskQueues[PRODUCT_SOURCE.SAINSBURY],
+                },
+                {
+                  name: 'BG_PRODUCT_SEARCH_OCADO_PRODUCT_SEARCH_QUEUE',
+                  value: subTaskQueues[PRODUCT_SOURCE.OCADO],
                 },
               ],
               image:
@@ -244,9 +252,11 @@ export function createCloudRunForBackgroundProductSearch({
 export function createCloudRunForBackgroundProductDetail({
   databaseName,
   llmEndpoint,
+  subTaskQueues,
 }: {
   databaseName: Output<string>;
   llmEndpoint: Output<string>;
+  subTaskQueues: { [key in PRODUCT_SOURCE]: Output<string> };
 }) {
   const bgProductDetailImage = appConfig.get('bg-product-detail-image');
   const cloudRunService = new cloudrunv2.Service(
@@ -274,6 +284,30 @@ export function createCloudRunForBackgroundProductDetail({
                 {
                   name: 'BG_PRODUCT_DETAIL_LLM_ENDPOINT',
                   value: llmEndpoint,
+                },
+                {
+                  name: 'BG_PRODUCT_DETAIL_SAINSBURY_PRODUCT_DETAIL_QUEUE',
+                  value: subTaskQueues[PRODUCT_SOURCE.SAINSBURY],
+                },
+                {
+                  name: 'BG_PRODUCT_DETAIL_OCADO_PRODUCT_DETAIL_QUEUE',
+                  value: subTaskQueues[PRODUCT_SOURCE.OCADO],
+                },
+                {
+                  name: 'BG_PRODUCT_DETAIL_VET_SHOP_PRODUCT_DETAIL_QUEUE',
+                  value: subTaskQueues[PRODUCT_SOURCE.VET_SHOP],
+                },
+                {
+                  name: 'BG_PRODUCT_DETAIL_ZOOPLUS_PRODUCT_DETAIL_QUEUE',
+                  value: subTaskQueues[PRODUCT_SOURCE.ZOOPLUS],
+                },
+                {
+                  name: 'BG_PRODUCT_DETAIL_LILYS_KITCHEN_PRODUCT_DETAIL_QUEUE',
+                  value: subTaskQueues[PRODUCT_SOURCE.LILYS_KITCHEN],
+                },
+                {
+                  name: 'BG_PRODUCT_DETAIL_PETS_AT_HOME_PRODUCT_DETAIL_QUEUE',
+                  value: subTaskQueues[PRODUCT_SOURCE.PETS_AT_HOME],
                 },
               ],
               image:
