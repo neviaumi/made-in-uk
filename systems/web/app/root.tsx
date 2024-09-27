@@ -1,5 +1,5 @@
 import { cssBundleHref } from '@remix-run/css-bundle';
-import type { LinksFunction } from '@remix-run/node';
+import type { LinksFunction, LoaderFunctionArgs } from '@remix-run/node';
 import {
   Links,
   LiveReload,
@@ -11,12 +11,36 @@ import {
 } from '@remix-run/react';
 import { cacheExchange, Client, fetchExchange, Provider } from 'urql';
 
+import { APP_ENV } from '@/config.server.ts';
+import { userSession } from '@/cookies.server.ts';
+import { createAPIFetchClient } from '@/fetch.server.ts';
+import { createLogger } from '@/logger.server.ts';
+
 import styles from './tailwind.css';
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ href: cssBundleHref, rel: 'stylesheet' }] : []),
   { href: styles, rel: 'stylesheet' },
 ];
+
+export async function loader({ request }: LoaderFunctionArgs) {
+  const logger = createLogger(APP_ENV);
+  const session = await userSession.parse(request.headers.get('Cookie'));
+  if (!session) {
+    const apiClient = createAPIFetchClient();
+    const { id: newSessionId } = await apiClient('/auth/session', {
+      method: 'POST',
+    }).then(resp => resp.json());
+    logger.info('Register session', { session: newSessionId });
+    return new Response(null, {
+      headers: {
+        'Set-Cookie': await userSession.serialize(newSessionId),
+      },
+    });
+  }
+  logger.info('Session already exist', { session });
+  return null;
+}
 
 export default function App() {
   const client = new Client({

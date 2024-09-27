@@ -32,11 +32,19 @@ function requireEnv(key: string) {
   return process.env[key]!;
 }
 
+function pickEnv(key: string) {
+  return process.env[key] || '';
+}
 export function loadConfig(appEnv: AppEnvironment) {
   return new Map([
     ['env', appEnv],
     ['log.level', Level.info],
-    ['api.endpoint', requireEnv('WEB_API_HOST')],
+    [
+      'api.endpoint',
+      ![AppEnvironment.TEST].includes(appEnv)
+        ? requireEnv('WEB_API_HOST')
+        : pickEnv('WEB_API_HOST'),
+    ],
   ]);
 }
 

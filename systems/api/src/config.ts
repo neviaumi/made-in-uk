@@ -95,9 +95,11 @@ export function loadConfig(appEnv: AppEnvironment) {
       },
     },
   });
-  configSchema.validate({
-    allowed: 'strict',
-  });
+  if (![AppEnvironment.TEST].includes(appEnv)) {
+    configSchema.validate({
+      allowed: 'strict',
+    });
+  }
   return configSchema;
 }
 

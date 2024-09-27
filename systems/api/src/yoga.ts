@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { useDeferStream } from '@graphql-yoga/plugin-defer-stream';
 import { createSchema, createYoga, useReadinessCheck } from 'graphql-yoga';
 
+import { useAuth } from '@/auth.ts';
 import { APP_ENV, loadConfig } from '@/config.ts';
 import {
   dealMonitorItemDefer,
@@ -172,6 +173,7 @@ export const yoga = createYoga<GraphqlContext>({
         return true;
       },
     }),
+    useAuth(),
   ],
   schema: createSchema<GraphqlContext>(schema),
 });
