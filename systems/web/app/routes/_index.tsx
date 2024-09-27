@@ -1,6 +1,11 @@
 import { Button, Field, Input } from '@headlessui/react';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
-import { json, type MetaFunction } from '@remix-run/node';
+import {
+  json,
+  type LoaderFunctionArgs,
+  type MetaFunction,
+} from '@remix-run/node';
+import { useLoaderData } from '@remix-run/react';
 import type React from 'react';
 import { useCallback, useRef, useState } from 'react';
 import { gql, useQuery } from 'urql';
@@ -8,6 +13,7 @@ import { gql, useQuery } from 'urql';
 import { Page } from '@/components/Layout.tsx';
 import { Loader } from '@/components/Loader.tsx';
 import { APP_ENV, loadConfig } from '@/config.server.ts';
+import { userSession } from '@/cookies.server.ts';
 import {
   type AsyncProductSuccess,
   sortByCountryOfOrigin,
@@ -43,16 +49,20 @@ const SearchProductsQuery = gql`
   }
 `;
 
-export async function loader() {
+export async function loader({ request }: LoaderFunctionArgs) {
   const config = loadConfig(APP_ENV);
+  const session = await userSession.parse(request.headers.get('Cookie'));
+
   return json({
     ENV: {
       WEB_ENV: config.get('env'),
     },
+    session,
   });
 }
 
 export default function Index() {
+  const { session } = useLoaderData<{ session: string }>();
   const searchForm = useRef<HTMLFormElement>(null);
   const [matchingFilters, setMatchingFilters] = useState<{
     keyword: string;
@@ -85,6 +95,10 @@ export default function Index() {
           'tw-sticky tw-top-0 tw-z-10 tw-border-b tw-border-solid tw-border-b-primary tw-bg-white tw-pb-2'
         }
       >
+        <h2>
+          <span>Session Id</span>
+          <p>{session}</p>
+        </h2>
         <form
           className={
             'tw-mx-auto tw-flex tw-h-5.5 tw-w-35 tw-items-center tw-gap-1'
