@@ -22,6 +22,7 @@ import {
   createProductSearchMainTaskQueue,
   createProductSearchTaskQueue,
 } from './gcp/cloud-tasks.ts';
+import { createFireBaseProject } from './gcp/fire-base.ts';
 import { createFireStoreDB } from './gcp/fire-store.ts';
 import { PRODUCT_SOURCE } from './types.ts';
 
@@ -39,6 +40,7 @@ const productSearchSubTaskQueues = (
 const productDetailSubTaskQueues = Object.values(PRODUCT_SOURCE).map(
   source => [source, createProductDetailTaskQueue(source)] as const,
 );
+createFireBaseProject();
 
 const { name: llmServiceName, url: llmUrl } = createCloudRunForLLM({
   databaseName: databaseName,
