@@ -28,7 +28,8 @@ services:
       - API_PRODUCT_SEARCH_QUEUE=projects/made-in-uk/locations/localhost/queues/emulator
       - API_PRODUCT_DETAIL_ENDPOINT=http://bg-product-detail:3000
       - API_PRODUCT_DETAIL_QUEUE=projects/made-in-uk/locations/localhost/queues/emulator
-      - FIRESTORE_EMULATOR_HOST=firestore:8080
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase:9099
+      - FIRESTORE_EMULATOR_HOST=firebase:8080
       - CLOUD_TASKS_EMULATOR_HOST=cloud-tasks:8080
       - GCLOUD_PROJECT=made-in-uk
     ports:
@@ -56,7 +57,7 @@ services:
       - BG_PRODUCT_DETAIL_DATABASE_ID=made-in-uk
       - BG_PRODUCT_DETAIL_ENV=development
       - BG_PRODUCT_DETAIL_PORT=3000
-      - FIRESTORE_EMULATOR_HOST=firestore:8080
+      - FIRESTORE_EMULATOR_HOST=firebase:8080
       - GCLOUD_PROJECT=made-in-uk
       - BG_PRODUCT_DETAIL_LLM_ENDPOINT=http://llm:3000
       - CLOUD_TASKS_EMULATOR_HOST=cloud-tasks:8080
@@ -91,7 +92,7 @@ services:
       - BG_PRODUCT_SEARCH_ENV=development
       - BG_PRODUCT_SEARCH_PORT=3000
       - BG_PRODUCT_SEARCH_PRODUCT_DETAIL_ENDPOINT=http://bg-product-detail:3000
-      - FIRESTORE_EMULATOR_HOST=firestore:8080
+      - FIRESTORE_EMULATOR_HOST=firebase:8080
       - CLOUD_TASKS_EMULATOR_HOST=cloud-tasks:8080
       - GCLOUD_PROJECT=made-in-uk
       - BG_PRODUCT_SEARCH_SAINSBURY_PRODUCT_SEARCH_QUEUE=projects/made-in-uk/locations/localhost/queues/emulator
@@ -106,11 +107,6 @@ services:
     entrypoint: /bin/bash
     ports:
       - '4000:4000'
-      - '9099:9099'
-      - '8080:8080'
-      - '4400:4400'
-      - '4500:4500'
-      - '9150:9150'
   llm:
     build:
       context: systems/llm
