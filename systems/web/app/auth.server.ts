@@ -88,10 +88,12 @@ export async function extendLoginSession({
     {
       body: (() => {
         const form = new FormData();
-        form.append('session_cookie', currentToken);
         form.append('grant_types', 'session_cookie');
         return form;
       })(),
+      headers: {
+        Authorization: `Bearer ${currentToken}`,
+      },
       method: 'POST',
     },
   )
