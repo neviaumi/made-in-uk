@@ -40,6 +40,12 @@ export function loadConfig(appEnv: AppEnvironment) {
     ['env', appEnv],
     ['log.level', Level.info],
     [
+      'firebase.auth.emulatorHost',
+      [AppEnvironment.TEST, AppEnvironment.DEV].includes(appEnv)
+        ? requireEnv('FIREBASE_AUTH_EMULATOR_HOST')
+        : pickEnv('FIREBASE_AUTH_EMULATOR_HOST'),
+    ],
+    [
       'api.endpoint',
       ![AppEnvironment.TEST].includes(appEnv)
         ? requireEnv('WEB_API_HOST')

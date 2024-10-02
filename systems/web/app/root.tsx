@@ -1,5 +1,10 @@
 import { cssBundleHref } from '@remix-run/css-bundle';
-import type { LinksFunction, LoaderFunctionArgs } from '@remix-run/node';
+import {
+  type ActionFunctionArgs,
+  json,
+  type LinksFunction,
+  type LoaderFunctionArgs,
+} from '@remix-run/node';
 import {
   Links,
   LiveReload,
@@ -8,13 +13,14 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from '@remix-run/react';
 import { cacheExchange, Client, fetchExchange, Provider } from 'urql';
 
-import { APP_ENV } from '@/config.server.ts';
-import { userSession } from '@/cookies.server.ts';
-import { createAPIFetchClient } from '@/fetch.server.ts';
-import { createLogger } from '@/logger.server.ts';
+import { useAuth } from '@/auth.client.ts';
+import { initialLoginSession, verifyLoginSession } from '@/auth.server.ts';
+import { APP_ENV, type AppEnvironment, loadConfig } from '@/config.server.ts';
+import { commitSession, getSession } from '@/sessions.server.ts';
 
 import styles from './tailwind.css';
 
@@ -24,28 +30,56 @@ export const links: LinksFunction = () => [
 ];
 
 export async function loader({ request }: LoaderFunctionArgs) {
-  const logger = createLogger(APP_ENV);
-  const session = await userSession.parse(request.headers.get('Cookie'));
-  if (!session) {
-    const apiClient = createAPIFetchClient();
-    const { id: newSessionId } = await apiClient('/auth/session', {
-      method: 'POST',
-    }).then(resp => resp.json());
-    logger.info('Register session', { session: newSessionId });
-    return new Response(null, {
-      headers: {
-        'Set-Cookie': await userSession.serialize(newSessionId),
-      },
+  const config = loadConfig(APP_ENV);
+  const { isSignedIn } = await verifyLoginSession({ request })
+    .then(() => {
+      return { isSignedIn: true };
+    })
+    .catch(() => {
+      return { isSignedIn: false };
     });
-  }
-  logger.info('Session already exist', { session });
-  return null;
+  return json({
+    ENV: {
+      FIREBASE_AUTH_EMULATOR_HOST: config.get('firebase.auth.emulatorHost'),
+      WEB_ENV: APP_ENV,
+    },
+    isSignedIn,
+  });
+}
+
+export async function action({ request }: ActionFunctionArgs) {
+  const session = await getSession(request.headers.get('Cookie'));
+  const { expiresIn, sessionCookie } = await initialLoginSession({ request });
+  session.set('sessionCookie', sessionCookie);
+  session.set('expiresTime', Date.now() + 1000 * expiresIn);
+  return json(
+    { sessionCookie },
+    {
+      headers: {
+        'Set-Cookie': await commitSession(session, {
+          maxAge: expiresIn,
+        }),
+      },
+    },
+  );
 }
 
 export default function App() {
   const client = new Client({
     exchanges: [cacheExchange, fetchExchange],
     url: '/graphql',
+  });
+  const {
+    ENV: { FIREBASE_AUTH_EMULATOR_HOST, WEB_ENV },
+    isSignedIn,
+  } = useLoaderData<{
+    ENV: { FIREBASE_AUTH_EMULATOR_HOST: string; WEB_ENV: AppEnvironment };
+    isSignedIn: boolean;
+  }>();
+  useAuth({
+    env: WEB_ENV,
+    firebaseAuthEmulatorHost: FIREBASE_AUTH_EMULATOR_HOST,
+    isSignedIn,
   });
   return (
     <html lang="en">
