@@ -1,0 +1,35 @@
+FROM openjdk:24-slim
+
+RUN apt-get update && apt-get install -y curl sudo
+RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+RUN curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
+RUN <<EOF
+#!/bin/bash
+source ~/.bashrc
+nvm install --lts
+nvm use --lts
+npm install -g firebase-tools
+EOF
+RUN cat <<EOF > ./firebase.json
+{
+  "emulators": {
+    "auth": {
+      "host": "0.0.0.0"
+    },
+    "firestore": {
+      "host":"0.0.0.0"
+    },
+    "ui": {
+      "host": "0.0.0.0"
+    }
+  }
+}
+EOF
+RUN mkdir -p ./scripts/docker
+RUN cat <<EOF > ./scripts/docker/start.sh
+#!/bin/bash
+source ~/.bashrc
+cat ./firebase.json
+nvm use --lts
+firebase emulators:start --project made-in-uk
+EOF

@@ -21,7 +21,7 @@ services:
           target: /app/src
     entrypoint: /bin/sh
     environment:
-      - API_DATABASE_ID=made-in-uk-demo
+      - API_DATABASE_ID=made-in-uk
       - API_ENV=development
       - API_PORT=3000
       - API_PRODUCT_SEARCH_ENDPOINT=http://bg-product-search:3000
@@ -53,7 +53,7 @@ services:
           target: /app/src
     entrypoint: /bin/sh
     environment:
-      - BG_PRODUCT_DETAIL_DATABASE_ID=made-in-uk-demo
+      - BG_PRODUCT_DETAIL_DATABASE_ID=made-in-uk
       - BG_PRODUCT_DETAIL_ENV=development
       - BG_PRODUCT_DETAIL_PORT=3000
       - FIRESTORE_EMULATOR_HOST=firestore:8080
@@ -87,7 +87,7 @@ services:
     entrypoint: /bin/sh
     environment:
       - BG_PRODUCT_SEARCH_PRODUCT_DETAIL_QUEUE=projects/made-in-uk/locations/localhost/queues/emulator
-      - BG_PRODUCT_SEARCH_DATABASE_ID=made-in-uk-demo
+      - BG_PRODUCT_SEARCH_DATABASE_ID=made-in-uk
       - BG_PRODUCT_SEARCH_ENV=development
       - BG_PRODUCT_SEARCH_PORT=3000
       - BG_PRODUCT_SEARCH_PRODUCT_DETAIL_ENDPOINT=http://bg-product-detail:3000
@@ -99,9 +99,18 @@ services:
   cloud-tasks:
     command: -host 0.0.0.0 -port 8080 -queue "projects/made-in-uk/locations/localhost/queues/emulator"
     image: ghcr.io/aertje/cloud-tasks-emulator:latest
-  firestore:
-    command: gcloud emulators firestore start --host-port=0.0.0.0:8080
-    image: 'gcr.io/google.com/cloudsdktool/cloud-sdk:emulators'
+  firebase:
+    build:
+      dockerfile: Dockerfile.firebase
+    command: ./scripts/docker/start.sh
+    entrypoint: /bin/bash
+    ports:
+      - '4000:4000'
+      - '9099:9099'
+      - '8080:8080'
+      - '4400:4400'
+      - '4500:4500'
+      - '9150:9150'
   llm:
     build:
       context: systems/llm
@@ -115,6 +124,7 @@ services:
           target: /app/src
     entrypoint: /bin/sh
     environment:
+      - LLM_DATABASE_ID=made-in-uk
       - LLM_PORT=3000
       - LLM_ENV=development
       - FIRESTORE_EMULATOR_HOST=firestore:8080

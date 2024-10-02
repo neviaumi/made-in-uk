@@ -28,9 +28,6 @@ if (
 }
 
 export function loadConfig(appEnv: AppEnvironment) {
-  const shouldUseFirestoreEmulator =
-    [AppEnvironment.TEST, AppEnvironment.DEV].includes(appEnv) &&
-    process.env['FIRESTORE_EMULATOR_HOST'] !== undefined;
   const shouldUseCloudTasksEmulator =
     [AppEnvironment.TEST, AppEnvironment.DEV].includes(appEnv) &&
     process.env['CLOUD_TASKS_EMULATOR_HOST'] !== undefined;
@@ -60,8 +57,8 @@ export function loadConfig(appEnv: AppEnvironment) {
     },
     database: {
       id: {
-        default: shouldUseFirestoreEmulator ? 'unused' : null,
-        env: shouldUseFirestoreEmulator ? 'UNUSED' : 'API_DATABASE_ID',
+        default: null,
+        env: 'API_DATABASE_ID',
         format: String,
       },
     },

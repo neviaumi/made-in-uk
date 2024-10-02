@@ -46,7 +46,7 @@ export function databaseHealthCheck(database: Firestore) {
 
 export function createDatabaseConnection(settings?: Settings) {
   const storeConfig = {
-    databaseId: config.get('database.id'),
+    databaseId: config.get('database.id')!,
     ...settings,
   };
   return new Firestore(storeConfig);

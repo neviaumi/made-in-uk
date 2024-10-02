@@ -8,8 +8,7 @@ if APP_ENV is None or not APP_ENV in ['development', 'production', 'test']:
         Invalid LLM_ENV value: {APP_ENV}
         possible values: {"/ ".join(['development', 'production', 'test'])}
     """)
-HAS_EMULATOR_SET = os.getenv('FIRESTORE_EMULATOR_HOST') is not None
-DATABASE_ID = os.getenv('LLM_DATABASE_ID',"Unused" if HAS_EMULATOR_SET and APP_ENV in ['development', 'test'] else None)
+DATABASE_ID = os.getenv('LLM_DATABASE_ID')
 if DATABASE_ID is None:
     raise ValueError("""
         LLM_DATABASE_ID must be set if not using emulator
