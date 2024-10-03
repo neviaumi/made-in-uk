@@ -12,7 +12,7 @@ services:
         condition: service_healthy
       cloud-tasks:
         condition: service_started
-      firestore:
+      firebase:
         condition: service_started
     develop:
       watch:
@@ -43,7 +43,7 @@ services:
     depends_on:
       cloud-tasks:
         condition: service_started
-      firestore:
+      firebase:
         condition: service_started
       llm:
         condition: service_started
@@ -78,7 +78,7 @@ services:
         condition: service_healthy
       cloud-tasks:
         condition: service_started
-      firestore:
+      firebase:
         condition: service_started
     develop:
       watch:
@@ -107,6 +107,7 @@ services:
     entrypoint: /bin/bash
     ports:
       - '4000:4000'
+      - '9099:9099'
   llm:
     build:
       context: systems/llm
@@ -123,7 +124,7 @@ services:
       - LLM_DATABASE_ID=made-in-uk
       - LLM_PORT=3000
       - LLM_ENV=development
-      - FIRESTORE_EMULATOR_HOST=firestore:8080
+      - FIRESTORE_EMULATOR_HOST=firebase:8080
   web:
     build:
       context: ./systems/web
@@ -153,6 +154,7 @@ services:
       - WEB_PORT=5333
       - WEB_API_HOST=http://api:3000
       - WEB_ENV=development
+      - FIREBASE_AUTH_EMULATOR_HOST=http://localhost:9099
     ports:
       - 5333:5333
       - 3001:3001
