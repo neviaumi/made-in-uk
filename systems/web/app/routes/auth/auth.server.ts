@@ -13,7 +13,7 @@ export async function initialLoginSession({
   request: Request;
 }): Promise<LoginSession> {
   const session = await getSession(request.headers.get('Cookie'));
-  if (!session.has('sessionCookie') || !session.has('expiresTime')) {
+  if (!session.get('sessionCookie') || !session.get('expiresTime')) {
     const fetchClient = createAPIFetchClient();
     const idToken = (await request.formData()).get('id_token')!;
     const { expires_in: expiresIn, session_cookie: token } = await fetchClient(
@@ -27,9 +27,10 @@ export async function initialLoginSession({
         })(),
         method: 'POST',
       },
-    )
-      .then(resp => resp.json())
-      .catch(e => withErrorCode('ERR_UNAUTHENTICATED')(e));
+    ).then(resp => {
+      if (resp.ok) return resp.json();
+      throw withErrorCode('ERR_UNAUTHENTICATED')(new Error(resp.statusText));
+    });
     return {
       expiresIn,
       sessionCookie: token,

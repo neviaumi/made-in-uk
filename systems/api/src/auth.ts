@@ -2,18 +2,24 @@ import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import type { Plugin } from 'graphql-yoga';
 
-const SESSION_EXPIRATION = 60 * 60 * 24 * 365 * 1000; // 1 year
+import { APP_ENV } from '@/config.ts';
+import { createLogger } from '@/logger.ts';
+
+const logger = createLogger(APP_ENV);
+const SESSION_EXPIRATION = 60 * 60 * 24 * 7 * 1000; // 2 weeks
 
 function createAccessGrant(grantTypes: 'id_token' | 'session_cookie') {
-  const firebaseApp = initializeApp();
+  const firebaseApp = initializeApp({});
   const auth = getAuth(firebaseApp);
-  const grants = {
-    idTokenGrant: async (request: Request): Promise<Response> => {
-      const formData = await request.formData();
+  const grants: Record<
+    'idTokenGrant' | 'sessionCookieGrant',
+    (request: Request, bodyForm: FormData) => Promise<Response>
+  > = {
+    idTokenGrant: async (_: Request, formData: FormData): Promise<Response> => {
       const idToken = String(formData.get('id_token'));
-      const { sub: userId } = await auth.verifyIdToken(idToken, true);
-      const customToken = await auth.createCustomToken(userId);
-      const sessionCookies = await auth.createSessionCookie(customToken, {
+      const { firebase, sub: userId } = await auth.verifyIdToken(idToken, true);
+      logger.info("Decoded user's ID token", { firebase, userId });
+      const sessionCookies = await auth.createSessionCookie(idToken, {
         expiresIn: SESSION_EXPIRATION,
       });
       return new Response(
@@ -41,13 +47,11 @@ function createAccessGrant(grantTypes: 'id_token' | 'session_cookie') {
         true,
       );
       const customToken = await auth.createCustomToken(userId);
-      const sessionCookies = await auth.createSessionCookie(customToken, {
-        expiresIn: SESSION_EXPIRATION,
-      });
+
       return new Response(
         JSON.stringify({
-          expires_in: SESSION_EXPIRATION / 1000,
-          session_cookie: sessionCookies,
+          custom_token: customToken,
+          expires_in: 3600,
         }),
         {
           headers: {
@@ -72,13 +76,22 @@ function createAccessGrant(grantTypes: 'id_token' | 'session_cookie') {
 export function useAuth(): Plugin {
   return {
     async onRequest({ endResponse, request }) {
+      logger.info("Auth plugin's onRequest hook has been called");
       const requestUrl = new URL(request.url);
       if (requestUrl.pathname === '/auth/token' && request.method === 'POST') {
         const formData = await request.formData();
         const grantTypes = String(formData.get('grant_types')) as Parameters<
           typeof createAccessGrant
         >[0];
-        return endResponse(await createAccessGrant(grantTypes)(request));
+        logger.info('/auth/token has been called with grant type', {
+          grantTypes,
+        });
+        return endResponse(
+          await createAccessGrant(grantTypes)(request, formData).catch(e => {
+            logger.error(e.message, { error: e });
+            return new Response(null, { status: 500 });
+          }),
+        );
       }
     },
   };

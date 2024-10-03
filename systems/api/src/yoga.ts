@@ -146,6 +146,7 @@ export const yoga = createYoga<GraphqlContext>({
       requestId,
     };
   },
+  logging: logger,
   plugins: [
     useDeferStream(),
     useReadinessCheck({

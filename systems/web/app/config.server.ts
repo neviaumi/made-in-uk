@@ -1,10 +1,6 @@
 import { Level } from '@/logger.types.ts';
+import { AppEnvironment } from '@/types.ts';
 
-export enum AppEnvironment {
-  DEV = 'development',
-  PRD = 'production',
-  TEST = 'test',
-}
 export const APP_ENV: AppEnvironment = process.env[
   'WEB_ENV'
 ]! as AppEnvironment;
