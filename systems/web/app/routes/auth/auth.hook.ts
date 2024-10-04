@@ -101,6 +101,10 @@ export function useAuth() {
           'request-id': requestId,
         },
         method: 'POST',
+      }).then(resp => {
+        if (resp.ok) {
+          fetcher.load(authPath.pathname);
+        }
       }),
     [fetcher.submit, authPath.pathname],
   );
@@ -127,15 +131,25 @@ export function useAuth() {
         ),
       });
       if (shouldExtendSession && isSignedIn) {
-        handleExtendCurrentSession(authSDK, requestId).then(formData =>
+        await handleExtendCurrentSession(authSDK, requestId).then(formData =>
           submitToAuthAction(requestId, formData),
         );
         return;
       }
       if (isSignedIn) return;
-      handleSignIn(authSDK).then(formData =>
+      await handleSignIn(authSDK).then(formData =>
         submitToAuthAction(requestId, formData),
       );
     })();
   }, [authPath.pathname, fetcher.data]);
+  const fetcherData = fetcher.data as AuthLoaderResponse;
+  return [
+    {
+      isSignedIn: fetcherData?.isSignedIn,
+      shouldExtendSession: fetcherData?.shouldExtendSession,
+    },
+    {
+      isLoading: fetcher.state === 'loading',
+    },
+  ] as const;
 }

@@ -19,6 +19,10 @@ services:
         - action: sync+restart
           path: systems/api/src
           target: /app/src
+        - action: rebuild
+          path: systems/api/package.json
+        - action: rebuild
+          path: systems/api/package-lock.json
     entrypoint: /bin/sh
     environment:
       - API_DATABASE_ID=made-in-uk
@@ -108,6 +112,7 @@ services:
     ports:
       - '4000:4000'
       - '9099:9099'
+      - '8080:8080'
   llm:
     build:
       context: systems/llm

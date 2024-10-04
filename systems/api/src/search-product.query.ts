@@ -1,15 +1,17 @@
 import { Readable } from 'node:stream';
 
 import { Repeater } from 'graphql-yoga';
+import pLimit from 'p-limit';
 
 import {
   createCloudTaskClient,
   createProductSearchScheduler,
 } from '@/cloud-task.ts';
 import {
-  closeReplyStream,
   connectToReplyStreamOnDatabase,
   createDatabaseConnection,
+  getRequestStream,
+  listUserRequest,
 } from '@/database.ts';
 import type { GraphqlContext, ResolverFunction } from '@/types.ts';
 
@@ -23,7 +25,8 @@ export const searchProductStream: ResolverFunction<
   { argument: SearchProductQueryArgument; requestId: string }
 > = async (parent, _, context) => {
   const logger = context.logger;
-  const requestId = parent.requestId;
+  const requestId = context.requestId;
+  const userId = context.userId;
   const search = parent.argument.input.keyword;
   logger.info(`Started stream product search that match ${search} ...`, {
     argument: parent.argument,
@@ -31,7 +34,11 @@ export const searchProductStream: ResolverFunction<
   const database = createDatabaseConnection();
   const cloudTask = createCloudTaskClient();
   const replyStream = connectToReplyStreamOnDatabase(database, requestId);
-  await replyStream.init();
+  await replyStream.init({
+    input: parent.argument.input,
+    operationName: context.operationName,
+    userId,
+  });
   await createProductSearchScheduler(cloudTask)({
     requestId: requestId,
     search: {
@@ -40,11 +47,6 @@ export const searchProductStream: ResolverFunction<
   });
 
   return new Repeater(async (push, stop) => {
-    stop.then(() => {
-      return closeReplyStream(database, {
-        logger: logger,
-      })(requestId);
-    });
     let totalExpectedDocs = 0;
     let documentReceived = 0;
     const productStream = replyStream.listenToReplyStreamData();
@@ -64,10 +66,9 @@ export const searchProductStream: ResolverFunction<
           productStream.end();
           return;
         }
-        if (item.type === 'FETCH_PRODUCT_DETAIL_FAILURE') {
-          return;
+        if (item.type === 'FETCH_PRODUCT_DETAIL') {
+          push(item);
         }
-        push(item);
         documentReceived += 1;
         if (totalExpectedDocs !== 0 && documentReceived >= totalExpectedDocs) {
           logger.info('Completed to stream product search result', {
@@ -96,5 +97,28 @@ export const searchProductQuery: ResolverFunction<
   return {
     argument: args,
     requestId: requestId,
+  };
+};
+
+export const productSearchHistoriesQuery: ResolverFunction = async (
+  _,
+  __,
+  context,
+) => {
+  const userId = context.userId;
+  const database = createDatabaseConnection();
+  const requests = await listUserRequest(database, userId, 'searchProducts');
+  const limit = pLimit(16);
+  return {
+    requestId: context.requestId,
+    searchHistories: await Promise.all(
+      requests.map(requestId =>
+        limit(async () =>
+          Object.assign(await getRequestStream(database, requestId), {
+            id: requestId,
+          }),
+        ),
+      ),
+    ),
   };
 };

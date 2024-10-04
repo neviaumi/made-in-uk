@@ -11,8 +11,6 @@ import {
 } from '@remix-run/react';
 import { cacheExchange, Client, fetchExchange, Provider } from 'urql';
 
-import { useAuth } from '@/routes/auth/auth.hook.ts';
-
 import styles from './tailwind.css';
 
 export const links: LinksFunction = () => [
@@ -26,7 +24,6 @@ export default function App() {
     url: '/graphql',
   });
 
-  useAuth();
   return (
     <html lang="en">
       <head>
