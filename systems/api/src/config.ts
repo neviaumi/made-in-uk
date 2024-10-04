@@ -71,6 +71,11 @@ export function loadConfig(appEnv: AppEnvironment) {
         env: 'API_LOG_LEVEL',
         format: Object.values(Level),
       },
+      silent: {
+        default: APP_ENV === AppEnvironment.TEST,
+        env: 'API_LOG_SILENT',
+        format: Boolean,
+      },
     },
     port: {
       default: 5333,

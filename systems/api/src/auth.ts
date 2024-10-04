@@ -1,8 +1,9 @@
 import { initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
-import type { Plugin } from 'graphql-yoga';
+import { createGraphQLError, type Plugin } from 'graphql-yoga';
 
 import { APP_ENV } from '@/config.ts';
+import { withErrorCode } from '@/error.ts';
 import { createLogger, type Logger } from '@/logger.ts';
 
 const SESSION_EXPIRATION = 60 * 60 * 24 * 7 * 1000; // 2 weeks
@@ -76,8 +77,33 @@ function createAccessGrant(
   }
 }
 
-export function useAuth(): Plugin {
+export function useAuth(): Plugin<{ userId: string }> {
   return {
+    async onContextBuilding({ breakContextBuilding, context, extendContext }) {
+      const request = context.request;
+      const givenSessionCookies = request.headers.get('SessionCookie');
+
+      if (!givenSessionCookies) {
+        breakContextBuilding();
+        throw withErrorCode('ERR_UNAUTHENTICATED')(
+          createGraphQLError('Missing header'),
+        );
+      }
+      const auth = getAuth(firebaseApp);
+      const { sub: userId } = await auth
+        .verifySessionCookie(givenSessionCookies)
+        .catch(e => {
+          throw withErrorCode('ERR_UNAUTHENTICATED')(
+            createGraphQLError("Can't verify session cookie", {
+              originalError: e,
+            }),
+          );
+        });
+      extendContext({ userId });
+      // Return the after stage handling
+      return;
+    },
+
     async onRequest({ endResponse, request }) {
       const requestUrl = new URL(request.url);
       if (requestUrl.pathname === '/auth/token' && request.method === 'POST') {

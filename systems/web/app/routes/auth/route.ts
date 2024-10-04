@@ -3,12 +3,15 @@ import {
   json,
   type LoaderFunctionArgs,
 } from '@remix-run/node';
+import { useNavigate } from '@remix-run/react';
+import { useEffect } from 'react';
 
 import { APP_ENV, loadConfig } from '@/config.server.ts';
 import { withErrorCode } from '@/error.server.ts';
 import { createAPIFetchClient } from '@/fetch.server.ts';
 import type { Logger } from '@/logger.server.ts';
 import { createLogger } from '@/logger.server.ts';
+import { useAuth } from '@/routes/auth/auth.hook.ts';
 import { commitSession, getSession } from '@/routes/auth/sessions.server.ts';
 import type { AuthLoaderResponse } from '@/routes/auth/types.ts';
 
@@ -204,4 +207,19 @@ export async function action({ request }: ActionFunctionArgs) {
   throw withErrorCode('ERR_UNEXPECTED_ERROR')(
     new Error('Invalid response type'),
   );
+}
+
+export default function Auth() {
+  const [{ isSignedIn, shouldExtendSession }] = useAuth();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (isSignedIn && !shouldExtendSession) {
+      const redirectUri = new URL(
+        new URLSearchParams(window.location.search).get('redirect_uri') ?? '/',
+        window.location.origin,
+      ).pathname;
+      navigate(redirectUri);
+    }
+  }, [isSignedIn, shouldExtendSession]);
+  return null;
 }

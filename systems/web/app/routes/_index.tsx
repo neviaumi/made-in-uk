@@ -14,6 +14,7 @@ import {
   sortByPrice,
   sortByPricePerItem,
 } from '@/product.ts';
+import { useAuth } from '@/routes/auth/auth.hook.ts';
 
 export const meta: MetaFunction = () => {
   return [
@@ -54,6 +55,7 @@ export async function loader() {
 }
 
 export default function Index() {
+  useAuth();
   const searchForm = useRef<HTMLFormElement>(null);
   const [matchingFilters, setMatchingFilters] = useState<{
     keyword: string;

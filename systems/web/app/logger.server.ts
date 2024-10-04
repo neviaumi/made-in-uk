@@ -33,7 +33,7 @@ export function createLogger(appEnv: AppEnvironment) {
         });
       })(),
       ...(isDev
-        ? [format.prettyPrint({ colorize: true, depth: 4 })]
+        ? [format.prettyPrint({ colorize: true, depth: 16 })]
         : [format.json()]),
     ),
     level: config.get('log.level'),

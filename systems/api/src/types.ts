@@ -1,4 +1,3 @@
-import type { Config } from '@/config.ts';
 import type { Logger } from '@/logger.ts';
 
 export type Product = {
@@ -12,9 +11,10 @@ export type Product = {
 };
 
 export type GraphqlContext = {
-  config: Config;
   logger: Logger;
+  operationName: string;
   requestId: string;
+  userId: string;
 };
 
 export type ResolverFunction<

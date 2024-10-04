@@ -1,17 +1,28 @@
 import { randomUUID } from 'node:crypto';
 
 import { useDeferStream } from '@graphql-yoga/plugin-defer-stream';
-import { createSchema, createYoga, useReadinessCheck } from 'graphql-yoga';
+import {
+  DateTimeISOResolver,
+  DateTimeISOTypeDefinition,
+} from 'graphql-scalars';
+import {
+  createSchema,
+  createYoga,
+  type Plugin,
+  useLogger,
+  useReadinessCheck,
+} from 'graphql-yoga';
 
 import { useAuth } from '@/auth.ts';
-import { APP_ENV, loadConfig } from '@/config.ts';
+import { APP_ENV } from '@/config.ts';
 import {
   dealMonitorItemDefer,
   getDealMonitorQuery,
   listDealMonitorsQuery,
 } from '@/deal-monitor.query.ts';
-import { createLogger } from '@/logger.ts';
+import { createLogger, toYogaLogger } from '@/logger.ts';
 import {
+  productSearchHistoriesQuery,
   searchProductQuery,
   searchProductStream,
 } from '@/search-product.query.ts';
@@ -19,11 +30,11 @@ import type { GraphqlContext, Product } from '@/types.ts';
 
 import { createDatabaseConnection, databaseHealthCheck } from './database.ts';
 
-const config = loadConfig(APP_ENV);
 const logger = createLogger(APP_ENV);
 
 export const schema = {
   resolvers: {
+    DateTimeISO: DateTimeISOResolver,
     GetDealMonitorResult: {
       items: dealMonitorItemDefer,
     },
@@ -68,6 +79,7 @@ export const schema = {
     Query: {
       dealMonitor: getDealMonitorQuery,
       dealMonitors: listDealMonitorsQuery,
+      productSearchHistories: productSearchHistoriesQuery,
       products: searchProductQuery,
     },
     SearchProductResult: {
@@ -75,11 +87,15 @@ export const schema = {
     },
   },
   typeDefs: /* GraphQL */ `
+    ${DateTimeISOTypeDefinition}
     input SearchProductInput {
       keyword: String
     }
+    type SearchProductFilter {
+      keyword: String
+    }
     type Product {
-      id: String
+      id: ID!
       countryOfOrigin: String
       image: String
       title: String
@@ -101,12 +117,12 @@ export const schema = {
       data: Product
     }
     type SearchProductResult {
-      requestId: String!
+      requestId: ID!
       stream: [ProductStream!]!
     }
 
     type DealMonitor {
-      id: String!
+      id: ID!
       name: String!
       description: String!
       numberOfItems: Int!
@@ -118,17 +134,33 @@ export const schema = {
     }
 
     type GetDealMonitorResult {
-      requestId: String!
+      requestId: ID!
       monitor: DealMonitor
       items: [DealMonitorItem!]!
     }
 
     type ListDealMonitorsResult {
-      requestId: String!
+      requestId: ID!
       monitors: [DealMonitor!]!
     }
 
+    type ProductSearchHistory {
+      completed: Boolean
+      docsReceived: Int
+      input: SearchProductFilter
+      isError: Boolean
+      requestedAt: DateTimeISO!
+      totalDocsExpected: Int
+      id: ID!
+    }
+
+    type ListProductSearchHistoriesResult {
+      requestId: ID!
+      searchHistories: [ProductSearchHistory!]!
+    }
+
     type Query {
+      productSearchHistories: ListProductSearchHistoriesResult!
       products(input: SearchProductInput!): SearchProductResult!
       dealMonitor(input: GetDealMonitorInput!): GetDealMonitorResult!
       dealMonitors: ListDealMonitorsResult!
@@ -137,17 +169,23 @@ export const schema = {
 };
 
 export const yoga = createYoga<GraphqlContext>({
-  context: async ({ params, request }) => {
-    const requestId = request.headers.get('request-id') ?? randomUUID();
-    const { operationName } = params;
-    return {
-      config,
-      logger: logger.child({ operationName, requestId }),
-      requestId,
-    };
-  },
-  logging: logger,
+  logging: toYogaLogger(logger),
   plugins: [
+    useLogger({
+      logFn: (eventName, args) => {
+        return logger.info(
+          eventName,
+          (function formatArgs() {
+            const { args: eventArgs } = args;
+            return {
+              operationName: eventArgs?.operationName,
+              requestId: eventArgs?.contextValue?.requestId,
+              userId: eventArgs?.contextValue?.userId,
+            };
+          })(),
+        );
+      },
+    }),
     useDeferStream(),
     useReadinessCheck({
       check: async () => {
@@ -175,6 +213,23 @@ export const yoga = createYoga<GraphqlContext>({
       },
     }),
     useAuth(),
+    (function injectCustomContext(): Plugin<GraphqlContext> {
+      return {
+        onContextBuilding: async ({ context, extendContext }) => {
+          const request = context.request;
+          const userId = context['userId'];
+          const requestId = request.headers.get('request-id') ?? randomUUID();
+          const { operationName } = context.params;
+          extendContext({
+            logger: logger.child({ operationName, requestId, userId }),
+            operationName,
+            requestId,
+            userId,
+          });
+          return;
+        },
+      };
+    })(),
   ],
   schema: createSchema<GraphqlContext>(schema),
 });
