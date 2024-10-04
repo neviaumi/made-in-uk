@@ -6,4 +6,6 @@ export type AuthLoaderResponse = {
     WEB_ENV: AppEnvironment;
   };
   isSignedIn: boolean;
+  requestId: string;
+  shouldExtendSession: boolean;
 };

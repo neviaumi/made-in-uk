@@ -1,4 +1,4 @@
-import { useFetcher } from '@remix-run/react';
+import { useFetcher, useResolvedPath } from '@remix-run/react';
 import { initializeApp } from 'firebase/app';
 import {
   type Auth,
@@ -7,6 +7,7 @@ import {
   inMemoryPersistence,
   onAuthStateChanged,
   signInAnonymously,
+  signInWithCustomToken,
 } from 'firebase/auth';
 import { useCallback, useEffect } from 'react';
 
@@ -45,6 +46,44 @@ async function handleSignIn(authSDK: Auth) {
       }
       const form = new FormData();
       form.append('id_token', await user.getIdToken());
+      form.append('response_type', 'session_cookie');
+
+      resolve(form);
+      detachStateObserver();
+    });
+  });
+}
+
+async function handleExtendCurrentSession(authSDK: Auth, requestId: string) {
+  const { customToken } = await fetch('/auth', {
+    body: (() => {
+      const form = new FormData();
+      form.append('response_type', 'custom_token');
+      return form;
+    })(),
+    headers: {
+      'request-id': requestId,
+    },
+    method: 'POST',
+  }).then(resp => {
+    if (!resp.ok) {
+      throw withErrorCode('ERR_UNAUTHENTICATED')(new Error(resp.statusText));
+    }
+    return resp.json();
+  });
+  await signInWithCustomToken(authSDK, customToken);
+  return new Promise<FormData>((resolve, reject) => {
+    const detachStateObserver = onAuthStateChanged(authSDK, async user => {
+      if (!user) {
+        return reject(
+          withErrorCode('ERR_UNAUTHENTICATED')(
+            new Error('User Signed in Failed'),
+          ),
+        );
+      }
+      const form = new FormData();
+      form.append('id_token', await user.getIdToken());
+      form.append('response_type', 'session_cookie');
       resolve(form);
       detachStateObserver();
     });
@@ -53,20 +92,22 @@ async function handleSignIn(authSDK: Auth) {
 
 export function useAuth() {
   const fetcher = useFetcher();
-
+  const authPath = useResolvedPath('/auth');
   const submitToAuthAction = useCallback(
-    (form: FormData) =>
-      fetcher.submit(form, {
-        action: '/auth',
+    (requestId: string, form: FormData) =>
+      fetch(authPath.pathname, {
+        body: form,
+        headers: {
+          'request-id': requestId,
+        },
         method: 'POST',
-        navigate: false,
       }),
-    [fetcher.submit],
+    [fetcher.submit, authPath.pathname],
   );
   useEffect(() => {
     (async () => {
       if (!fetcher.data) {
-        fetcher.load('/auth');
+        fetcher.load(authPath.pathname);
         return;
       }
       const {
@@ -75,6 +116,8 @@ export function useAuth() {
           WEB_ENV: env,
         },
         isSignedIn,
+        requestId,
+        shouldExtendSession,
       } = fetcher.data as AuthLoaderResponse;
       const authSDK = await createFirebaseAuth({
         apiKey: 'unused',
@@ -83,8 +126,16 @@ export function useAuth() {
           env,
         ),
       });
+      if (shouldExtendSession && isSignedIn) {
+        handleExtendCurrentSession(authSDK, requestId).then(formData =>
+          submitToAuthAction(requestId, formData),
+        );
+        return;
+      }
       if (isSignedIn) return;
-      handleSignIn(authSDK).then(formData => submitToAuthAction(formData));
+      handleSignIn(authSDK).then(formData =>
+        submitToAuthAction(requestId, formData),
+      );
     })();
-  }, [fetcher.data]);
+  }, [authPath.pathname, fetcher.data]);
 }
