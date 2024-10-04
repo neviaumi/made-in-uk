@@ -35,6 +35,7 @@ export function loadConfig(appEnv: AppEnvironment) {
   return new Map([
     ['env', appEnv],
     ['log.level', Level.info],
+    ['auth.secret', requireEnv('WEB_AUTH_COOKIE_SECRET')],
     [
       'firebase.auth.emulatorHost',
       [AppEnvironment.TEST, AppEnvironment.DEV].includes(appEnv)
