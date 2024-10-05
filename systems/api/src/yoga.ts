@@ -178,7 +178,6 @@ export const yoga = createYoga<GraphqlContext>({
           (function formatArgs() {
             const { args: eventArgs } = args;
             return {
-              operationName: eventArgs?.operationName,
               requestId: eventArgs?.contextValue?.requestId,
               userId: eventArgs?.contextValue?.userId,
             };

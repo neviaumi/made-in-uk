@@ -12,8 +12,6 @@ import {
   SUBTASK_RELY_DATA_TYPE,
 } from '@/types.ts';
 
-export { Timestamp } from '@google-cloud/firestore';
-
 const config = loadConfig(APP_ENV);
 
 export function databaseHealthCheck(database: Firestore) {
@@ -201,11 +199,10 @@ export function connectReplyStreamOnDatabase(
             type: REPLY_DATA_TYPE.SEARCH_PRODUCT;
           },
     ) {
-      return productInfo;
+      return { search: productInfo };
     },
     get stream() {
-      const collectionPath = `replies.${requestId}`;
-      return database.collection(collectionPath).doc('search');
+      return database.collection('replies').doc(requestId);
     },
   };
 }

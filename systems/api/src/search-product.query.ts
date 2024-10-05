@@ -33,7 +33,9 @@ export const searchProductStream: ResolverFunction<
   });
   const database = createDatabaseConnection();
   const cloudTask = createCloudTaskClient();
-  const replyStream = connectToReplyStreamOnDatabase(database, requestId);
+  const replyStream = connectToReplyStreamOnDatabase(database, requestId, {
+    logger,
+  });
   await replyStream.init({
     input: parent.argument.input,
     operationName: context.operationName,
@@ -45,27 +47,19 @@ export const searchProductStream: ResolverFunction<
       keyword: search,
     },
   });
+  const productSearchResult = await replyStream.waitForProductSearchResult();
+  if (productSearchResult.type === 'SEARCH_PRODUCT_ERROR') {
+    logger.error('search product error', { error: productSearchResult.error });
+    return;
+  }
+  const totalExpectedDocs = productSearchResult.data.total;
 
   return new Repeater(async (push, stop) => {
-    let totalExpectedDocs = 0;
     let documentReceived = 0;
     const productStream = replyStream.listenToReplyStreamData();
     try {
       await Readable.from(productStream).forEach(item => {
         if (!item.type) return;
-        if (item.type === 'SEARCH_PRODUCT') {
-          logger.info('Received search product result', {
-            search,
-            total: item.data.total,
-          });
-          totalExpectedDocs = item.data.total;
-          return;
-        }
-        if (item.type === 'SEARCH_PRODUCT_ERROR') {
-          logger.error('search product error', { error: item.error });
-          productStream.end();
-          return;
-        }
         if (item.type === 'FETCH_PRODUCT_DETAIL') {
           push(item);
         }

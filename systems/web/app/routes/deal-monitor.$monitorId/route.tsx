@@ -14,6 +14,7 @@ import {
   sortByPricePerItem,
   sortFailureResponseToLatest,
 } from '@/product.ts';
+import { useAuth } from '@/routes/auth/auth.hook.ts';
 
 import { ErrorItem } from './error-item.tsx';
 
@@ -56,6 +57,7 @@ const GetDealMonitorQuery = gql`
 
 export default function GoodDealsMonitor() {
   const params = useParams();
+  const [{ isSignedIn }] = useAuth();
 
   const [matchingResults] = useQuery<
     {
@@ -76,6 +78,7 @@ export default function GoodDealsMonitor() {
       };
     }
   >({
+    pause: !isSignedIn,
     query: GetDealMonitorQuery,
     variables: {
       input: {

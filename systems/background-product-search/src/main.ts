@@ -27,7 +27,6 @@ import {
   connectToProductSearchSubTasksReplyStreamOnDatabase,
   createDatabaseConnection,
   databaseHealthCheck,
-  Timestamp,
 } from '@/database.ts';
 import * as error from '@/error.ts';
 import { adaptToFastifyLogger, createLogger } from '@/logger.ts';
@@ -393,7 +392,7 @@ fastify.post('/', {
     const totalCount = await subTaskReplyStream.totalSearchMatchCount;
     const batch = database.batch();
     if (totalCount && totalCount !== 0) {
-      batch.set(
+      batch.update(
         replyStream.stream,
         replyStream.shapeOfReplyStreamItem({
           data: { total: totalCount },
@@ -409,7 +408,7 @@ fastify.post('/', {
         streamItems,
         totalCount,
       });
-      batch.set(
+      batch.update(
         replyStream.stream,
         replyStream.shapeOfReplyStreamItem({
           error: {
@@ -419,10 +418,10 @@ fastify.post('/', {
           type: REPLY_DATA_TYPE.SEARCH_PRODUCT_ERROR,
         }),
       );
-      batch.set(taskState.taskState, {
-        markedAt: Timestamp.now(),
-        state: TASK_STATE.ERROR,
-      });
+      batch.set(
+        taskState.taskState,
+        taskState.shapeOfTaskStateObject(TASK_STATE.ERROR),
+      );
     }
     batch.delete(lock.lock);
     await batch.commit();

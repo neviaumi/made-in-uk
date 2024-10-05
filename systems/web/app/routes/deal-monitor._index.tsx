@@ -1,4 +1,8 @@
-import { json, type MetaFunction } from '@remix-run/node';
+import {
+  json,
+  type LoaderFunctionArgs,
+  type MetaFunction,
+} from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
 import { print } from 'graphql';
 import type React from 'react';
@@ -6,6 +10,12 @@ import { gql } from 'urql';
 
 import { Page } from '@/components/Layout.tsx';
 import { createAPIFetchClient } from '@/fetch.server.ts';
+import { useAuth } from '@/routes/auth/auth.hook.ts';
+import {
+  getCurrentSession,
+  isAuthSessionExist,
+  redirectToAuthPage,
+} from '@/routes/auth/sessions.server.ts';
 
 export const meta: MetaFunction = () => {
   return [
@@ -28,7 +38,10 @@ const GetDealMonitorQuery = gql`
   }
 `;
 
-export async function loader() {
+export async function loader({ request }: LoaderFunctionArgs) {
+  if (!(await isAuthSessionExist({ request }))) {
+    return redirectToAuthPage({ request });
+  }
   return json(
     await createAPIFetchClient()('/graphql', {
       body: JSON.stringify({
@@ -36,6 +49,7 @@ export async function loader() {
       }),
       headers: {
         'Content-Type': 'application/json',
+        SessionCookie: await getCurrentSession({ request }),
       },
       method: 'POST',
     }).then(response => response.json()),
@@ -58,6 +72,7 @@ export default function GoodDealsMonitorListing() {
       };
     };
   } = useLoaderData();
+  useAuth();
   return (
     <Page className={'tw-mx-auto tw-pb-2'}>
       <Page.Header

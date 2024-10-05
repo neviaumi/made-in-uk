@@ -1,11 +1,6 @@
 import { Duplex } from 'node:stream';
 
-import {
-  FieldPath,
-  Firestore,
-  type Settings,
-  Timestamp,
-} from '@google-cloud/firestore';
+import { Firestore, type Settings, Timestamp } from '@google-cloud/firestore';
 
 import { APP_ENV, loadConfig } from '@/config.ts';
 import { createGraphQLError, withErrorCode } from '@/error.ts';
@@ -72,65 +67,60 @@ export async function getRequestStream(
   docsReceived: number;
   input: Record<string, unknown>;
   isError: boolean;
-  requestedAt: number;
+  requestedAt: Date;
   totalDocsExpected?: number;
 }> {
-  const collectionPath = `replies.${requestId}`;
-  const searchDoc = await database
+  const collectionPath = `replies`;
+  const requestStream = await database
     .collection(collectionPath)
-    .doc('search')
+    .doc(requestId)
     .get();
-  const metaDoc = await database.collection(collectionPath).doc('meta').get();
-  if (!metaDoc.exists) {
+  if (!requestStream.exists) {
     throw withErrorCode('ERR_UNEXPECTED_ERROR')(
-      createGraphQLError('Meta not found on request stream'),
+      createGraphQLError('Request stream not found'),
     );
   }
-  const metaData = metaDoc.data();
+  const requestStreamData = requestStream.data();
 
-  if (!metaData) {
+  if (!requestStreamData) {
     throw withErrorCode('ERR_UNEXPECTED_ERROR')(
-      createGraphQLError('Meta not found on request stream'),
+      createGraphQLError('Request stream.data() not found'),
     );
   }
   const docsReceived = await database
     .collection(collectionPath)
-    .where(FieldPath.documentId(), 'not-in', ['meta', 'search'])
+    .doc(requestId)
+    .collection('products')
     .count()
     .get()
     .then(count => count.data());
-  if (!searchDoc.exists) {
+  if (!requestStreamData['search']) {
     return {
       completed: false,
       docsReceived: docsReceived.count,
-      input: metaData['input'],
+      input: requestStreamData['input'],
       isError: false,
-      requestedAt: metaData['createdAt'].toDate().getTime(),
+      requestedAt: requestStreamData['createdAt'].toDate(),
     };
   }
-  const searchDocData = searchDoc.data();
-  if (!searchDocData) {
-    throw withErrorCode('ERR_UNEXPECTED_ERROR')(
-      createGraphQLError('Search not found on request stream'),
-    );
-  }
-  if (searchDocData['type'] === 'SEARCH_PRODUCT_ERROR') {
+  const searchResult = requestStreamData['search'];
+  if (searchResult['type'] === 'SEARCH_PRODUCT_ERROR') {
     return {
       completed: false,
       docsReceived: docsReceived.count,
-      input: metaData['input'],
+      input: requestStreamData['input'],
       isError: true,
-      requestedAt: metaData['createdAt'].toDate().getTime(),
+      requestedAt: requestStreamData['createdAt'].toDate(),
     };
   }
 
   return {
-    completed: docsReceived.count === searchDocData['data']['total'],
+    completed: docsReceived.count === searchResult['data']['total'],
     docsReceived: docsReceived.count,
-    input: metaData['input'],
+    input: requestStreamData['input'],
     isError: false,
-    requestedAt: metaData['createdAt'].toDate().getTime(),
-    totalDocsExpected: searchDocData['data']['total'],
+    requestedAt: requestStreamData['createdAt'].toDate(),
+    totalDocsExpected: searchResult['data']['total'],
   };
 }
 
@@ -140,9 +130,8 @@ export async function listUserRequest(
   operationName: string,
 ) {
   const docs = await database
-    .collection('users')
-    .doc(userId)
-    .collection('requests')
+    .collection('replies')
+    .where('requestedBy', '==', userId)
     .where('operationName', '==', operationName)
     .orderBy('createdAt', 'desc')
     .get();
@@ -152,10 +141,8 @@ export async function listUserRequest(
 export function connectToReplyStreamOnDatabase(
   database: Firestore,
   requestId: string,
+  { logger }: { logger: Logger },
 ) {
-  const replyCollectionPath = `replies.${requestId}`;
-  const userCollectionPath = `users`;
-
   return {
     async init({
       input,
@@ -166,27 +153,13 @@ export function connectToReplyStreamOnDatabase(
       operationName: string;
       userId: string;
     }) {
-      const batch = database.batch();
-      batch.set(database.collection(replyCollectionPath).doc('meta'), {
+      await database.collection('replies').doc(requestId).set({
         createdAt: Timestamp.now(),
         createdBy: 'api',
         input,
         operationName,
         requestedBy: userId,
       });
-      batch.set(
-        database
-          .collection(userCollectionPath)
-          .doc(userId)
-          .collection('requests')
-          .doc(requestId),
-        {
-          createdAt: Timestamp.now(),
-          createdBy: 'api',
-          operationName,
-        },
-      );
-      await batch.commit();
     },
     listenToReplyStreamData() {
       const duplexStream = new Duplex({
@@ -197,7 +170,9 @@ export function connectToReplyStreamOnDatabase(
         read() {},
       });
       const detachDBListener = database
-        .collection(replyCollectionPath)
+        .collection('replies')
+        .doc(requestId)
+        .collection('products')
         .onSnapshot(snapshot => {
           snapshot.docChanges().forEach(change => {
             if (change.type === 'removed' || change.type === 'modified') return;
@@ -207,6 +182,42 @@ export function connectToReplyStreamOnDatabase(
         });
       duplexStream.on('end', () => detachDBListener());
       return duplexStream;
+    },
+    async waitForProductSearchResult(): Promise<
+      | {
+          data: {
+            total: number;
+          };
+          type: 'SEARCH_PRODUCT';
+        }
+      | {
+          error: {
+            code: string | undefined;
+            message: string;
+            meta?: Record<string, unknown>;
+          };
+          type: 'SEARCH_PRODUCT_ERROR';
+        }
+    > {
+      const requestData = database.collection('replies').doc(requestId);
+      const searchData = (await requestData.get()).get('search');
+      if (searchData) {
+        return searchData;
+      }
+      return new Promise(resolve => {
+        const detachDBListener = database
+          .collection('replies')
+          .doc(requestId)
+          .onSnapshot(async snapshot => {
+            const search = snapshot.get('search');
+            if (!search) return;
+            logger.info('Received product search result', {
+              search: search,
+            });
+            resolve(search);
+            detachDBListener();
+          });
+      });
     },
   };
 }
