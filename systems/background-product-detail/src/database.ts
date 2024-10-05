@@ -110,7 +110,13 @@ export function createLockHandlerOnDatabase(
     return taskId;
   }
   return {
-    async acquireLock() {
+    async acquireLock({
+      taskName,
+      ...rest
+    }: {
+      [key: string]: unknown;
+      taskName: string;
+    }) {
       return database
         .collection(collectionPath)
         .doc(formatDocPath())
@@ -118,8 +124,9 @@ export function createLockHandlerOnDatabase(
           acquiredAt: Timestamp.fromDate(new Date()),
           // lock will expire after 10 minutes
           expiresAt: Timestamp.fromDate(new Date(Date.now() + 1000 * 60 * 10)),
-
           requestId: requestId,
+          taskName,
+          ...rest,
         });
     },
     async checkRequestLockExist() {
@@ -145,8 +152,11 @@ export function connectReplyStreamOnDatabase(
 ) {
   return {
     get repliesStream() {
-      const collectionPath = `replies.${requestId}`;
-      return database.collection(collectionPath).doc(productId);
+      return database
+        .collection('replies')
+        .doc(requestId)
+        .collection('products')
+        .doc(productId);
     },
     shapeOfReplyStreamItem(
       productInfo:

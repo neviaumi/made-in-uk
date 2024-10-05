@@ -100,7 +100,10 @@ fastify.post('/:source/product/detail', {
     if (await lock.checkRequestLockExist()) {
       return reply.send(409).send('409 Conflict');
     }
-    await lock.acquireLock();
+    await lock.acquireLock({
+      product,
+      taskName: `${source}-product-detail`,
+    });
     logger.info(
       `Start process product detail of ${product.productId} on ${source}`,
       {
@@ -311,10 +314,9 @@ fastify.post('/:source/product/detail', {
 fastify.post('/', {
   async handler(req, reply) {
     const requestId = req.id;
-    const logger = req.log;
     const host = req.headers.host;
     if (!host) {
-      logger.error('Host header is missing');
+      req.log.error('Host header is missing');
       reply.code(400).send('400 Bad Request');
       return;
     }
@@ -327,6 +329,7 @@ fastify.post('/', {
       };
       taskId: string;
     };
+    const logger = req.log.child({ taskId });
 
     const { productId, productUrl, source } = product;
     const taskState = connectTaskStateOnDatabase(database, requestId, taskId);
@@ -339,7 +342,9 @@ fastify.post('/', {
     if (await lock.checkRequestLockExist()) {
       return reply.send(409).send('409 Conflict');
     }
-    await lock.acquireLock();
+    await lock.acquireLock({
+      taskName: 'product-detail',
+    });
     const productDetailSubTaskScheduler = createProductDetailSubTaskScheduler(
       createCloudTaskClient(),
       requestId,
@@ -371,6 +376,7 @@ fastify.post('/', {
         taskState.shapeOfTaskStateObject(TASK_STATE.DONE),
       );
       batchWrite.delete(lock.lock);
+      await batchWrite.commit();
       return reply.code(204).send();
     } catch (e) {
       logger.error(

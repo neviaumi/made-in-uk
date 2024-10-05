@@ -174,8 +174,14 @@ export const dealMonitorItemDefer: ResolverFunction<
   const database = createDatabaseConnection();
   const cloudTask = createCloudTaskClient();
   const productDetailScheduler = createProductDetailScheduler(cloudTask);
-  const replyStream = connectToReplyStreamOnDatabase(database, requestId);
-  await replyStream.init();
+  const replyStream = connectToReplyStreamOnDatabase(database, requestId, {
+    logger,
+  });
+  await replyStream.init({
+    input: parent.monitor,
+    operationName: context.operationName,
+    userId: context.userId,
+  });
 
   const items: Array<unknown> = [];
   logger.info(
