@@ -118,13 +118,14 @@ export function useAuth() {
         ENV: {
           FIREBASE_AUTH_EMULATOR_HOST: firebaseAuthEmulatorHost,
           WEB_ENV: env,
+          WEB_FIREBASE_API_KEY: apiKey,
         },
         isSignedIn,
         requestId,
         shouldExtendSession,
       } = fetcher.data as AuthLoaderResponse;
       const authSDK = await createFirebaseAuth({
-        apiKey: 'unused',
+        apiKey: apiKey,
         authEmulatorHost: firebaseAuthEmulatorHost,
         shouldUseEmulator: [AppEnvironment.DEV, AppEnvironment.TEST].includes(
           env,

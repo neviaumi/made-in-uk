@@ -160,6 +160,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
     ENV: {
       FIREBASE_AUTH_EMULATOR_HOST: config.get('firebase.auth.emulatorHost')!,
       WEB_ENV: APP_ENV,
+      WEB_FIREBASE_API_KEY: config.get('firebase.auth.apiKey')!,
     },
     isSignedIn,
     requestId,

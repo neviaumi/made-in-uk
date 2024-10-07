@@ -32,23 +32,26 @@ function pickEnv(key: string) {
   return process.env[key] || '';
 }
 export function loadConfig(appEnv: AppEnvironment) {
-  return new Map([
-    ['env', appEnv],
-    ['log.level', Level.info],
-    ['auth.secret', requireEnv('WEB_AUTH_COOKIE_SECRET')],
-    [
-      'firebase.auth.emulatorHost',
-      [AppEnvironment.TEST, AppEnvironment.DEV].includes(appEnv)
-        ? requireEnv('FIREBASE_AUTH_EMULATOR_HOST')
-        : pickEnv('FIREBASE_AUTH_EMULATOR_HOST'),
-    ],
-    [
-      'api.endpoint',
-      ![AppEnvironment.TEST].includes(appEnv)
-        ? requireEnv('WEB_API_HOST')
-        : pickEnv('WEB_API_HOST'),
-    ],
-  ]);
+  const config = {
+    'api.endpoint': ![AppEnvironment.TEST].includes(appEnv)
+      ? requireEnv('WEB_API_HOST')
+      : pickEnv('WEB_API_HOST'),
+    'auth.secret': requireEnv('WEB_AUTH_COOKIE_SECRET'),
+    env: appEnv,
+    'firebase.auth.apiKey': requireEnv('WEB_FIREBASE_API_KEY'),
+    'firebase.auth.emulatorHost': [
+      AppEnvironment.TEST,
+      AppEnvironment.DEV,
+    ].includes(appEnv)
+      ? requireEnv('FIREBASE_AUTH_EMULATOR_HOST')
+      : pickEnv('FIREBASE_AUTH_EMULATOR_HOST'),
+    'log.level': Level.info,
+  };
+  return {
+    get(key: keyof typeof config) {
+      return config[key];
+    },
+  };
 }
 
 export type ConfigServer = ReturnType<typeof loadConfig>;

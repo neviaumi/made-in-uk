@@ -22,8 +22,8 @@ import {
   createProductSearchMainTaskQueue,
   createProductSearchTaskQueue,
 } from './gcp/cloud-tasks.ts';
-import { createFireBaseProject } from './gcp/fire-base.ts';
-import { createFireStoreDB } from './gcp/fire-store.ts';
+import { createFireBaseProject, createFirebaseWebApp } from './gcp/firebase.ts';
+import { createFireStoreDB } from './gcp/firestore.ts';
 import { PRODUCT_SOURCE } from './types.ts';
 
 const { name: databaseName } = createFireStoreDB();
@@ -40,7 +40,8 @@ const productSearchSubTaskQueues = (
 const productDetailSubTaskQueues = Object.values(PRODUCT_SOURCE).map(
   source => [source, createProductDetailTaskQueue(source)] as const,
 );
-createFireBaseProject();
+const { projectId: firebaseProjectId } = createFireBaseProject();
+const { apiKeyId } = createFirebaseWebApp(firebaseProjectId);
 
 const { name: llmServiceName, url: llmUrl } = createCloudRunForLLM({
   databaseName: databaseName,
@@ -123,6 +124,7 @@ allowServiceAccountsToCallBackgroundProductDetail({
 const { serviceAccount: webCloudRunServiceAccount, url: webUrl } =
   createCloudRunForWeb({
     apiEndpoint: apiUrl,
+    firebaseApiKey: apiKeyId,
   });
 
 onlyAllowServiceToServiceForInvokeAPI({
