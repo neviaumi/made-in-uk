@@ -1,5 +1,6 @@
 import { cloudrun, cloudrunv2 } from '@pulumi/gcp';
 import pulumi, { type Output } from '@pulumi/pulumi';
+import * as random from '@pulumi/random';
 
 import { PRODUCT_SOURCE } from '../types.ts';
 import { getLocation } from '../utils/get-gcp-config.ts';
@@ -22,6 +23,12 @@ export function createCloudRunForWeb({
         Object.assign(
           {
             envs: [
+              {
+                name: 'WEB_AUTH_COOKIE_SECRET',
+                value: new random.RandomUuid(
+                  resourceName`web-auth-cookie-secret`,
+                ).result,
+              },
               {
                 name: 'WEB_FIREBASE_API_KEY',
                 value: firebaseApiKey,
