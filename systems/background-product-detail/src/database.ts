@@ -148,6 +148,7 @@ export function createLockHandlerOnDatabase(
 export function connectReplyStreamOnDatabase(
   database: Firestore,
   requestId: string,
+  source: PRODUCT_SOURCE,
   productId: string,
 ) {
   return {
@@ -156,7 +157,7 @@ export function connectReplyStreamOnDatabase(
         .collection('replies')
         .doc(requestId)
         .collection('products')
-        .doc(productId);
+        .doc(`${source}.${productId}`);
     },
     shapeOfReplyStreamItem(
       productInfo:

@@ -113,6 +113,7 @@ fastify.post('/:source/product/detail', {
     const replyStream = connectReplyStreamOnDatabase(
       database,
       requestId,
+      source,
       productId,
     );
     const cache = connectProductCacheOnDatabase(database, source, productId);
