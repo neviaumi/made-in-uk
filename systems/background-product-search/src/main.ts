@@ -192,9 +192,9 @@ fastify.post(`/:source/product/search`, {
           },
           requestId: payload.parentRequestId,
         });
-        if (matchedProducts.length >= 4) {
-          break;
-        }
+        // if (matchedProducts.length >= 4) {
+        //   break;
+        // }
       }
       const numberOfProducts = matchedProducts.length;
 
