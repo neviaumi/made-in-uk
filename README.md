@@ -93,6 +93,8 @@ bash ./scripts/dev.sh
 
 It may error about you need enable project on dashboard, just follow the link and enable the project.
 
+You need manually enable the Firebase authentication on [firebase dashboard](https://console.firebase.google.com/)
+
 ```sh
 # For development
 bash ./scripts/deploy.sh development
