@@ -9,8 +9,10 @@ const appConfig = new pulumi.Config('app');
 
 export function createCloudRunForWeb({
   apiEndpoint,
+  firebaseApiKey,
 }: {
   apiEndpoint: Output<string>;
+  firebaseApiKey: Output<string>;
 }) {
   const webImage = appConfig.get('web-image');
   const cloudRunService = new cloudrunv2.Service(resourceName`web`, {
@@ -20,6 +22,10 @@ export function createCloudRunForWeb({
         Object.assign(
           {
             envs: [
+              {
+                name: 'WEB_FIREBASE_API_KEY',
+                value: firebaseApiKey,
+              },
               {
                 name: 'WEB_API_HOST',
                 value: apiEndpoint,

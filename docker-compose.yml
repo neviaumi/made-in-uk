@@ -161,6 +161,7 @@ services:
       - WEB_ENV=development
       - FIREBASE_AUTH_EMULATOR_HOST=http://localhost:9099
       - WEB_AUTH_COOKIE_SECRET=13746473-9d41-4eeb-8fdc-2fff2ad8c187
+      - WEB_FIREBASE_API_KEY=unused
     ports:
       - 5333:5333
       - 3001:3001
