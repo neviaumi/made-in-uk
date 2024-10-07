@@ -41,7 +41,7 @@ const productDetailSubTaskQueues = Object.values(PRODUCT_SOURCE).map(
   source => [source, createProductDetailTaskQueue(source)] as const,
 );
 const { projectId: firebaseProjectId } = createFireBaseProject();
-const { apiKeyId } = createFirebaseWebApp(firebaseProjectId);
+const { apiKey } = createFirebaseWebApp(firebaseProjectId);
 
 const { name: llmServiceName, url: llmUrl } = createCloudRunForLLM({
   databaseName: databaseName,
@@ -124,7 +124,7 @@ allowServiceAccountsToCallBackgroundProductDetail({
 const { serviceAccount: webCloudRunServiceAccount, url: webUrl } =
   createCloudRunForWeb({
     apiEndpoint: apiUrl,
-    firebaseApiKey: apiKeyId,
+    firebaseApiKey: apiKey,
   });
 
 onlyAllowServiceToServiceForInvokeAPI({
