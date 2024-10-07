@@ -16,8 +16,16 @@ export function createFirebaseWebApp(projectId: Output<string>) {
     displayName: 'web',
     project: projectId,
   });
+
   return {
-    apiKeyId: firebaseWebApp.apiKeyId,
+    apiKey: firebaseWebApp.appId.apply(appId =>
+      firebase
+        .getWebAppConfig({
+          webAppId: appId,
+        })
+        .then(config => config.apiKey),
+    ),
+    appId: firebaseWebApp.appId,
     name: firebaseWebApp.displayName,
   };
 }
