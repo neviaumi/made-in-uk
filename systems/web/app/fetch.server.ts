@@ -1,6 +1,7 @@
 import { GoogleAuth } from 'google-auth-library';
 
 import { APP_ENV, loadConfig } from '@/config.server.ts';
+import { withErrorCode } from '@/error.server.ts';
 
 function headerInitToEntries(init: HeadersInit | undefined) {
   if (!init) return [];
@@ -9,7 +10,7 @@ function headerInitToEntries(init: HeadersInit | undefined) {
   return Object.entries(init);
 }
 
-export function createAPIFetchClient() {
+export function createAPIFetchClient(): typeof fetch {
   const config = loadConfig(APP_ENV);
 
   const { webApiHost, webEnv } = {
@@ -17,8 +18,18 @@ export function createAPIFetchClient() {
     webEnv: config.get('env')!,
   };
 
-  return async (path: string, init: RequestInit) => {
-    const requestPath = new URL(path, webApiHost).toString();
+  return async (req: string | Request | URL, init?: RequestInit) => {
+    if (!init)
+      throw withErrorCode('ERR_UNEXPECTED_ERROR')(
+        new Error('Unexpect usage of fetch, init is required'),
+      );
+    const requestPath = (() => {
+      if (req instanceof URL)
+        return new URL(req.pathname, webApiHost).toString();
+      if (req instanceof Request)
+        return new URL(new URL(req.url).pathname, webApiHost).toString();
+      return new URL(req.toString(), webApiHost).toString();
+    })();
     const initHeaders = Array.from(headerInitToEntries(init.headers)).filter(
       ([key]) => !['authorization', 'host'].includes(key.toLowerCase()),
     );

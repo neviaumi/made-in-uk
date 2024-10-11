@@ -1,6 +1,7 @@
 import { Duplex } from 'node:stream';
 
 import { Firestore, type Settings, Timestamp } from '@google-cloud/firestore';
+import pLimit from 'p-limit';
 
 import { APP_ENV, loadConfig } from '@/config.ts';
 import { createGraphQLError, withErrorCode } from '@/error.ts';
@@ -57,6 +58,29 @@ export function closeReplyStream(
     await database.recursiveDelete(database.collection(collectionPath));
     logger.info(`Close reply stream ${requestId}`);
   };
+}
+
+export async function getRequestStreamProduct(
+  database: Firestore,
+  requestId: string,
+) {
+  return await database
+    .collection(`replies`)
+    .doc(requestId)
+    .collection('products')
+    .listDocuments()
+    .then(async docs => {
+      const limit = pLimit(64);
+
+      const allDocDatas = await Promise.all(
+        docs.map(doc => {
+          return limit(() => doc.get().then(data => data.data()));
+        }),
+      );
+      return allDocDatas.filter(
+        data => data && data['type'] === 'FETCH_PRODUCT_DETAIL',
+      );
+    });
 }
 
 export async function getRequestStream(

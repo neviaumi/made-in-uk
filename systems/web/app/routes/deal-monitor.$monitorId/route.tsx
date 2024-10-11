@@ -5,6 +5,7 @@ import { gql, useQuery } from 'urql';
 
 import { Page } from '@/components/Layout.tsx';
 import { Loader } from '@/components/Loader.tsx';
+import { NavBar } from '@/components/Nav.tsx';
 import {
   type AsyncProductError,
   type AsyncProductSuccess,
@@ -94,6 +95,7 @@ export default function GoodDealsMonitor() {
             'tw-sticky tw-top-0 tw-z-10 tw-border-b tw-border-solid tw-border-b-primary tw-bg-white tw-pb-2'
           }
         >
+          <NavBar />
           <h1 className={'tw-text-center tw-text-2xl'}>Deal Monitor</h1>
         </Page.Header>
         <Page.Main>

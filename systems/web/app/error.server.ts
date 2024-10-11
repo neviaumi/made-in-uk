@@ -5,7 +5,7 @@ export function isNativeError(e: unknown): e is NodeJS.ErrnoException {
 }
 
 export function withErrorCode(
-  code: 'ERR_UNAUTHENTICATED' | 'ERR_UNEXPECTED_ERROR',
+  code: 'ERR_UNAUTHENTICATED' | 'ERR_UNEXPECTED_ERROR' | 'ERR_REVOKED_SESSION',
 ) {
   return (e: NodeJS.ErrnoException) => {
     e.code = code;

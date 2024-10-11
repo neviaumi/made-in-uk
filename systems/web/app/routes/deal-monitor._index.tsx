@@ -9,10 +9,12 @@ import type React from 'react';
 import { gql } from 'urql';
 
 import { Page } from '@/components/Layout.tsx';
+import { NavBar } from '@/components/Nav.tsx';
 import { createAPIFetchClient } from '@/fetch.server.ts';
 import { useAuth } from '@/routes/auth/auth.hook.ts';
 import {
   getCurrentSession,
+  getSessionCookie,
   isAuthSessionExist,
   redirectToAuthPage,
 } from '@/routes/auth/sessions.server.ts';
@@ -49,7 +51,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
       }),
       headers: {
         'Content-Type': 'application/json',
-        SessionCookie: await getCurrentSession({ request }),
+        SessionCookie: getSessionCookie(await getCurrentSession({ request })),
       },
       method: 'POST',
     }).then(response => response.json()),
@@ -80,6 +82,7 @@ export default function GoodDealsMonitorListing() {
           'tw-sticky tw-top-0 tw-z-10 tw-border-b tw-border-solid tw-border-b-primary tw-bg-white  tw-pb-2'
         }
       >
+        <NavBar />
         <h1 className={'tw-text-center'}>Deal Monitors</h1>
       </Page.Header>
       <Page.Main className={'tw-pt-2'}>

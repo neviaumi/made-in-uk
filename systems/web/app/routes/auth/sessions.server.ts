@@ -26,7 +26,7 @@ const { commitSession, destroySession, getSession } =
     },
   });
 
-export { commitSession, destroySession, getSession };
+export { commitSession, destroySession };
 
 export async function isAuthSessionExist({ request }: { request: Request }) {
   const session = await getSession(request.headers.get('Cookie'));
@@ -44,7 +44,31 @@ export function redirectToAuthPage({ request }: { request: Request }) {
 }
 
 export function getCurrentSession({ request }: { request: Request }) {
-  return getSession(request.headers.get('Cookie')).then(
-    session => session.get('sessionCookie')!,
-  );
+  return getSession(request.headers.get('Cookie'));
+}
+
+export function getSessionCookie(
+  session: Awaited<ReturnType<typeof getSession>>,
+) {
+  return session.get('sessionCookie')!;
+}
+
+export function getSessionExpiresTime(
+  session: Awaited<ReturnType<typeof getSession>>,
+) {
+  return session.get('expiresTime')!;
+}
+
+export function setSessionCookie(
+  session: Awaited<ReturnType<typeof getSession>>,
+  sessionCookie: string,
+) {
+  session.set('sessionCookie', sessionCookie);
+}
+
+export function setSessionExpiresTime(
+  session: Awaited<ReturnType<typeof getSession>>,
+  expiresTime: number,
+) {
+  session.set('expiresTime', expiresTime);
 }

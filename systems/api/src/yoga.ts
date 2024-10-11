@@ -23,6 +23,9 @@ import {
 import { createLogger, toYogaLogger } from '@/logger.ts';
 import {
   productSearchHistoriesQuery,
+  productSearchHistoryItemQuery,
+  productSearchHistoryMetaQuery,
+  productSearchHistoryQuery,
   searchProductQuery,
   searchProductStream,
 } from '@/search-product.query.ts';
@@ -76,10 +79,15 @@ export const schema = {
         return [priceInString, pricePerUnit].join(' per ');
       },
     },
+    ProductSearchHistory: {
+      items: productSearchHistoryItemQuery,
+      meta: productSearchHistoryMetaQuery,
+    },
     Query: {
       dealMonitor: getDealMonitorQuery,
       dealMonitors: listDealMonitorsQuery,
       productSearchHistories: productSearchHistoriesQuery,
+      productSearchHistory: productSearchHistoryQuery,
       products: searchProductQuery,
     },
     SearchProductResult: {
@@ -144,14 +152,18 @@ export const schema = {
       monitors: [DealMonitor!]!
     }
 
-    type ProductSearchHistory {
+    type ProductSearchHistoryMeta {
       completed: Boolean
       docsReceived: Int
       input: SearchProductFilter
       isError: Boolean
       requestedAt: DateTimeISO!
       totalDocsExpected: Int
+    }
+    type ProductSearchHistory {
+      meta: ProductSearchHistoryMeta!
       id: ID!
+      items: [ProductStream!]!
     }
 
     type ListProductSearchHistoriesResult {
@@ -159,8 +171,20 @@ export const schema = {
       searchHistories: [ProductSearchHistory!]!
     }
 
+    type GetProductSearchHistoryResult {
+      requestId: ID!
+      searchHistory: ProductSearchHistory
+    }
+
+    input GetProductSearchHistoryInput {
+      requestId: ID!
+    }
+
     type Query {
       productSearchHistories: ListProductSearchHistoriesResult!
+      productSearchHistory(
+        input: GetProductSearchHistoryInput!
+      ): GetProductSearchHistoryResult!
       products(input: SearchProductInput!): SearchProductResult!
       dealMonitor(input: GetDealMonitorInput!): GetDealMonitorResult!
       dealMonitors: ListDealMonitorsResult!
@@ -178,6 +202,7 @@ export const yoga = createYoga<GraphqlContext>({
           (function formatArgs() {
             const { args: eventArgs } = args;
             return {
+              operationName: eventArgs.operationName,
               requestId: eventArgs?.contextValue?.requestId,
               userId: eventArgs?.contextValue?.userId,
             };

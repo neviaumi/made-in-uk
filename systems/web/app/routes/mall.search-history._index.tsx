@@ -4,17 +4,20 @@ import {
   type MetaFunction,
 } from '@remix-run/node';
 import { useLoaderData } from '@remix-run/react';
-import { print } from 'graphql';
+import { createClient, fetchExchange, gql } from '@urql/core';
 import type React from 'react';
-import { gql } from 'urql';
 
 import { Page } from '@/components/Layout.tsx';
-import { APP_ENV } from '@/config.server.ts';
+import {
+  SearchProgress,
+  SearchStatusBadge,
+} from '@/components/mall.search-history.tsx';
+import { NavBar } from '@/components/Nav.tsx';
 import { withErrorCode } from '@/error.server.ts';
 import { createAPIFetchClient } from '@/fetch.server.ts';
-import { createLogger } from '@/logger.server.ts';
 import {
   getCurrentSession,
+  getSessionCookie,
   isAuthSessionExist,
   redirectToAuthPage,
 } from '@/routes/auth/sessions.server.ts';
@@ -32,13 +35,16 @@ const ListProductSearchHistoriesQuery = gql`
       requestId
       searchHistories {
         id
-        input {
-          keyword
+        meta {
+          input {
+            keyword
+          }
+          completed
+          docsReceived
+          isError
+          requestedAt
+          totalDocsExpected
         }
-        completed
-        docsReceived
-        isError
-        requestedAt
       }
     }
   }
@@ -48,49 +54,43 @@ export async function loader({ request }: LoaderFunctionArgs) {
   if (!(await isAuthSessionExist({ request }))) {
     return redirectToAuthPage({ request });
   }
-  const logger = createLogger(APP_ENV);
-  return json(
-    await createAPIFetchClient()('/graphql', {
-      body: JSON.stringify({
-        query: print(ListProductSearchHistoriesQuery),
-      }),
+  const resp = await createClient({
+    exchanges: [fetchExchange],
+    fetch: createAPIFetchClient(),
+    fetchOptions: {
       headers: {
-        'Content-Type': 'application/json',
-        SessionCookie: await getCurrentSession({ request }),
+        SessionCookie: getSessionCookie(await getCurrentSession({ request })),
       },
-      method: 'POST',
-    }).then(async response => {
-      if (!response.ok)
-        throw withErrorCode('ERR_UNEXPECTED_ERROR')(
-          new Error('Failed to fetch data'),
-        );
-      const resp = await response.json();
-      logger.info('Fetched search history data', { resp });
-      return resp;
-    }),
-  );
-}
-
-export default function ProductSearchHistoryListing() {
-  const {
-    data: { productSearchHistories },
-  }: {
-    data: {
-      productSearchHistories: {
-        requestId: string;
-        searchHistories: Array<{
+    },
+    url: '/graphql',
+  }).query<{
+    productSearchHistories: {
+      requestId: string;
+      searchHistories: Array<{
+        id: string;
+        meta: {
           completed: boolean;
-          docsReceived: boolean;
-          id: string;
+          docsReceived: number;
           input: {
             keyword: string;
           };
           isError: boolean;
           requestedAt: string;
-        }>;
-      };
+          totalDocsExpected: number | null;
+        };
+      }>;
     };
-  } = useLoaderData();
+  }>(ListProductSearchHistoriesQuery, {});
+  return json(resp);
+}
+
+export default function ProductSearchHistoryListing() {
+  const loaderData = useLoaderData<typeof loader>();
+  if (!loaderData.data)
+    throw withErrorCode('ERR_UNEXPECTED_ERROR')(
+      new Error('Loader data is missing'),
+    );
+  const { productSearchHistories } = loaderData.data;
   return (
     <Page className={'tw-mx-auto tw-pb-2'}>
       <Page.Header
@@ -98,31 +98,60 @@ export default function ProductSearchHistoryListing() {
           'tw-sticky tw-top-0 tw-z-10 tw-border-b tw-border-solid tw-border-b-primary tw-bg-white  tw-pb-2'
         }
       >
+        <NavBar />
         <h1 className={'tw-text-center'}>Search History</h1>
       </Page.Header>
       <Page.Main className={'tw-pt-2'}>
         <ul
           className={
-            'tw-grid tw-grid-cols-1 tw-gap-1 sm:tw-grid-cols-2 lg:tw-grid-cols-4 2xl:tw-grid-cols-8'
+            'tw-grid tw-grid-cols-1 tw-gap-1 lg:tw-grid-cols-2 2xl:tw-grid-cols-3'
           }
         >
           {productSearchHistories.searchHistories.map(searchHistory => {
+            const { meta: searchHistoryMeta } = searchHistory;
             return (
               <li key={searchHistory.id}>
                 <a
                   className={
-                    'tw-box-border tw-flex tw-flex-col tw-items-center tw-border tw-border-solid tw-border-transparent hover:tw-border-primary-user-action'
+                    'tw-flex tw-flex-col tw-gap-1 tw-border tw-border-solid tw-border-transparent tw-p-2 hover:tw-border-primary-user-action'
                   }
                   href={`/mall/search-history/${searchHistory.id}`}
                   rel="noreferrer"
                   target={'_self'}
                 >
-                  <h1 className={'tw-text-center tw-text-xl tw-font-semibold'}>
-                    {searchHistory.input.keyword}
-                  </h1>
-                  <p className={'tw-py-0.5 tw-text-base tw-font-semibold'}>
-                    Contain {searchHistory.docsReceived} items
-                  </p>
+                  <section
+                    className={
+                      'tw-flex tw-flex-row tw-items-center tw-justify-around'
+                    }
+                  >
+                    <div>
+                      <h1 className={'tw-text-center tw-text-xl'}>
+                        Search for{' '}
+                        <b className={'tw-font-semibold'}>
+                          {searchHistoryMeta.input.keyword}
+                        </b>
+                      </h1>
+                    </div>
+                    <div>
+                      <SearchStatusBadge searchHistory={searchHistoryMeta} />
+                    </div>
+                  </section>
+                  <SearchProgress searchHistory={searchHistoryMeta} />
+                  <section>
+                    <p
+                      className={'tw-text-center tw-text-base tw-font-semibold'}
+                    >
+                      Contain {searchHistoryMeta.docsReceived} items
+                    </p>
+                    <p className={'tw-text-center'}>
+                      {new Date(searchHistoryMeta.requestedAt).toLocaleString(
+                        'en-GB',
+                        {
+                          hourCycle: 'h24',
+                        },
+                      )}
+                    </p>
+                  </section>
                 </a>
               </li>
             );
