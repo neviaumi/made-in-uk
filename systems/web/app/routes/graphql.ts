@@ -1,15 +1,18 @@
 import { type ActionFunctionArgs } from '@remix-run/node';
 
-import { getSession } from '@/routes/auth/sessions.server.ts';
+import {
+  getCurrentSession,
+  getSessionCookie,
+} from '@/routes/auth/sessions.server.ts';
 
 import { createAPIFetchClient } from '../fetch.server.ts';
 
 export async function action({ request }: ActionFunctionArgs) {
-  const session = await getSession(request.headers.get('Cookie'));
-  if (!session.get('sessionCookie')) {
+  const sessionCookie = getSessionCookie(await getCurrentSession({ request }));
+  if (!sessionCookie) {
     return new Response('Unauthorized', { status: 401 });
   }
-  request.headers.set('SessionCookie', session.get('sessionCookie')!);
+  request.headers.set('SessionCookie', sessionCookie);
   const fetchClient = createAPIFetchClient();
   const gqlResponse = await fetchClient('/graphql', {
     body: request.body,

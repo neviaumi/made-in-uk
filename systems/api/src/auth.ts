@@ -106,6 +106,27 @@ export function useAuth(): Plugin<{ userId: string }> {
 
     async onRequest({ endResponse, request }) {
       const requestUrl = new URL(request.url);
+      if (
+        requestUrl.pathname === '/auth/token_info' &&
+        request.method === 'POST'
+      ) {
+        const requestId = String(request.headers.get('request-id'));
+        const logger = createLogger(APP_ENV).child({ requestId });
+
+        const formData = await request.formData();
+        const currentSessionCookies = String(formData.get('sessionCookie'));
+        const auth = getAuth(firebaseApp);
+        const resp = await auth
+          .verifySessionCookie(currentSessionCookies, true)
+          .then(resp => Object.assign(resp, { active: true }))
+          .catch(e => {
+            logger.error('Session cookie is invalid', { e });
+            return {
+              active: false,
+            };
+          });
+        return endResponse(new Response(JSON.stringify(resp), { status: 200 }));
+      }
       if (requestUrl.pathname === '/auth/token' && request.method === 'POST') {
         const requestId = String(request.headers.get('request-id'));
 

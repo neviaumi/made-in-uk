@@ -11,6 +11,7 @@ import {
   connectToReplyStreamOnDatabase,
   createDatabaseConnection,
   getRequestStream,
+  getRequestStreamProduct,
   listUserRequest,
 } from '@/database.ts';
 import type { GraphqlContext, ResolverFunction } from '@/types.ts';
@@ -115,4 +116,36 @@ export const productSearchHistoriesQuery: ResolverFunction = async (
       ),
     ),
   };
+};
+
+export const productSearchHistoryQuery: ResolverFunction<{
+  input: { requestId: string };
+}> = async (_, args, context) => {
+  const { requestId } = args.input;
+  return {
+    requestId: context.requestId,
+    searchHistory: {
+      id: requestId,
+    },
+  };
+};
+
+export const productSearchHistoryMetaQuery: ResolverFunction<
+  never,
+  GraphqlContext,
+  { id: string }
+> = async parent => {
+  const { id: requestId } = parent;
+  const database = createDatabaseConnection();
+  return getRequestStream(database, requestId);
+};
+
+export const productSearchHistoryItemQuery: ResolverFunction<
+  never,
+  GraphqlContext,
+  { id: string }
+> = parent => {
+  const requestId = parent.id;
+  const database = createDatabaseConnection();
+  return getRequestStreamProduct(database, requestId);
 };
