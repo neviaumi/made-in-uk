@@ -35,7 +35,7 @@ export async function isAuthSessionExist({ request }: { request: Request }) {
 
 export function redirectToAuthPage({ request }: { request: Request }) {
   const currentUrl = new URL(request.url);
-  const redirectUrl = new URL('/login', currentUrl.origin);
+  const redirectUrl = new URL('/auth', currentUrl.origin);
   redirectUrl.searchParams.set(
     'redirect_url',
     `${currentUrl.pathname}${currentUrl.search}`,
