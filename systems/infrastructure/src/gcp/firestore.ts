@@ -8,6 +8,27 @@ export function createFireStoreDB() {
     locationId: getLocation(),
     type: 'FIRESTORE_NATIVE',
   });
+  new firestore.Index(
+    resourceName`replies-stream-index-for-filter-by-user-id`,
+    {
+      collection: 'replies',
+      database: dbRef.name,
+      fields: [
+        {
+          fieldPath: 'operationName',
+          order: 'ASCENDING',
+        },
+        {
+          fieldPath: 'requestedBy',
+          order: 'ASCENDING',
+        },
+        {
+          fieldPath: 'createdAt',
+          order: 'DESCENDING',
+        },
+      ],
+    },
+  );
   new firestore.Field(resourceName`product-search-lock-ttl`, {
     collection: 'product-search.request-lock',
     database: dbRef.name,
