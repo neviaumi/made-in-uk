@@ -5,7 +5,7 @@ import { gql, useQuery } from 'urql';
 
 import { Page } from '@/components/Layout.tsx';
 import { Loader } from '@/components/Loader.tsx';
-import { NavBar } from '@/components/Nav.tsx';
+import { NavBar } from '@/components/Nav/Nav.tsx';
 import {
   type AsyncProductError,
   type AsyncProductSuccess,

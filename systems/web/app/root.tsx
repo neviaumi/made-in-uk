@@ -10,11 +10,13 @@ import {
 } from '@remix-run/react';
 import { cacheExchange, Client, fetchExchange, Provider } from 'urql';
 
+// import icon from '../public/icon.webp';
 import styles from './tailwind.css';
 
 export const links: LinksFunction = () => [
   ...(cssBundleHref ? [{ href: cssBundleHref, rel: 'stylesheet' }] : []),
   { href: styles, rel: 'stylesheet' },
+  { as: 'image', href: '/icon.png', rel: 'preload' },
 ];
 
 export default function App() {

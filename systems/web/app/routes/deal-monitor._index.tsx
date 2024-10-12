@@ -9,7 +9,7 @@ import type React from 'react';
 import { gql } from 'urql';
 
 import { Page } from '@/components/Layout.tsx';
-import { NavBar } from '@/components/Nav.tsx';
+import { NavBar } from '@/components/Nav/Nav.tsx';
 import { createAPIFetchClient } from '@/fetch.server.ts';
 import { useAuth } from '@/routes/auth/auth.hook.ts';
 import {
