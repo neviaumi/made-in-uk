@@ -66,6 +66,10 @@ export function createCloudRunForWeb({
             : {},
         ),
       ],
+      // scaling: {
+      //   minInstanceCount: 1,
+      // }, // This will costly if we enable this
+      timeout: '900s',
     },
   });
   new cloudrun.IamBinding(resourceName`allow-any-user-iam-binding`, {
@@ -98,7 +102,6 @@ export function createCloudRunForApi({
   const cloudRunService = new cloudrunv2.Service(resourceName`api`, {
     ingress: 'INGRESS_TRAFFIC_ALL',
     location: getLocation(),
-
     template: {
       containers: [
         Object.assign(
@@ -139,11 +142,6 @@ export function createCloudRunForApi({
                 path: '/ready',
               },
             },
-            resources: {
-              limits: {
-                memory: '2048Mi',
-              },
-            },
             startupProbe: {
               httpGet: {
                 path: '/health',
@@ -158,6 +156,9 @@ export function createCloudRunForApi({
             : {},
         ),
       ],
+      // scaling: {
+      //   minInstanceCount: 1,
+      // }, // This will costly if we enable this
       timeout: '900s',
     },
   });

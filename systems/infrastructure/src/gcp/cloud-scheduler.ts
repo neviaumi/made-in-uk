@@ -24,8 +24,8 @@ export function createProductSearchCronJob({
           new URL('/token-bucket/refill', baseUrl).toString(),
         ),
       },
-      paused: true,
-      schedule: '* * * * *',
+      paused: false,
+      schedule: '*/15 * * * *',
       timeZone: 'UTC',
     },
   );
@@ -52,8 +52,8 @@ export function createProductDetailCronJob({
           new URL('/token-bucket/refill', baseUrl).toString(),
         ),
       },
-      paused: true,
-      schedule: '* * * * *',
+      paused: false,
+      schedule: '*/15 * * * *',
       timeZone: 'UTC',
     },
   );
