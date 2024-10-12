@@ -14,7 +14,7 @@ import { gql, useQuery } from 'urql';
 import { Page } from '@/components/Layout.tsx';
 import { Loader } from '@/components/Loader.tsx';
 import { ProductListItem } from '@/components/mall.tsx';
-import { NavBar } from '@/components/Nav.tsx';
+import { NavBar } from '@/components/Nav/Nav.tsx';
 import { APP_ENV, loadConfig } from '@/config.server.ts';
 import { withErrorCode } from '@/error.server.ts';
 import { createAPIFetchClient } from '@/fetch.server.ts';
