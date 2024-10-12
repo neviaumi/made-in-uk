@@ -35,9 +35,7 @@ Container_Boundary(ProductDetailService, "Product Detail Service") {
 Container(
 productDetailTaskQueue, "Cloud Task",
 "Product detail tasks", "Buffer to queue product detail requests")
-Container(
-productDetailLowPriorityTaskQueue, "Cloud Task",
-"Product detail low priority tasks", "Buffer to queue product detail requests that have cached results")
+
 Component(
 productDetailAPI, "HTTP Server",
 "Product Detail HTTP API", "API to handle product details")
@@ -52,9 +50,7 @@ Rel(api, productSearchTaskQueue, "Queues API requests for product search", "HTTP
 Rel(productSearchTaskQueue, productSearchAPI, "Forwards tasks to product search API", "HTTPS")
 Rel(productSearchAPI, groceryWebsite, "Lists products matching given filter", "HTTPS")
 Rel(productSearchAPI, productDetailTaskQueue, "Queues API requests for product search", "HTTPS")
-Rel(productSearchAPI, productDetailLowPriorityTaskQueue, "Queues API requests for product search to update cached data", "HTTPS")
 Rel(productDetailTaskQueue, productDetailAPI, "Queues API requests to fetch product details", "HTTPS")
-Rel(productDetailLowPriorityTaskQueue, productDetailAPI, "Queues API requests to fetch product details", "HTTPS")
 Rel(productDetailAPI, groceryWebsite, "Fetches product details", "HTTPS")
 Rel(productDetailAPI, database, "Responds to reply stream with product data", "HTTPS")
 ```
