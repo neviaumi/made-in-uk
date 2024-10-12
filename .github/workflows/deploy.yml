@@ -17,6 +17,7 @@ jobs:
         name: Open PR to $GITHUB_REF_NAME
         run: |
           PR_URL=$(gh pr create --head "$HEAD_BRANCH" --title "$PR_TITLE $GITHUB_REF_NAME" --body "$PR_BODY" --base "$GITHUB_REF_NAME")
+          sleep 10
           gh pr merge --auto --rebase --delete-branch "$PR_URL"
   release: 
     outputs: 
