@@ -154,13 +154,15 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
         resolve(items);
       });
     },
-  ).finally(() => {
-    try {
-      responseStream.destroy();
-    } catch (e) {
-      logger.error('Error when destroying response stream', { error: e });
-    }
-  });
+  );
+
+  // .finally(() => {
+  //   try {
+  //     responseStream.destroy();
+  //   } catch (e) {
+  //     logger.error('Error when destroying response stream', { error: e });
+  //   }
+  // });
   const isItemsContainError = new Promise<boolean>(resolve => {
     items.then(items => {
       resolve(items.some(isFailureProductResponse));

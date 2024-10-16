@@ -5,7 +5,8 @@
     "noEmit": true,
     "paths": {
       "@/*": ["./app/*"],
-    }
+    },
+    "types": ["@remix-run/node", "vite/client"]
   },
   "extends": "@busybox/tsconfig/tsconfig-react.json",
   "include": ["remix.env.d.ts", "app"]

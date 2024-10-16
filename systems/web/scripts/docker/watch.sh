@@ -2,4 +2,4 @@
 
 set -ex
 WEB_PORT="${PORT:-$WEB_PORT}"
-PORT=$WEB_PORT npx remix dev
+npx remix vite:dev
