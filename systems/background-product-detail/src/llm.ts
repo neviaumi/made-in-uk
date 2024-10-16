@@ -65,6 +65,8 @@ Explanation:
       requestInit.headers = requestInitHeaders.concat(
         Object.entries(await idTokenClient.getRequestHeaders()),
       );
+    } else {
+      requestInit.headers = requestInitHeaders;
     }
 
     try {
@@ -158,6 +160,8 @@ total weight of White Fish & Salmon Dry Food (2kg) is 2kg because 2kg = 2kg<|end
     requestInit.headers = requestInitHeaders.concat(
       Object.entries(await idTokenClient.getRequestHeaders()),
     );
+  } else {
+    requestInit.headers = requestInitHeaders;
   }
 
   try {
@@ -263,6 +267,8 @@ Given Address: ${address}<|end|>`,
     requestInit.headers = requestInitHeaders.concat(
       Object.entries(await idTokenClient.getRequestHeaders()),
     );
+  } else {
+    requestInit.headers = requestInitHeaders;
   }
   try {
     return await fetch(new URL('/prompt', llmEndpoint), requestInit)

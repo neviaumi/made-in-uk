@@ -113,12 +113,16 @@ services:
       - '4000:4000'
       - '9099:9099'
       - '8080:8080'
+      - '9150:9150'
   llm:
     build:
       context: systems/llm
       dockerfile: Dockerfile
       target: dev
     command: ./scripts/docker/start.sh
+    depends_on:
+      firebase:
+        condition: service_started
     develop:
       watch:
         - action: sync+restart
@@ -129,6 +133,7 @@ services:
       - LLM_DATABASE_ID=made-in-uk
       - LLM_PORT=3000
       - LLM_ENV=development
+      - GCLOUD_PROJECT=made-in-uk
       - FIRESTORE_EMULATOR_HOST=firebase:8080
   web:
     build:
