@@ -3,7 +3,7 @@ FROM node:20-alpine AS base
 
 WORKDIR /app
 
-COPY ./package.json ./package-lock.json ./tsconfig.json ./remix.config.js ./remix.env.d.ts ./tailwind.config.mjs ./
+COPY ./package.json ./package-lock.json ./tsconfig.json ./vite.config.ts ./remix.env.d.ts ./tailwind.config.mjs ./
 COPY ./app ./app
 COPY ./public ./public
 COPY ./scripts/docker/ ./scripts/docker/
@@ -21,7 +21,7 @@ FROM node:20-alpine
 WORKDIR /app
 COPY --from=builder /app/build ./build
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json /app/package-lock.json /app/remix.config.js ./
+COPY --from=builder /app/package.json /app/package-lock.json /app/vite.config.ts ./
 COPY --from=builder /app/scripts/docker/ ./scripts/docker/
 
 RUN sh ./scripts/docker/setup.sh --prod
