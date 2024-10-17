@@ -170,3 +170,4 @@ services:
     ports:
       - 5333:5333
       - 3001:3001
+    restart: on-failure
