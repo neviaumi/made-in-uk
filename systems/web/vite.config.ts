@@ -1,23 +1,18 @@
-import { dirname, resolve } from 'node:path';
-
 import { vitePlugin as remix } from '@remix-run/dev';
 import { defineConfig } from 'vite';
-
-const rootDir = new URL(dirname(import.meta.url)).pathname;
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
   plugins: [
     remix({
-      ignoredRouteFiles: ['**/*.css'],
+      future: {
+        v3_fetcherPersist: true,
+        v3_relativeSplatPath: true,
+        v3_throwAbortReason: true,
+      },
     }),
+    tsconfigPaths(),
   ],
-  resolve: {
-    alias: {
-      '@': resolve(rootDir, 'app'),
-    },
-    conditions: ['node'],
-    mainFields: ['module', 'jsnext:main', 'jsnext'],
-  },
   server: {
     host: '0.0.0.0',
     port: Number(process.env['WEB_PORT'] ?? '5173'),

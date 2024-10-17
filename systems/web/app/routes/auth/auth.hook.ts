@@ -11,7 +11,7 @@ import {
 } from 'firebase/auth';
 import { useCallback, useEffect } from 'react';
 
-import { withErrorCode } from '@/error.server.ts';
+import { withErrorCode } from '@/error.ts';
 import type { AuthLoaderResponse } from '@/routes/auth/types.ts';
 import { AppEnvironment } from '@/types.ts';
 

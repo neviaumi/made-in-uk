@@ -1,7 +1,7 @@
 import { GoogleAuth } from 'google-auth-library';
 
 import { APP_ENV, loadConfig } from '@/config.server.ts';
-import { withErrorCode } from '@/error.server.ts';
+import { withErrorCode } from '@/error.ts';
 
 function headerInitToEntries(init: HeadersInit | undefined) {
   if (!init) return [];

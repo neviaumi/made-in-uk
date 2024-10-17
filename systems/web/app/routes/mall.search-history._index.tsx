@@ -13,7 +13,7 @@ import {
   SearchStatusBadge,
 } from '@/components/mall.search-history.tsx';
 import { NavBar } from '@/components/Nav/Nav.tsx';
-import { withErrorCode } from '@/error.server.ts';
+import { withErrorCode } from '@/error.ts';
 import { createAPIFetchClient } from '@/fetch.server.ts';
 import {
   getCurrentSession,
