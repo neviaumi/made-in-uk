@@ -10,7 +10,7 @@ import {
 } from '@/components/mall.search-history.tsx';
 import { ProductListItem } from '@/components/mall.tsx';
 import { NavBar } from '@/components/Nav/Nav.tsx';
-import { withErrorCode } from '@/error.server.ts';
+import { withErrorCode } from '@/error.ts';
 import { createAPIFetchClient } from '@/fetch.server.ts';
 import {
   type AsyncProductSuccess,

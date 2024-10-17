@@ -5,12 +5,22 @@ import {
 } from 'winston';
 
 import { APP_ENV, loadConfig } from '@/config.server.ts';
+import type { OperationResult } from '@/deps/urql.ts';
 import { Level, levels } from '@/logger.types.ts';
 import { AppEnvironment } from '@/types.ts';
 
 const config = loadConfig(APP_ENV);
 
 export type { Logger } from 'winston';
+
+export function formatURQLResult(result: OperationResult<unknown>) {
+  return {
+    data: result.data,
+    error: result.error,
+    hasNext: result.hasNext,
+  };
+}
+
 export function createLogger(appEnv: AppEnvironment) {
   const isDev = [AppEnvironment.DEV].includes(appEnv);
   return createWinstonLogger({

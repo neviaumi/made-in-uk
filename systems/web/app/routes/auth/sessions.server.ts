@@ -37,7 +37,7 @@ export function redirectToAuthPage({ request }: { request: Request }) {
   const currentUrl = new URL(request.url);
   const redirectUrl = new URL('/auth', currentUrl.origin);
   redirectUrl.searchParams.set(
-    'redirect_url',
+    'redirect_uri',
     `${currentUrl.pathname}${currentUrl.search}`,
   );
   return redirect(`${redirectUrl.pathname}${redirectUrl.search}`);

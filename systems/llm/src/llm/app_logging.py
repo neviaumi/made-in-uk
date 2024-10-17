@@ -6,7 +6,7 @@ def get_logger(*args, **kwargs):
     class JSONFormatter(logging.Formatter):
         def format(self, record: logging.LogRecord) -> str:
             ignored_fields = ['module', 'taskName', 'processName', 'threadName', 'thread', 'relativeCreated',
-                              'msecs', 'filename', 'name', 'args', 'funcName', 'process']
+                              'msecs', 'filename', 'name', 'args', 'funcName', 'process', 'exc_info', 'exc_text','stack_info', 'created']
             severity_mapping = {
                 logging.getLevelName(logging.NOTSET): 'DEFAULT',
                 logging.getLevelName(logging.DEBUG): 'DEBUG',

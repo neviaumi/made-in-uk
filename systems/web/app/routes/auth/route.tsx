@@ -1,13 +1,11 @@
-import {
-  type ActionFunctionArgs,
-  json,
-  type LoaderFunctionArgs,
-} from '@remix-run/node';
+import type { ActionFunctionArgs, LoaderFunctionArgs } from '@remix-run/node';
+import { json } from '@remix-run/node';
 import { useNavigate } from '@remix-run/react';
 import { useEffect } from 'react';
 
 import { APP_ENV, loadConfig } from '@/config.server.ts';
-import { isNativeError, withErrorCode } from '@/error.server.ts';
+import { isNativeError } from '@/error.server.ts';
+import { withErrorCode } from '@/error.ts';
 import { createAPIFetchClient } from '@/fetch.server.ts';
 import type { Logger } from '@/logger.server.ts';
 import { createLogger } from '@/logger.server.ts';
@@ -289,6 +287,6 @@ export default function Auth() {
       ).pathname;
       navigate(redirectUri);
     }
-  }, [isSignedIn, shouldExtendSession]);
-  return null;
+  }, [navigate, isSignedIn, shouldExtendSession]);
+  return <div>loading...</div>;
 }

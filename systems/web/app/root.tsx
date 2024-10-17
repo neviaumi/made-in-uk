@@ -1,30 +1,21 @@
-import { cssBundleHref } from '@remix-run/css-bundle';
-import { type LinksFunction } from '@remix-run/node';
+import '@/tailwind.css';
+
+import type { LinksFunction } from '@remix-run/node';
 import {
   Links,
-  LiveReload,
   Meta,
   Outlet,
   Scripts,
   ScrollRestoration,
 } from '@remix-run/react';
-import { cacheExchange, Client, fetchExchange, Provider } from 'urql';
 
-// import icon from '../public/icon.webp';
-import styles from './tailwind.css';
+import { cacheExchange, Client, fetchExchange, Provider } from '@/deps/urql.ts';
 
 export const links: LinksFunction = () => [
-  ...(cssBundleHref ? [{ href: cssBundleHref, rel: 'stylesheet' }] : []),
-  { href: styles, rel: 'stylesheet' },
   { as: 'image', href: '/icon.png', rel: 'preload' },
 ];
 
-export default function App() {
-  const client = new Client({
-    exchanges: [cacheExchange, fetchExchange],
-    url: '/graphql',
-  });
-
+export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
@@ -34,13 +25,23 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Provider value={client}>
-          <Outlet />
-        </Provider>
+        {children}
         <ScrollRestoration />
         <Scripts />
-        <LiveReload />
       </body>
     </html>
+  );
+}
+
+export default function App() {
+  const client = new Client({
+    exchanges: [cacheExchange, fetchExchange],
+    url: '/graphql',
+  });
+
+  return (
+    <Provider value={client}>
+      <Outlet />
+    </Provider>
   );
 }

@@ -22,12 +22,26 @@ async def prompt(request):
     cache_control_header = request.headers.get('Cache-Control', '')
     use_cache = cache_control_header not in ['no-cache', 'no-store']
     should_cache_response = cache_control_header not in ['no-store']
+    logger.info("Request to LLM", extra={
+        "use_cache": use_cache,
+        "should_cache_response": should_cache_response,
+        "request_id": request.headers.get('request-id')
+    })
     cached_response = database.get_cached_llm_prompt(system, prompt_str) if use_cache else None
     if cached_response is None:
+        logger.info("Calculate Response",extra={
+            "request_id": request.headers.get('request-id')
+        } )
         resp = llm_model.prompt(system, prompt_str)
         if should_cache_response:
+            logger.info("Cache response to db",extra={
+                "request_id": request.headers.get('request-id')
+            } )
             database.cache_llm_prompt(system, prompt_str, resp)
     else:
+        logger.info("Request cached",extra={
+            "request_id": request.headers.get('request-id')
+        } )
         resp = cached_response
     resp_end = time.time()
     logger.info("Response from LLM", extra={
