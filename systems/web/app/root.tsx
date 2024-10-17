@@ -1,3 +1,5 @@
+import '@/tailwind.css';
+
 import type { LinksFunction } from '@remix-run/node';
 import {
   Links,
@@ -6,7 +8,8 @@ import {
   Scripts,
   ScrollRestoration,
 } from '@remix-run/react';
-import { cacheExchange, Client, fetchExchange, Provider } from 'urql';
+
+import { cacheExchange, Client, fetchExchange, Provider } from '@/deps/urql.ts';
 
 export const links: LinksFunction = () => [
   { as: 'image', href: '/icon.png', rel: 'preload' },

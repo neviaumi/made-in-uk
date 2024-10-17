@@ -1,19 +1,22 @@
 import { Duplex } from 'node:stream';
 
-import { type LoaderFunctionArgs, type MetaFunction } from '@remix-run/node';
-import { defer } from '@remix-run/node';
 import { Await, useLoaderData } from '@remix-run/react';
 import { createClient, fetchExchange } from '@urql/core';
 import type React from 'react';
 import { Suspense } from 'react';
-import { gql } from 'urql';
 
 import { Page } from '@/components/Layout.tsx';
 import { Loader } from '@/components/Loader.tsx';
 import { NavBar } from '@/components/Nav/Nav.tsx';
 import { APP_ENV } from '@/config.server.ts';
+import type {
+  LoaderFunctionArgs,
+  MetaFunction,
+} from '@/deps/@remix-run/node.server.ts';
+import { defer } from '@/deps/@remix-run/node.server.ts';
+import { gql } from '@/deps/urql.ts';
 import { createAPIFetchClient } from '@/fetch.server.ts';
-import { createLogger } from '@/logger.server.ts';
+import { createLogger, formatURQLResult } from '@/logger.server.ts';
 import {
   type AsyncProductError,
   type AsyncProductSuccess,
@@ -142,27 +145,26 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
       }
       const { monitor } = result.data.dealMonitor;
 
-      logger.info('First response', { result: result.data });
+      logger.info('First response', { result: formatURQLResult(result) });
       resolve({ monitor });
     });
   });
   const items = new Promise<Array<AsyncProductError | AsyncProductSuccess>>(
-    resolve => {
+    (resolve, reject) => {
       responseStream.once('data', result => {
-        logger.info('Deferred response', { result: result.data });
+        logger.info('Deferred response', { result: formatURQLResult(result) });
+        if (result.error) return reject(result.error);
         const { items } = result.data.dealMonitor;
         resolve(items);
       });
     },
-  );
-
-  // .finally(() => {
-  //   try {
-  //     responseStream.destroy();
-  //   } catch (e) {
-  //     logger.error('Error when destroying response stream', { error: e });
-  //   }
-  // });
+  ).finally(() => {
+    try {
+      responseStream.destroy();
+    } catch (e) {
+      logger.error('Error when destroying response stream', { error: e });
+    }
+  });
   const isItemsContainError = new Promise<boolean>(resolve => {
     items.then(items => {
       resolve(items.some(isFailureProductResponse));
