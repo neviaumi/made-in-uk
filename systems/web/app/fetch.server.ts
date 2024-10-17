@@ -31,7 +31,7 @@ export function createAPIFetchClient(): typeof global.fetch {
         new Error('Unexpect usage of fetch, init is required'),
       );
     init.dispatcher = new Agent({
-      bodyTimeout: 900,
+      bodyTimeout: 900 * 1000,
     });
     const requestPath = (() => {
       if (req instanceof URL)
