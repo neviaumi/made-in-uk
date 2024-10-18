@@ -16,6 +16,7 @@ export async function action({ request }: ActionFunctionArgs) {
   const fetchClient = createAPIFetchClient();
   const gqlResponse = await fetchClient('/graphql', {
     body: request.body,
+    duplex: 'half',
     // headers: {
     //   SessionCookie: session.get('sessionCookie'),
     //   ...request.headers,

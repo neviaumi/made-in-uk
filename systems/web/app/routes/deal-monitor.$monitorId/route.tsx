@@ -15,7 +15,7 @@ import type {
 } from '@/deps/@remix-run/node.server.ts';
 import { defer } from '@/deps/@remix-run/node.server.ts';
 import { gql } from '@/deps/urql.ts';
-import { createAPIFetchClient } from '@/fetch.server.ts';
+import { createAPIFetchClient, withCustomBodyTimeout } from '@/fetch.server.ts';
 import { createLogger, formatURQLResult } from '@/logger.server.ts';
 import {
   type AsyncProductError,
@@ -95,7 +95,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
   });
   const { unsubscribe } = createClient({
     exchanges: [fetchExchange],
-    fetch: createAPIFetchClient(),
+    fetch: withCustomBodyTimeout(900 * 1000)(createAPIFetchClient('undici')),
     url: '/graphql',
   })
     .query<
