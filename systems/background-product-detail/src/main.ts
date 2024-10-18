@@ -176,6 +176,9 @@ fastify.post('/:source/product/detail', {
           requestId: requestId,
         })(productUrl)
         .finally(async () => {
+          logger.error(
+            `Closing the browser for ${product.productId} on ${source}`,
+          );
           await closePage(page);
           await closeBrowser(browser);
         });
