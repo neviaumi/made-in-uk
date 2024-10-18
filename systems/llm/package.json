@@ -10,5 +10,5 @@
   "sideEffects": false,
   "type": "module",
   "description": "Unused package.json for Monorepo configuration",
-  "version": "2024.10.12-alpha.414"
+  "version": "2024.10.18-alpha.1705"
 }
