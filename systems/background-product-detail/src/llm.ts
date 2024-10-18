@@ -144,6 +144,22 @@ total weight of Chicken with Veggies Dry Food (4kg) is 4kg because 4kg = 4kg<|en
 <|assistant|>${JSON.stringify({ totalWeight: 2, weightUnit: 'kg' })}
 Explanation:
 total weight of White Fish & Salmon Dry Food (2kg) is 2kg because 2kg = 2kg<|end|>
+<|user|>Given Input: Encore Natural Wet Cat Food Tins Fish Selection Broth - 12 x 70g<|end|>
+<|assistant|>${JSON.stringify({ totalWeight: 0.84, weightUnit: 'kg' })}
+Explanation:
+total weight of Encore Natural Wet Cat Food Tins Fish Selection Broth - 12 x 70g is 0.84kg because 12 * 70g = 840g = 0.84kg<|end|>
+<|user|>Given Input: Applaws Tuna Fillet Wet Cat Food Tins - 24 x 70g<|end|>
+<|assistant|>${JSON.stringify({ totalWeight: 1.68, weightUnit: 'kg' })}
+Explanation:
+total weight of Applaws Tuna Fillet Wet Cat Food Tins - 24 x 70g is 1.68kg because 24 * 70g = 1680g = 1.68kg<|end|>
+<|user|>Given Input: Catit Cuisine Tuna Pâté with Sardines Wet Cat Food - 12 x 95g<|end|>
+<|assistant|>${JSON.stringify({ totalWeight: 1.14, weightUnit: 'kg' })}
+Explanation:
+total weight of Catit Cuisine Tuna Pâté with Sardines Wet Cat Food - 12 x 95g is 1.14kg because 12 * 95g = 1140g = 1.14kg<|end|>
+<|user|>Given Input: Encore Natural Wet Cat Food Tins Tuna Fillet in Broth - 16 x 70g<|end|>
+<|assistant|>${JSON.stringify({ totalWeight: 1.12, weightUnit: 'kg' })}
+Explanation:
+total weight of Encore Natural Wet Cat Food Tins Tuna Fillet in Broth - 16 x 70g is 1.14kg because 16 * 70g = 1120g = 1.12kg<|end|>
 <|user|>Given Input: ${input.description}<|end|>`,
       system:
         'You are AI system that able to extract total weight from given input .',

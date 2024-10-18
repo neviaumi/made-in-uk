@@ -1,32 +1,55 @@
 import playwright from 'playwright';
 
+import { extractTotalWeight } from '@/llm.ts';
+import { type Logger } from '@/logger.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
 
 export const baseUrl = 'https://www.vetshop.co.uk/';
 
-async function extractPricePerItem(page: playwright.Page, price: number) {
+async function extractPricePerItem(
+  page: playwright.Page,
+  { price, productName }: { price: number; productName: string },
+  option: { logger: Logger; requestId: string },
+) {
   if (isNaN(price)) {
     return null;
   }
-  // VetShop total weight can be wrong but we keep it for now
-  const weightContainer = page.locator('.item-details-weight-value');
-  if (!(await weightContainer.isVisible())) {
+  const { data } = await extractTotalWeight(
+    { description: productName },
+    option,
+  );
+  const totalWeight = await (async () => {
+    if (data.totalWeight) {
+      return data.totalWeight;
+    }
+    // VetShop total weight can be wrong, used as a fell back
+    const weightContainer = page.locator('.item-details-weight-value');
+    if (!(await weightContainer.isVisible())) {
+      return null;
+    }
+    const weight = await weightContainer
+      .textContent()
+      .then(text => Number(text!.trim().slice(0, -2)));
+    if (isNaN(weight)) {
+      return null;
+    }
+    return null;
+  })();
+  if (!totalWeight) {
     return null;
   }
-  const weight = await weightContainer
-    .textContent()
-    .then(text => Number(text!.trim().slice(0, -2)));
-  if (isNaN(weight)) {
-    return null;
-  }
+
   const pricePerItem = `${Intl.NumberFormat('en-GB', {
     currency: 'GBP',
     style: 'currency',
-  }).format(price / weight)}/kg`;
+  }).format(price / totalWeight)}/${data.weightUnit}`;
   return pricePerItem;
 }
 
-export function createProductDetailsFetcher(page: playwright.Page) {
+export function createProductDetailsFetcher(
+  page: playwright.Page,
+  options: { logger: Logger; requestId: string },
+) {
   return async function fetchProductDetails(productUrl: string): Promise<
     | {
         error: { code: string; message: string; meta: Record<string, unknown> };
@@ -67,7 +90,14 @@ export function createProductDetailsFetcher(page: playwright.Page) {
         id: id!,
         image: image!,
         price: price!,
-        pricePerItem: await extractPricePerItem(page, Number(price!.slice(1))),
+        pricePerItem: await extractPricePerItem(
+          page,
+          {
+            price: Number(price!.slice(1)),
+            productName: productTitle!,
+          },
+          options,
+        ),
         source: PRODUCT_SOURCE.VET_SHOP,
         title: productTitle!,
         type: 'product',
