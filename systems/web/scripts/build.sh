@@ -2,4 +2,4 @@
 
 set -ex
 
-npx remix build
+npx remix vite:build

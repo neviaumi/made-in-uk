@@ -2,4 +2,4 @@
 
 set -ex
 WEB_PORT="${PORT:-$WEB_PORT}"
-PORT=$WEB_PORT npx remix-serve build/index.js
+PORT=$WEB_PORT npx remix-serve ./build/server/index.js
