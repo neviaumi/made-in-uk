@@ -57,8 +57,11 @@ export function createProductDetailsFetcher(
       }
     | { data: Product; ok: true }
   > {
+    const logger = options.logger;
     const fullUrl = new URL(productUrl, baseUrl).toString();
     await page.goto(fullUrl);
+    logger.info('Navigated to product page');
+
     (await page.getByRole('button', { name: 'I Agree' }).isVisible()) &&
       (await page.getByRole('button', { name: 'I Agree' }).click());
     const productTitle = await page
@@ -83,6 +86,7 @@ export function createProductDetailsFetcher(
       .locator('.item-views-blb-price-option-price')
       .first()
       .textContent();
+    logger.info('Process of product page finished');
 
     return {
       data: {
