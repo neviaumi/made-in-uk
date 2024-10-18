@@ -3,7 +3,7 @@ import { GoogleAuth } from 'google-auth-library';
 import { APP_ENV, loadConfig } from '@/config.server.ts';
 import {
   Agent,
-  fetch,
+  fetch as undiciFetch,
   type HeadersInit,
   Request,
   type RequestInit,
@@ -17,7 +17,24 @@ function headerInitToEntries(init: HeadersInit | undefined) {
   return Object.entries(init);
 }
 
-export function createAPIFetchClient(): typeof global.fetch {
+export function withCustomBodyTimeout(bodyTimeout: number) {
+  return (fetchFunction: typeof global.fetch) => {
+    return (async (req: string | Request | URL, init?: RequestInit) => {
+      if (!init)
+        throw withErrorCode('ERR_UNEXPECTED_ERROR')(
+          new Error('Unexpect usage of fetch, init is required'),
+        );
+      init.dispatcher = new Agent({
+        bodyTimeout: bodyTimeout,
+      });
+      return (fetchFunction as typeof undiciFetch)(req, init);
+    }) as typeof global.fetch;
+  };
+}
+
+export function createAPIFetchClient(
+  fetch: 'glbaol.fetch' | 'undici' = 'glbaol.fetch',
+): typeof global.fetch {
   const config = loadConfig(APP_ENV);
 
   const { webApiHost, webEnv } = {
@@ -30,9 +47,6 @@ export function createAPIFetchClient(): typeof global.fetch {
       throw withErrorCode('ERR_UNEXPECTED_ERROR')(
         new Error('Unexpect usage of fetch, init is required'),
       );
-    init.dispatcher = new Agent({
-      bodyTimeout: 900 * 1000,
-    });
     const requestPath = (() => {
       if (req instanceof URL)
         return new URL(req.pathname, webApiHost).toString();
@@ -52,6 +66,8 @@ export function createAPIFetchClient(): typeof global.fetch {
     } else {
       init.headers = initHeaders;
     }
-    return fetch(requestPath, init);
+    const fetchClient = fetch === 'undici' ? undiciFetch : global.fetch;
+    // @ts-expect-error Undici Fetch and Global fetch should similar
+    return fetchClient(requestPath, init);
   }) as typeof global.fetch;
 }

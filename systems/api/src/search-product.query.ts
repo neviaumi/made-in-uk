@@ -51,7 +51,7 @@ export const searchProductStream: ResolverFunction<
   const productSearchResult = await replyStream.waitForProductSearchResult();
   if (productSearchResult.type === 'SEARCH_PRODUCT_ERROR') {
     logger.error('search product error', { error: productSearchResult.error });
-    return;
+    return [];
   }
   const totalExpectedDocs = productSearchResult.data.total;
 
