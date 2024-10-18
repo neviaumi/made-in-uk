@@ -334,7 +334,7 @@ export function createCloudRunForBackgroundProductDetail({
               },
               resources: {
                 limits: {
-                  memory: '2048Mi',
+                  memory: '4096Mi',
                 },
               },
               startupProbe: {

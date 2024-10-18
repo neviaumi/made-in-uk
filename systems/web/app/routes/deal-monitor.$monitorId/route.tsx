@@ -225,7 +225,21 @@ export default function GoodDealsMonitor() {
               ),
             )}
           >
-            <Await resolve={loaderData.items}>
+            <Await
+              errorElement={Array.from({ length: monitor.numberOfItems }).map(
+                (_, index) => (
+                  <li className={'tw-group'} key={index}>
+                    <ErrorItem />
+                    <h1
+                      className={'tw-text-center tw-text-xl tw-font-semibold'}
+                    >
+                      Refresh or report to admin with requestId
+                    </h1>
+                  </li>
+                ),
+              )}
+              resolve={loaderData.items}
+            >
               {items => {
                 return items
                   .toSorted((productA, productB) => {
