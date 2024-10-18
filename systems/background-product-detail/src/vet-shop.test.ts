@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import {
   closeBrowser,
@@ -6,13 +6,34 @@ import {
   createBrowserPage,
   createChromiumBrowser,
 } from '@/browser.ts';
+import { APP_ENV } from '@/config.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
+import { createLogger } from '@/logger.ts';
+import { createLLMPromptHandler } from '@/mocks/handlers.ts';
+import { HttpResponse } from '@/mocks/msw.ts';
+import { server } from '@/mocks/node.ts';
 import { baseUrl, createProductDetailsFetcher } from '@/vet-shop.ts';
 
 describe('Vet Shop', () => {
+  beforeAll(() => {
+    server.listen();
+  });
+  afterAll(() => {
+    server.close();
+  });
   it(
     'Cat Wet food',
     async () => {
+      server.use(
+        createLLMPromptHandler(() =>
+          HttpResponse.json({
+            message: JSON.stringify({
+              totalWeight: 0.56,
+              weightUnit: 'kg',
+            }),
+          }),
+        ),
+      );
       const browser = await createChromiumBrowser({
         headless: true,
       });
@@ -29,7 +50,10 @@ describe('Vet Shop', () => {
           status: 200,
         });
       });
-      const data = await createProductDetailsFetcher(page)(url);
+      const data = await createProductDetailsFetcher(page, {
+        logger: createLogger(APP_ENV),
+        requestId: 'unused',
+      })(url);
       await closePage(page);
       await closeBrowser(browser);
       expect(data.ok).toBeTruthy();
@@ -40,7 +64,7 @@ describe('Vet Shop', () => {
           image:
             'https://www.vetshop.co.uk/SCA%20Product%20Images/Lilys-Kitchen-Shredded-Fillets-Variety_vetshop-1.png?resizeid=8&resizeh=300&resizew=300',
           price: '£8.39',
-          pricePerItem: '£29.96/kg',
+          pricePerItem: '£14.98/kg',
           source: 'VET_SHOP',
           title:
             "Lily's Kitchen Shredded Fillets Variety Pack Wet Cat Food Tins - 8 x 70g   By Lilys Kitchen",
