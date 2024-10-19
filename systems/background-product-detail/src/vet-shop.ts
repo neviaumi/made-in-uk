@@ -60,7 +60,7 @@ export function createProductDetailsFetcher(
     const logger = options.logger;
     const fullUrl = new URL(productUrl, baseUrl).toString();
     await page.goto(fullUrl);
-    logger.info('Navigated to product page');
+    logger.info('Navigated to product page on VET_SHOP');
 
     (await page.getByRole('button', { name: 'I Agree' }).isVisible()) &&
       (await page.getByRole('button', { name: 'I Agree' }).click());
@@ -86,7 +86,7 @@ export function createProductDetailsFetcher(
       .locator('.item-views-blb-price-option-price')
       .first()
       .textContent();
-    logger.info('Process of product page finished');
+    logger.info('Process of product page finished on VET_SHOP');
 
     return {
       data: {

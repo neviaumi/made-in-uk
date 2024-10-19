@@ -1,13 +1,6 @@
 import Fastify from 'fastify';
 
 import {
-  closeBrowser,
-  closePage,
-  createAntiDetectionChromiumBrowser,
-  createBrowserPage,
-  createChromiumBrowser,
-} from '@/browser.ts';
-import {
   createCloudTaskClient,
   createProductDetailSubTaskScheduler,
 } from '@/cloud-task.ts';
@@ -22,14 +15,9 @@ import {
   databaseHealthCheck,
 } from '@/database.ts';
 import * as error from '@/error.ts';
-import * as lilysKitchen from '@/lilys-kitchen.ts';
 import { adaptToFastifyLogger, createLogger } from '@/logger.ts';
-import * as ocado from '@/ocado.ts';
-import * as petsAtHome from '@/pets-at-home.ts';
-import * as sainsbury from '@/sainsbury.ts';
+import crawlerQueue from '@/queue.ts';
 import { PRODUCT_SOURCE, REPLY_DATA_TYPE, TASK_STATE } from '@/types.ts';
-import * as vetShop from '@/vet-shop.ts';
-import * as zooplus from '@/zooplus.ts';
 
 const config = loadConfig(APP_ENV);
 
@@ -87,8 +75,13 @@ fastify.post('/:source/product/detail', {
     };
     const { source } = req.params as { source: PRODUCT_SOURCE };
     const { productId, productUrl } = product;
-
     const logger = req.log.child({ taskId });
+    logger.info(
+      `Receive process product detail of ${product.productId} on ${source}`,
+      {
+        product: productId,
+      },
+    );
     const database = createDatabaseConnection();
 
     const taskState = connectTaskStateOnDatabase(database, requestId, taskId);
@@ -153,56 +146,26 @@ fastify.post('/:source/product/detail', {
           ),
         );
       }
-      const browser =
-        source === PRODUCT_SOURCE.SAINSBURY
-          ? await createAntiDetectionChromiumBrowser()
-          : await createChromiumBrowser();
-      const page = await createBrowserPage(browser)();
-      const fetchers: {
-        [key in PRODUCT_SOURCE]: {
-          createProductDetailsFetcher: typeof ocado.createProductDetailsFetcher;
-        };
-      } = {
-        [PRODUCT_SOURCE.LILYS_KITCHEN]: lilysKitchen,
-        [PRODUCT_SOURCE.OCADO]: ocado,
-        [PRODUCT_SOURCE.PETS_AT_HOME]: petsAtHome,
-        [PRODUCT_SOURCE.ZOOPLUS]: zooplus,
-        [PRODUCT_SOURCE.VET_SHOP]: vetShop,
-        [PRODUCT_SOURCE.SAINSBURY]: sainsbury,
-      };
-      const productInfo = await fetchers[source]
-        .createProductDetailsFetcher(page, {
-          logger: logger,
+      const product = await crawlerQueue.push({
+        taskInput: {
+          options: {
+            logger,
+          },
+          productId: productId,
+          productUrl: productUrl,
           requestId: requestId,
-        })(productUrl)
-        .finally(async () => {
-          logger.error(
-            `Closing the browser for ${product.productId} on ${source}`,
-          );
-          await closePage(page);
-          await closeBrowser(browser);
-        });
-      if (!productInfo.ok) {
-        throw error.withHTTPError(500, 'Failed to fetch product details', {
-          retryAble: true,
-        })(
-          error.withErrorCode('ERR_UNEXPECTED_ERROR')(
-            new Error('Failed to fetch product details'),
-          ),
-        );
-      }
+          source: source,
+        },
+      });
       const batchWrite = database.batch();
       batchWrite.set(
         replyStream.repliesStream,
         replyStream.shapeOfReplyStreamItem({
-          data: productInfo.data,
+          data: product,
           type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL,
         }),
       );
-      batchWrite.set(
-        cache.cachedProduct,
-        cache.shapeOfCachedProduct(productInfo.data),
-      );
+      batchWrite.set(cache.cachedProduct, cache.shapeOfCachedProduct(product));
       batchWrite.set(
         taskState.taskState,
         taskState.shapeOfTaskStateObject(TASK_STATE.DONE),
@@ -210,9 +173,9 @@ fastify.post('/:source/product/detail', {
       batchWrite.delete(lock.lock);
       await batchWrite.commit();
       logger.info(
-        `Complete process product detail of ${product.productId} on ${source}`,
+        `Complete process product detail of ${product.id} on ${source}`,
         {
-          product: productInfo.data,
+          product: product,
         },
       );
       return reply.code(204).send();
