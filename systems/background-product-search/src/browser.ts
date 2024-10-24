@@ -1,5 +1,7 @@
 import { BrowserPool, PlaywrightPlugin } from '@crawlee/browser-pool';
 import playwright from 'playwright';
+import playwrightExtra from 'playwright-extra';
+import stealth from 'puppeteer-extra-plugin-stealth';
 
 const defaultBrowserPool = createBrowserPool({
   browserPlugins: [createBrowserPluginFroBrowserPool()],
@@ -10,7 +12,16 @@ export type Page = playwright.Page;
 export function createBrowserPluginFroBrowserPool(
   options?: ConstructorParameters<typeof PlaywrightPlugin>[1],
 ) {
-  return new PlaywrightPlugin(playwright.chromium, options);
+  const chromium = playwrightExtra.chromium;
+  const antiDetection = stealth();
+  antiDetection.enabledEvasions = new Set([
+    'chrome.app',
+    'chrome.runtime',
+    'user-agent-override',
+    'window.outerdimensions',
+  ]);
+  chromium.use(antiDetection);
+  return new PlaywrightPlugin(chromium, options);
 }
 
 export function createBrowserPool(
