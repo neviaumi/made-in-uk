@@ -2,12 +2,7 @@ import { Readable } from 'node:stream';
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  closeBrowser,
-  closePage,
-  createAntiDetectionChromiumBrowser,
-  createBrowserPage,
-} from '@/browser.ts';
+import { closeBrowserPage, createBrowserPage } from '@/browser.ts';
 import { APP_ENV } from '@/config.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
 import { createLogger } from '@/logger.ts';
@@ -19,12 +14,11 @@ describe('background-product-search', () => {
   it(
     'fetch until no more product found',
     async () => {
-      const browser = await createAntiDetectionChromiumBrowser({
-        headless: true,
-      });
-      const page = await createBrowserPage(browser)({
-        javaScriptEnabled: false,
-        offline: true,
+      const page = await createBrowserPage()({
+        pageOptions: {
+          javaScriptEnabled: false,
+          offline: true,
+        },
       });
       await page.route(
         new URL('/gol-ui/SearchResults/Beer', baseUrl).toString(),
@@ -97,8 +91,7 @@ describe('background-product-search', () => {
         createProductsSearchHandler(page, { logger })('Beer'),
       );
       streams.on('end', async () => {
-        await closePage(page);
-        await closeBrowser(browser);
+        await closeBrowserPage(page);
       });
       const response = await streams.toArray();
       expect(new Set(response.map(item => item[0])).size).toEqual(

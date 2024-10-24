@@ -1,5 +1,6 @@
 import playwright from 'playwright';
 
+import { closeCookieModals } from '@/browser-utils.ts';
 import { APP_ENV } from '@/config.ts';
 import { createLogger, type Logger } from '@/logger.ts';
 import { PRODUCT_SOURCE } from '@/types.ts';
@@ -45,16 +46,8 @@ export function createProductsSearchHandler(
   > {
     await page.goto(
       new URL(`/gol-ui/SearchResults/${keyword}`, baseUrl).toString(),
-      {
-        waitUntil: 'domcontentloaded',
-      },
     );
-    (await page
-      .getByRole('button', {
-        name: 'Accept all cookies',
-      })
-      .isVisible()) &&
-      (await page.getByRole('button', { name: 'Accept all cookies' }).click());
+    await closeCookieModals(page);
     if (await page.locator('.si__no-results').isVisible()) {
       return;
     }

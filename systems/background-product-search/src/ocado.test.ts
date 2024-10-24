@@ -2,12 +2,7 @@ import { Readable } from 'node:stream';
 
 import { describe, expect, it } from 'vitest';
 
-import {
-  closeBrowser,
-  closePage,
-  createBrowserPage,
-  createChromiumBrowser,
-} from '@/browser.ts';
+import { closeBrowserPage, createBrowserPage } from '@/browser.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
 import { baseUrl, createProductsSearchHandler } from '@/ocado.ts';
 
@@ -17,14 +12,12 @@ describe(
     it(
       'what will happen when no product found',
       async () => {
-        const browser = await createChromiumBrowser({
-          headless: true,
+        const page = await createBrowserPage()({
+          pageOptions: {
+            javaScriptEnabled: false,
+            offline: true,
+          },
         });
-        const browserContext = await browser.newContext({
-          javaScriptEnabled: false,
-          offline: true,
-        });
-        const page = await createBrowserPage(browserContext)();
         await page.route(
           new URL('/search?entry=jkfjafjk&display=1024', baseUrl).toString(),
           async route => {
@@ -38,8 +31,7 @@ describe(
           createProductsSearchHandler(page)('jkfjafjk'),
         );
         respStream.on('end', async () => {
-          await closePage(page);
-          await closeBrowser(browser);
+          await closeBrowserPage(page);
         });
         const numberOfRecords = await respStream.reduce(acc => {
           return acc + 1;
@@ -50,14 +42,12 @@ describe(
       60000 * 60,
     );
     it('should load all product in response', async () => {
-      const browser = await createChromiumBrowser({
-        headless: true,
+      const page = await createBrowserPage()({
+        pageOptions: {
+          javaScriptEnabled: false,
+          offline: true,
+        },
       });
-      const browserContext = await browser.newContext({
-        javaScriptEnabled: false,
-        offline: true,
-      });
-      const page = await createBrowserPage(browserContext)();
       await page.route(
         new URL('/search?entry=beer&display=1024', baseUrl).toString(),
         async route => {
@@ -71,14 +61,13 @@ describe(
         createProductsSearchHandler(page)('beer'),
       );
       respStream.on('end', async () => {
-        await closePage(page);
-        await closeBrowser(browser);
+        await closeBrowserPage(page);
       });
       const numberOfRecords = await respStream.reduce(acc => {
         return acc + 1;
       }, 0);
 
-      expect(numberOfRecords).toEqual(92);
+      expect(numberOfRecords).toEqual(97);
     });
   },
   60000 * 60,

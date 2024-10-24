@@ -1,6 +1,8 @@
 {
   "author": "",
   "dependencies": {
+    "@crawlee/browser-pool": "3.11.5",
+    "@crawlee/playwright": "3.11.5",
     "@google-cloud/firestore": "7.7.0",
     "@google-cloud/tasks": "5.4.0",
     "@grpc/grpc-js": "1.10.9",
