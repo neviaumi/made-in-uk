@@ -1,9 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vitest';
 
 import {
-  closeBrowser,
-  closePage,
-  createAntiDetectionChromiumBrowser,
+  closeBrowserPage,
+  closeBrowserPool,
   createBrowserPage,
 } from '@/browser.ts';
 import { APP_ENV } from '@/config.ts';
@@ -14,15 +13,17 @@ import { baseUrl, createProductDetailsFetcher } from '@/sainsbury.ts';
 const logger = createLogger(APP_ENV);
 
 describe('Sainsbury', () => {
+  afterAll(async () => {
+    await closeBrowserPool();
+  });
   it(
     'handle price per item less than one pound',
     async () => {
-      const browser = await createAntiDetectionChromiumBrowser({
-        headless: true,
-      });
-      const page = await createBrowserPage(browser)({
-        javaScriptEnabled: false,
-        offline: true,
+      const page = await createBrowserPage()({
+        pageOptions: {
+          javaScriptEnabled: false,
+          offline: true,
+        },
       });
       const url = '/gol-ui/product/sainsburys-british-whole-milk-227l-4-pint-';
 
@@ -67,8 +68,7 @@ Packed in United Kingdom`,
         });
       }
 
-      await closePage(page);
-      await closeBrowser(browser);
+      await closeBrowserPage(page);
     },
     {
       timeout: 60000 * 60,
@@ -77,12 +77,11 @@ Packed in United Kingdom`,
   it(
     "handle product country of origin wasn't able to split",
     async () => {
-      const browser = await createAntiDetectionChromiumBrowser({
-        headless: true,
-      });
-      const page = await createBrowserPage(browser)({
-        javaScriptEnabled: false,
-        offline: true,
+      const page = await createBrowserPage()({
+        pageOptions: {
+          javaScriptEnabled: false,
+          offline: true,
+        },
       });
       const url = '/gol-ui/product/courvoisier-cognac--vs-70cl';
 
@@ -124,8 +123,7 @@ Packed in United Kingdom`,
         });
       }
 
-      await closePage(page);
-      await closeBrowser(browser);
+      await closeBrowserPage(page);
     },
     {
       timeout: 60000 * 60,
@@ -134,12 +132,11 @@ Packed in United Kingdom`,
   it(
     'parse product details',
     async () => {
-      const browser = await createAntiDetectionChromiumBrowser({
-        headless: true,
-      });
-      const page = await createBrowserPage(browser)({
-        javaScriptEnabled: false,
-        offline: true,
+      const page = await createBrowserPage()({
+        pageOptions: {
+          javaScriptEnabled: false,
+          offline: true,
+        },
       });
       const url =
         '/shop/gb/groceries/product/details/peroni-nastro-azzuro-12x330ml';
@@ -183,8 +180,7 @@ Packed in United Kingdom`,
         });
       }
 
-      await closePage(page);
-      await closeBrowser(browser);
+      await closeBrowserPage(page);
     },
     {
       timeout: 60000 * 60,

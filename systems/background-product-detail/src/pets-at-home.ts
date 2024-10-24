@@ -1,9 +1,8 @@
-import playwright from 'playwright';
-
+import type { Page } from '@/browser.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
 
 export const baseUrl = 'https://www.petsathome.com';
-export function createProductDetailsFetcher(page: playwright.Page) {
+export function createProductDetailsFetcher(page: Page) {
   return async function fetchProductDetails(productUrl: string): Promise<
     | {
         error: { code: string; message: string; meta: Record<string, unknown> };

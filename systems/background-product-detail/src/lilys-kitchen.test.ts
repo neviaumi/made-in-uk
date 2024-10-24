@@ -1,11 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import {
-  closeBrowser,
-  closePage,
-  createBrowserPage,
-  createChromiumBrowser,
-} from '@/browser.ts';
+import { closeBrowserPage, createBrowserPage } from '@/browser.ts';
 import { APP_ENV } from '@/config.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
 import { baseUrl, createProductDetailsFetcher } from '@/lilys-kitchen.ts';
@@ -36,12 +31,11 @@ describe('Lilys Kitchen', () => {
           }),
         ),
       );
-      const browser = await createChromiumBrowser({
-        headless: true,
-      });
-      const page = await createBrowserPage(browser)({
-        javaScriptEnabled: false,
-        offline: true,
+      const page = await createBrowserPage()({
+        pageOptions: {
+          javaScriptEnabled: false,
+          offline: true,
+        },
       });
       const url =
         '/for-cats/dry-food/chicken-with-veggies-dry-food-4kg-ZCDDC4KG.html';
@@ -55,8 +49,7 @@ describe('Lilys Kitchen', () => {
         logger,
         requestId: 'unused',
       })(url);
-      await closePage(page);
-      await closeBrowser(browser);
+      await closeBrowserPage(page);
       expect(data.ok).toBeTruthy();
       data.ok &&
         expect(data.data).toEqual({

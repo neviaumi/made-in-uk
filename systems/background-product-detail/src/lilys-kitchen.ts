@@ -1,12 +1,11 @@
-import playwright from 'playwright';
-
+import { type Page } from '@/browser.ts';
 import { extractTotalWeight } from '@/llm.ts';
 import { type Logger } from '@/logger.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
 
 export const baseUrl = 'https://www.lilyskitchen.co.uk/';
 export function createProductDetailsFetcher(
-  page: playwright.Page,
+  page: Page,
   options: {
     logger: Logger;
     requestId: string;
