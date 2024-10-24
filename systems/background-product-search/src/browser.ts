@@ -1,43 +1,38 @@
+import { BrowserPool, PlaywrightPlugin } from '@crawlee/browser-pool';
 import playwright from 'playwright';
-import playwrightExtra from 'playwright-extra';
-import stealth from 'puppeteer-extra-plugin-stealth';
 
-export function createAntiDetectionChromiumBrowser(
-  browserLaunchOptions?: playwright.LaunchOptions,
+const defaultBrowserPool = createBrowserPool({
+  browserPlugins: [createBrowserPluginFroBrowserPool()],
+});
+
+export type Page = playwright.Page;
+
+export function createBrowserPluginFroBrowserPool(
+  options?: ConstructorParameters<typeof PlaywrightPlugin>[1],
 ) {
-  const chromium = playwrightExtra.chromium;
-  const antiDetection = stealth();
-  antiDetection.enabledEvasions = new Set([
-    'chrome.app',
-    'chrome.runtime',
-    'user-agent-override',
-    'window.outerdimensions',
-  ]);
-  chromium.use(antiDetection);
-  return chromium.launch(browserLaunchOptions);
+  return new PlaywrightPlugin(playwright.chromium, options);
 }
 
-export function createChromiumBrowser(
-  browserLaunchOptions?: playwright.LaunchOptions,
+export function createBrowserPool(
+  ...args: ConstructorParameters<typeof BrowserPool>
 ) {
-  const chromium = playwright.chromium;
-  return chromium.launch(browserLaunchOptions);
+  return new BrowserPool(...args);
 }
 
 export function createBrowserPage(
-  browser: playwright.Browser | playwright.BrowserContext,
+  browserPool: typeof defaultBrowserPool = defaultBrowserPool,
 ) {
-  return (pageOptions?: playwright.BrowserContextOptions) => {
-    return browser.newPage(pageOptions);
+  return (...args: Parameters<typeof browserPool.newPage>): Promise<Page> => {
+    return browserPool.newPage(...args) as Promise<Page>;
   };
 }
 
-export function closeBrowser(browser: playwright.Browser) {
-  return browser.close();
+export function closeBrowserPool(
+  browserPool: typeof defaultBrowserPool = defaultBrowserPool,
+) {
+  return browserPool.destroy();
 }
 
-export function closePage(page: playwright.Page) {
+export function closeBrowserPage(page: Page) {
   return page.close();
 }
-
-export { type Browser } from 'playwright';

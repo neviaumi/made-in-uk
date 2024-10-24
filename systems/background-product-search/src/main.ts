@@ -4,13 +4,7 @@ import { Readable } from 'node:stream';
 import Fastify from 'fastify';
 import hashObject from 'hash-object';
 
-import {
-  closeBrowser,
-  closePage,
-  createAntiDetectionChromiumBrowser,
-  createBrowserPage,
-  createChromiumBrowser,
-} from '@/browser.ts';
+import { closeBrowserPage, createBrowserPage } from '@/browser.ts';
 import {
   createCloudTaskClient,
   createProductDetailScheduler,
@@ -144,12 +138,8 @@ fastify.post(`/:source/product/search`, {
             ),
           );
         }
-        const browser =
-          source === PRODUCT_SOURCE.SAINSBURY
-            ? await createAntiDetectionChromiumBrowser()
-            : await createChromiumBrowser();
 
-        const page = await createBrowserPage(browser)();
+        const page = await createBrowserPage()();
         const productModules: {
           [key in PRODUCT_SOURCE]: {
             createProductsSearchHandler: typeof ocado.createProductsSearchHandler;
@@ -167,8 +157,7 @@ fastify.post(`/:source/product/search`, {
         try {
           yield* generator;
         } finally {
-          await closePage(page);
-          await closeBrowser(browser);
+          await closeBrowserPage(page);
         }
       }
     }
