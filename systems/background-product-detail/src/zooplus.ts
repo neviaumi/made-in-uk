@@ -55,10 +55,6 @@ export function createProductDetailsFetcher(
     const fullUrl = new URL(productUrl, baseUrl).toString();
     await page.goto(fullUrl);
     await closeCookieModals(page);
-    // (await page
-    //   .getByRole('button', { name: 'Agree and continue' })
-    //   .isVisible()) &&
-    //   (await page.getByRole('button', { name: 'Agree and continue' }).click());
     const productTitle = await page
       .locator('meta[property="og:title"]')
       .getAttribute('content');
