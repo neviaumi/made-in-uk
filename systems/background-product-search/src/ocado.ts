@@ -3,10 +3,12 @@ import { Duplex, Readable } from 'node:stream';
 import playwright from 'playwright';
 
 import { closeCookieModals, infiniteScroll } from '@/browser-utils.ts';
-import type { Logger } from '@/logger.ts';
+import { APP_ENV } from '@/config.ts';
+import { createLogger, type Logger } from '@/logger.ts';
 import { PRODUCT_SOURCE } from '@/types.ts';
 
 export const baseUrl = 'https://www.ocado.com';
+const defaultLogger = createLogger(APP_ENV);
 
 export function createProductsSearchHandler(
   page: playwright.Page,
@@ -23,8 +25,8 @@ export function createProductsSearchHandler(
       },
     ]
   > {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const logger = options?.logger;
+    const logger = options?.logger ?? defaultLogger;
+
     const responseStream = new Duplex({
       final() {
         this.push(null);
@@ -73,6 +75,11 @@ export function createProductsSearchHandler(
               ),
             )
             .then(links => {
+              if (links.length > 0) {
+                logger.info(
+                  `Match ${links.length} products that match ${keyword} on Ocado`,
+                );
+              }
               links.forEach(link => {
                 responseStream.push(link);
                 productsAlreadyLoaded.add(link[0]);
