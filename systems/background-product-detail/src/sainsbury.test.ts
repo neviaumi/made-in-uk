@@ -1,10 +1,6 @@
-import { afterAll, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import {
-  closeBrowserPage,
-  closeBrowserPool,
-  createBrowserPage,
-} from '@/browser.ts';
+import { closeBrowserPage, createBrowserPage } from '@/browser.ts';
 import { APP_ENV } from '@/config.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
 import { createLogger } from '@/logger.ts';
@@ -13,9 +9,6 @@ import { baseUrl, createProductDetailsFetcher } from '@/sainsbury.ts';
 const logger = createLogger(APP_ENV);
 
 describe('Sainsbury', () => {
-  afterAll(async () => {
-    await closeBrowserPool();
-  });
   it(
     'handle price per item less than one pound',
     async () => {

@@ -1,4 +1,5 @@
 import type { Page } from '@/browser.ts';
+import { closeCookieModals } from '@/browser-utils.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
 
 export const baseUrl = 'https://www.petsathome.com';
@@ -12,8 +13,7 @@ export function createProductDetailsFetcher(page: Page) {
   > {
     const fullUrl = new URL(productUrl, baseUrl).toString();
     await page.goto(fullUrl);
-    (await page.getByRole('button', { name: 'Allow all' }).isVisible()) &&
-      (await page.getByRole('button', { name: 'Allow all' }).click());
+    await closeCookieModals(page);
     const productTitle = await page.title();
     const image = await page
       .locator('meta[property="og:image"]')
