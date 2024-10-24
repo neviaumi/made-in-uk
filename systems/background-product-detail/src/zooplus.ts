@@ -1,12 +1,11 @@
-import playwright from 'playwright';
-
+import { type Page } from '@/browser.ts';
 import { APP_ENV } from '@/config.ts';
 import { createLogger, type Logger } from '@/logger.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
 
 export const baseUrl = 'https://www.zooplus.co.uk/';
 
-async function extractPrice(page: playwright.Page) {
+async function extractPrice(page: Page) {
   const priceContainer = page.locator(
     '[data-zta="SelectedArticleBox__TopSection"]',
   );
@@ -38,7 +37,7 @@ async function extractPrice(page: playwright.Page) {
 }
 
 export function createProductDetailsFetcher(
-  page: playwright.Page,
+  page: Page,
   options?: {
     logger: Logger;
   },

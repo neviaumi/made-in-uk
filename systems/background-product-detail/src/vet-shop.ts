@@ -1,5 +1,4 @@
-import playwright from 'playwright';
-
+import { type Page } from '@/browser.ts';
 import { extractTotalWeight } from '@/llm.ts';
 import { type Logger } from '@/logger.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
@@ -7,7 +6,7 @@ import { type Product, PRODUCT_SOURCE } from '@/types.ts';
 export const baseUrl = 'https://www.vetshop.co.uk/';
 
 async function extractPricePerItem(
-  page: playwright.Page,
+  page: Page,
   { price, productName }: { price: number; productName: string },
   option: { logger: Logger; requestId: string },
 ) {
@@ -47,7 +46,7 @@ async function extractPricePerItem(
 }
 
 export function createProductDetailsFetcher(
-  page: playwright.Page,
+  page: Page,
   options: { logger: Logger; requestId: string },
 ) {
   return async function fetchProductDetails(productUrl: string): Promise<

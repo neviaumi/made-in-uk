@@ -16,7 +16,7 @@ import {
 } from '@/database.ts';
 import * as error from '@/error.ts';
 import { adaptToFastifyLogger, createLogger } from '@/logger.ts';
-import crawlerQueue from '@/queue.ts';
+import * as requestQueue from '@/request-queue.ts';
 import { PRODUCT_SOURCE, REPLY_DATA_TYPE, TASK_STATE } from '@/types.ts';
 
 const config = loadConfig(APP_ENV);
@@ -146,16 +146,14 @@ fastify.post('/:source/product/detail', {
           ),
         );
       }
-      const product = await crawlerQueue.push({
-        taskInput: {
-          options: {
-            logger,
-          },
-          productId: productId,
-          productUrl: productUrl,
-          requestId: requestId,
-          source: source,
+      const product = await requestQueue.processRequest({
+        options: {
+          logger,
         },
+        productId: productId,
+        productUrl: productUrl,
+        requestId: requestId,
+        source: source,
       });
       const batchWrite = database.batch();
       batchWrite.set(

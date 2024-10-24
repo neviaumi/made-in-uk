@@ -1,15 +1,15 @@
 {
   "author": "",
   "dependencies": {
+    "@crawlee/browser-pool": "3.11.5",
     "@google-cloud/firestore": "7.7.0",
     "@google-cloud/tasks": "5.5.0",
     "@grpc/grpc-js": "1.10.11",
     "convict": "6.2.4",
     "fastify": "5.0.0",
     "google-auth-library": "9.13.0",
+    "p-limit": "6.1.0",
     "playwright": "1.47.2",
-    "playwright-extra": "4.3.6",
-    "puppeteer-extra-plugin-stealth": "2.11.2",
     "ramda": "0.30.0",
     "undici": "6.19.8",
     "winston": "3.13.0"

@@ -1,11 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
-import {
-  closeBrowser,
-  closePage,
-  createBrowserPage,
-  createChromiumBrowser,
-} from '@/browser.ts';
+import { closeBrowserPage, createBrowserPage } from '@/browser.ts';
 import { APP_ENV } from '@/config.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
 import { createLogger } from '@/logger.ts';
@@ -37,14 +32,13 @@ describe('Ocado fetcher', () => {
         }),
       ),
     );
-    const browser = await createChromiumBrowser({
-      headless: true,
+
+    const page = await createBrowserPage()({
+      pageOptions: {
+        javaScriptEnabled: false,
+        offline: true,
+      },
     });
-    const browserContext = await browser.newContext({
-      javaScriptEnabled: false,
-      offline: true,
-    });
-    const page = await createBrowserPage(browserContext)();
     await page.route(
       new URL(
         '/products/blue-dragon-medium-egg-noodles-623907011',
@@ -61,8 +55,7 @@ describe('Ocado fetcher', () => {
       logger,
       requestId: 'unused',
     })('/products/blue-dragon-medium-egg-noodles-623907011');
-    await closePage(page);
-    await closeBrowser(browser);
+    await closeBrowserPage(page);
     expect(resp.ok).toBeTruthy();
     if (!resp.ok) throw new Error('Expected response to be ok');
     expect(resp.data.pricePerItem).toEqual('70p per 100g');
@@ -107,14 +100,12 @@ describe('Ocado fetcher', () => {
       url: '/products/m-s-maxim-straight-sided-mug-white-567408011',
     },
   ])('$case', async ({ expectFunctions, fixture, url }) => {
-    const browser = await createChromiumBrowser({
-      headless: true,
+    const page = await createBrowserPage()({
+      pageOptions: {
+        javaScriptEnabled: false,
+        offline: true,
+      },
     });
-    const browserContext = await browser.newContext({
-      javaScriptEnabled: false,
-      offline: true,
-    });
-    const page = await createBrowserPage(browserContext)();
     await page.route(new URL(url, baseUrl).toString(), async route => {
       return route.fulfill({
         body: await loadFixtures(fixture),
@@ -125,8 +116,7 @@ describe('Ocado fetcher', () => {
       logger,
       requestId: 'unused',
     })(url);
-    await closePage(page);
-    await closeBrowser(browser);
+    await closeBrowserPage(page);
     expectFunctions(resp);
   });
 }, 60000);

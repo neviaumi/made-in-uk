@@ -1,5 +1,4 @@
-import playwright from 'playwright';
-
+import type { Page } from '@/browser.ts';
 import { APP_ENV } from '@/config.ts';
 import { extractCountryFromAddress } from '@/llm.ts';
 import { createLogger, type Logger } from '@/logger.ts';
@@ -9,7 +8,7 @@ import { type Product, PRODUCT_SOURCE } from './types.ts';
 export const baseUrl = 'https://www.ocado.com';
 
 async function lookupCountryOfOrigin(
-  page: playwright.Page,
+  page: Page,
   options: { logger: Logger; requestId: string },
 ) {
   const { logger, requestId } = options;
@@ -79,7 +78,7 @@ async function lookupCountryOfOrigin(
 }
 
 export function createProductDetailsFetcher(
-  page: playwright.Page,
+  page: Page,
   options: {
     logger: Logger;
     requestId: string;
