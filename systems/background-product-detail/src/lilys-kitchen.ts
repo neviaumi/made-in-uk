@@ -1,4 +1,5 @@
 import { type Page } from '@/browser.ts';
+import { closeCookieModals } from '@/browser-utils.ts';
 import { extractTotalWeight } from '@/llm.ts';
 import { type Logger } from '@/logger.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
@@ -21,10 +22,8 @@ export function createProductDetailsFetcher(
   > {
     const fullUrl = new URL(productUrl, baseUrl).toString();
     await page.goto(fullUrl);
-    (await page
-      .getByRole('button', { name: 'Accept All Cookies' })
-      .isVisible()) &&
-      (await page.getByRole('button', { name: 'Accept All Cookies' }).click());
+    await closeCookieModals(page);
+
     const productTitle = await page
       .locator('meta[property="og:title"]')
       .getAttribute('content');

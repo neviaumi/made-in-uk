@@ -48,6 +48,7 @@ describe('Vet Shop', () => {
         logger: createLogger(APP_ENV),
         requestId: 'unused',
       })(url);
+      await page.pause();
       await closeBrowserPage(page);
       expect(data.ok).toBeTruthy();
       data.ok &&

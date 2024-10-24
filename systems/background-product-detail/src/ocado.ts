@@ -1,4 +1,5 @@
 import type { Page } from '@/browser.ts';
+import { closeCookieModals } from '@/browser-utils.ts';
 import { APP_ENV } from '@/config.ts';
 import { extractCountryFromAddress } from '@/llm.ts';
 import { createLogger, type Logger } from '@/logger.ts';
@@ -94,12 +95,7 @@ export function createProductDetailsFetcher(
   > {
     const fullUrl = new URL(productUrl, baseUrl).toString();
     await page.goto(fullUrl);
-    (await page
-      .getByRole('button', {
-        name: 'Accept',
-      })
-      .isVisible()) &&
-      (await page.getByRole('button', { name: 'Accept' }).click());
+    await closeCookieModals(page);
 
     const countryOfOrigin = await lookupCountryOfOrigin(page, {
       logger,

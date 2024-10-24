@@ -1,4 +1,5 @@
 import { type Page } from '@/browser.ts';
+import { closeCookieModals } from '@/browser-utils.ts';
 import { extractTotalWeight } from '@/llm.ts';
 import { type Logger } from '@/logger.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
@@ -60,9 +61,7 @@ export function createProductDetailsFetcher(
     const fullUrl = new URL(productUrl, baseUrl).toString();
     await page.goto(fullUrl);
     logger.info('Navigated to product page on VET_SHOP');
-
-    (await page.getByRole('button', { name: 'I Agree' }).isVisible()) &&
-      (await page.getByRole('button', { name: 'I Agree' }).click());
+    await closeCookieModals(page);
     const productTitle = await page
       .locator('meta[name="og:title"]')
       .getAttribute('content');

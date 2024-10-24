@@ -1,4 +1,5 @@
 import type { Page } from '@/browser.ts';
+import { closeCookieModals } from '@/browser-utils.ts';
 import { extractCountryFromAddress } from '@/llm.ts';
 import { type Logger } from '@/logger.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
@@ -39,16 +40,9 @@ export function createProductDetailsFetcher(
       );
     });
 
-    await page.goto(fullUrl, {
-      waitUntil: 'commit',
-    });
+    await page.goto(fullUrl);
 
-    (await page
-      .getByRole('button', {
-        name: 'Accept all cookies',
-      })
-      .isVisible()) &&
-      (await page.getByRole('button', { name: 'Accept all cookies' }).click());
+    await closeCookieModals(page);
 
     const resp = await apiRequest.then(resp => resp.json());
     const {
