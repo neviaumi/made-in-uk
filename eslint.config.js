@@ -13,7 +13,7 @@ export default [
   },
   ...busyboxEslintConfig,
   {
-    files: ['*.md'],
+    files: ['*.md', 'docs/**/*.md'],
     rules: {
       'markdownlint/md013': 'off',
     },
