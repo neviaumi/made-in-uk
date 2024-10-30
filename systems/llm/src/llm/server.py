@@ -93,7 +93,7 @@ async def prompt(request):
     return JSONResponse({'message': resp})
 
 
-async def healthCheck():
+async def healthCheck(request):
     resp = llm_model.prompt([{
         "content": "Are you operating as normal? Reply in JSON Object Format with with 1 key, 'status' ('ok' or 'error')",
         "role": "system"

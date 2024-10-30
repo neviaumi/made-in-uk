@@ -135,7 +135,7 @@ services:
       context: systems/llm
       dockerfile: Dockerfile
       target: dev
-    command: ./scripts/docker/start.sh
+    command: ./scripts/docker/watch.sh
     depends_on:
       firebase:
         condition: service_started
