@@ -15,7 +15,7 @@ describe('Pets at home', () => {
         },
       });
       const url = '/product/7128260P';
-      await page.route(new URL('**', baseUrl).toString(), async route => {
+      await page.route('**', async route => {
         return route.abort();
       });
       await page.route(new URL(url, baseUrl).toString(), async route => {

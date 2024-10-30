@@ -39,7 +39,7 @@ describe('Lilys Kitchen', () => {
       });
       const url =
         '/for-cats/dry-food/chicken-with-veggies-dry-food-4kg-ZCDDC4KG.html';
-      await page.route(new URL('**', baseUrl).toString(), async route => {
+      await page.route('**', async route => {
         return route.abort();
       });
       await page.route(new URL(url, baseUrl).toString(), async route => {

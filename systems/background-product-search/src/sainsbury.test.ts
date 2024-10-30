@@ -20,7 +20,7 @@ describe('background-product-search', () => {
           offline: true,
         },
       });
-      await page.route(new URL('**', baseUrl).toString(), async route => {
+      await page.route('**', async route => {
         return route.abort();
       });
       await page.route(
