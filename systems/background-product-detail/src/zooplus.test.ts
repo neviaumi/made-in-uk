@@ -15,6 +15,9 @@ describe('Zooplus', () => {
         },
       });
       const url = '/shop/cats/dry_cat_food/encore/1934717';
+      await page.route(new URL('**', baseUrl).toString(), async route => {
+        return route.abort();
+      });
       await page.route(new URL(url, baseUrl).toString(), async route => {
         return route.fulfill({
           body: await loadFixtures('zooplus/1934717.html'),
@@ -52,6 +55,9 @@ describe('Zooplus', () => {
         },
       });
       const url = '/shop/cats/dry_cat_food/encore/1946560';
+      await page.route(new URL('**', baseUrl).toString(), async route => {
+        return route.abort();
+      });
       await page.route(new URL(url, baseUrl).toString(), async route => {
         return route.fulfill({
           body: await loadFixtures('zooplus/1946560.html'),

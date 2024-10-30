@@ -36,6 +36,9 @@ describe('Vet Shop', () => {
         },
       });
       const url = '/Lilys-Kitchen-Shredded-Fillets-Variety';
+      await page.route(new URL('**', baseUrl).toString(), async route => {
+        return route.abort();
+      });
       await page.route(new URL(url, baseUrl).toString(), async route => {
         return route.fulfill({
           body: await loadFixtures(
