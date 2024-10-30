@@ -9,7 +9,7 @@ COPY pyproject.toml pdm.lock .python-version ./
 COPY ./src/ ./src/
 COPY ./tests/ ./tests/
 COPY ./scripts/docker/ ./scripts/docker/
-COPY ./gpt4all/ ./gpt4all/
+COPY ./.models/ ./.models/
 HEALTHCHECK --interval=60s --timeout=180s --start-period=5s --retries=3 CMD [ "bash", "scripts/docker/health-check.sh" ]
 
 FROM base AS dev
