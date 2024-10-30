@@ -18,6 +18,9 @@ describe(
             offline: true,
           },
         });
+        await page.route(new URL('**', baseUrl).toString(), async route => {
+          return route.abort();
+        });
         await page.route(
           new URL('/search?entry=jkfjafjk&display=1024', baseUrl).toString(),
           async route => {
@@ -47,6 +50,9 @@ describe(
           javaScriptEnabled: false,
           offline: true,
         },
+      });
+      await page.route(new URL('**', baseUrl).toString(), async route => {
+        return route.abort();
       });
       await page.route(
         new URL('/search?entry=beer&display=1024', baseUrl).toString(),

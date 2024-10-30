@@ -39,6 +39,9 @@ describe('Ocado fetcher', () => {
         offline: true,
       },
     });
+    await page.route(new URL('**', baseUrl).toString(), async route => {
+      return route.abort();
+    });
     await page.route(
       new URL(
         '/products/blue-dragon-medium-egg-noodles-623907011',
@@ -105,6 +108,9 @@ describe('Ocado fetcher', () => {
         javaScriptEnabled: false,
         offline: true,
       },
+    });
+    await page.route(new URL('**', baseUrl).toString(), async route => {
+      return route.abort();
     });
     await page.route(new URL(url, baseUrl).toString(), async route => {
       return route.fulfill({

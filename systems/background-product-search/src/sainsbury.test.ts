@@ -20,6 +20,9 @@ describe('background-product-search', () => {
           offline: true,
         },
       });
+      await page.route(new URL('**', baseUrl).toString(), async route => {
+        return route.abort();
+      });
       await page.route(
         new URL('/gol-ui/SearchResults/Beer', baseUrl).toString(),
         async route => {
