@@ -19,7 +19,7 @@ describe('Sainsbury', () => {
         },
       });
       const url = '/gol-ui/product/sainsburys-british-whole-milk-227l-4-pint-';
-      await page.route(new URL('**', baseUrl).toString(), async route => {
+      await page.route('**', async route => {
         return route.abort();
       });
       await page.route(new URL(url, baseUrl).toString(), async route => {
@@ -80,7 +80,7 @@ Packed in United Kingdom`,
         },
       });
       const url = '/gol-ui/product/courvoisier-cognac--vs-70cl';
-      await page.route(new URL('**', baseUrl).toString(), async route => {
+      await page.route('**', async route => {
         return route.abort();
       });
       await page.route(new URL(url, baseUrl).toString(), async route => {
@@ -138,7 +138,7 @@ Packed in United Kingdom`,
       });
       const url =
         '/shop/gb/groceries/product/details/peroni-nastro-azzuro-12x330ml';
-      await page.route(new URL('**', baseUrl).toString(), async route => {
+      await page.route('**', async route => {
         return route.abort();
       });
       await page.route(new URL(url, baseUrl).toString(), async route => {
