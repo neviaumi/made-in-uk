@@ -6,15 +6,19 @@ authors = [
     {name = "David Ng", email = "david.ng.dev@gmail.com"},
 ]
 dependencies = [
-    "gpt4all>=2.7.0",
     "starlette>=0.38.2",
     "uvicorn>=0.30.5",
     "google-cloud-firestore>=2.18.0",
+    "huggingface-hub[cli]>=0.26.2",
 ]
 requires-python = "==3.12.4"
 readme = "README.md"
 license = {text = "MIT"}
 
 
+[project.optional-dependencies]
+"llama.cpp" = [
+    "llama-cpp-python>=0.3.1",
+]
 [tool.pdm]
 distribution = false
