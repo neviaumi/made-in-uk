@@ -400,7 +400,7 @@ export function createCloudRunForLLM({
             resources: {
               limits: {
                 cpu: '8',
-                memory: '4096Mi',
+                memory: '8192Mi',
               },
             },
             startupProbe: {
