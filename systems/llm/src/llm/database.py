@@ -25,7 +25,7 @@ logger.info(
 
 def cache_llm_prompt(prompts, response):
     document_id_hexer = hashlib.sha256()
-    document_id_hexer.update(json.loads(prompts).encode())
+    document_id_hexer.update(json.dumps(prompts).encode())
     document_id = document_id_hexer.hexdigest()
     doc_ref = database.collection('llm.prompts').document(document_id)
     doc_ref.set({
@@ -38,7 +38,7 @@ def cache_llm_prompt(prompts, response):
 
 def get_cached_llm_prompt(prompts):
     document_id_hexer = hashlib.sha256()
-    document_id_hexer.update(json.loads(prompts).encode())
+    document_id_hexer.update(json.dumps(prompts).encode())
     document_id = document_id_hexer.hexdigest()
     doc_ref = database.collection('llm.prompts').document(document_id)
     doc = doc_ref.get()
