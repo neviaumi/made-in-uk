@@ -39,14 +39,17 @@ describe('Vet Shop', () => {
       await page.route('**', async route => {
         return route.abort();
       });
-      await page.route(new URL(url, baseUrl).toString(), async route => {
-        return route.fulfill({
-          body: await loadFixtures(
-            'vet-shop/Lilys-Kitchen-Shredded-Fillets-Variety.html',
-          ),
-          status: 200,
-        });
-      });
+      await page.route(
+        new URL('/api/items*', baseUrl).toString(),
+        async route => {
+          return route.fulfill({
+            body: await loadFixtures(
+              'vet-shop/Lilys-Kitchen-Shredded-Fillets-Variety.html',
+            ),
+            status: 200,
+          });
+        },
+      );
       const data = await createProductDetailsFetcher(page, {
         logger: createLogger(APP_ENV),
         requestId: 'unused',
@@ -58,12 +61,12 @@ describe('Vet Shop', () => {
           countryOfOrigin: 'Unknown',
           id: '731873',
           image:
-            'https://www.vetshop.co.uk/SCA%20Product%20Images/Lilys-Kitchen-Shredded-Fillets-Variety_vetshop-1.png?resizeid=8&resizeh=300&resizew=300',
+            'https://www.vetshop.co.uk/SCA%20Product%20Images/Lilys-Kitchen-Shredded-Fillets-Variety_vetshop-1.png',
           price: '£7.55',
           pricePerItem: '£13.48/kg',
           source: 'VET_SHOP',
           title:
-            "Lily's Kitchen Shredded Fillets Variety Pack Wet Cat Food Tins - 8 x 70g   By Lilys Kitchen",
+            "Lily's Kitchen Shredded Fillets Variety Pack Wet Cat Food Tins - 8 x 70g",
           type: 'product',
           url: expect.any(String),
         });

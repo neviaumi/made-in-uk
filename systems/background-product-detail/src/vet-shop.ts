@@ -1,5 +1,4 @@
 import { type Page } from '@/browser.ts';
-import { closeCookieModals } from '@/browser-utils.ts';
 import { extractTotalWeight } from '@/llm.ts';
 import { type Logger } from '@/logger.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
@@ -7,8 +6,11 @@ import { type Product, PRODUCT_SOURCE } from '@/types.ts';
 export const baseUrl = 'https://www.vetshop.co.uk/';
 
 async function extractPricePerItem(
-  page: Page,
-  { price, productName }: { price: number; productName: string },
+  {
+    price,
+    productName,
+    vetShopWeight,
+  }: { price: number; productName: string; vetShopWeight?: number },
   option: { logger: Logger; requestId: string },
 ) {
   if (isNaN(price)) {
@@ -23,17 +25,10 @@ async function extractPricePerItem(
       return data.totalWeight;
     }
     // VetShop total weight can be wrong, used as a fell back
-    const weightContainer = page.locator('.item-details-weight-value');
-    if (!(await weightContainer.isVisible())) {
+    if (!vetShopWeight) {
       return null;
     }
-    const weight = await weightContainer
-      .textContent()
-      .then(text => Number(text!.trim().slice(0, -2)));
-    if (isNaN(weight)) {
-      return null;
-    }
-    return null;
+    return vetShopWeight;
   })();
   if (!totalWeight) {
     return null;
@@ -58,32 +53,40 @@ export function createProductDetailsFetcher(
     | { data: Product; ok: true }
   > {
     const logger = options.logger;
-    const fullUrl = new URL(productUrl, baseUrl).toString();
-    await page.goto(fullUrl);
-    logger.info('Navigated to product page on VET_SHOP');
-    await closeCookieModals(page);
-    const productTitle = await page
-      .locator('meta[name="og:title"]')
-      .getAttribute('content');
-    const image = await page
-      .locator('meta[name="og:image"]')
-      .getAttribute('content')
-      .then(url => decodeURI(url!));
-    const url = await page
-      .locator('meta[name="og:url"]')
-      .getAttribute('content');
-    const id = await page
-      .locator('[itemprop="sku"]')
-      .textContent()
-      .then(text => text?.trim());
+    const apiURL = new URL('/api/items', baseUrl);
+    apiURL.searchParams.set('c', '3934951');
+    apiURL.searchParams.set('country', 'GB');
+    apiURL.searchParams.set('currency', 'GBP');
+    apiURL.searchParams.set('fieldset', 'details');
+    apiURL.searchParams.set('language', 'en');
+    apiURL.searchParams.set('url', productUrl);
+    const resp = await page
+      .goto(apiURL.toString())
+      .then(() => page.innerText('pre').then(JSON.parse));
+    const product = resp.items?.[0];
+    if (!product) {
+      return {
+        error: {
+          code: 'PRODUCT_NOT_FOUND',
+          message: 'Product not found',
+          meta: { productUrl, resp },
+        },
+        ok: false,
+      };
+    }
+    const productTitle = product.pagetitle;
+    const image = (function parseVetShopImage() {
+      const imageUrl = product.itemimages_detail.vetshop.urls[0].url;
+      if (!imageUrl) {
+        throw new Error('Image not found');
+      }
+      return encodeURI(imageUrl);
+    })();
+    const url = new URL(productUrl, baseUrl).toString();
 
-    const price = await page
-      .locator('.item-views-blb-price-option', {
-        has: page.getByText('Ship once'),
-      })
-      .locator('.item-views-blb-price-option-price')
-      .first()
-      .textContent();
+    const id = product.itemid;
+
+    const price = product.pricelevel4_formatted;
     logger.info('Process of product page finished on VET_SHOP');
 
     return {
@@ -93,10 +96,10 @@ export function createProductDetailsFetcher(
         image: image!,
         price: price!,
         pricePerItem: await extractPricePerItem(
-          page,
           {
             price: Number(price!.slice(1)),
             productName: productTitle!,
+            vetShopWeight: product.weight,
           },
           options,
         ),
