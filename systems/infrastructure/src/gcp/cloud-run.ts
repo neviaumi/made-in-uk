@@ -180,8 +180,8 @@ export function createCloudRunForBackgroundProductSearch({
   productDetailEndpoint: Output<string>;
   productDetailTaskQueue: Output<string>;
   subTaskQueues: {
-    [PRODUCT_SOURCE.SAINSBURY]: Output<string>;
     [PRODUCT_SOURCE.OCADO]: Output<string>;
+    [PRODUCT_SOURCE.SAINSBURY]: Output<string>;
   };
 }) {
   const bgProductSearchImage = appConfig.get('bg-product-search-image');

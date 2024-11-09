@@ -1,6 +1,5 @@
-import { dirname, join } from 'node:path';
-
 import { config } from 'dotenv';
+import { dirname, join } from 'node:path';
 
 const rootDir = new URL(dirname(import.meta.url)).pathname;
 const projectRoot = join(rootDir, '../../../..');

@@ -1,5 +1,6 @@
 import { useCodeSortingEslintConfig } from '@busybox/eslint-config-code-sorting';
 import { useESModuleEslintConfig } from '@busybox/eslint-config-esm';
+import { useReactEslintConfig } from '@busybox/eslint-config-react';
 import { useTailwindCSSEslintConfig } from '@busybox/eslint-config-tailwindcss';
 import {
   useJSONEslintConfig,
@@ -33,6 +34,12 @@ export default [
   useESModuleEslintConfig({
     rules: {
       'n/no-unsupported-features/node-builtins': 'off',
+    },
+  }),
+  useReactEslintConfig({
+    rules: {
+      'import/prefer-default-export': 'off',
+      'react-refresh/only-export-components': 'off',
     },
   }),
   useCodeSortingEslintConfig({
