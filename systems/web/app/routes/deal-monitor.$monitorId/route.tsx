@@ -115,10 +115,10 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
       {
         fetchOptions: {
           headers: {
+            'request-id': requestId,
             SessionCookie: getSessionCookie(
               await getCurrentSession({ request }),
             ),
-            'request-id': requestId,
           },
         },
       },
@@ -295,7 +295,7 @@ export default function GoodDealsMonitor() {
                             </p>
                             <p
                               className={
-                                'tw-py-0.5 tw-text-base  tw-font-semibold tw-text-placeholder'
+                                'tw-py-0.5 tw-text-base tw-font-semibold tw-text-placeholder'
                               }
                             >
                               {item.data.pricePerItem}
