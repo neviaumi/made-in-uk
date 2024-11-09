@@ -1,9 +1,8 @@
-import playwright from 'playwright';
-
 import { closeCookieModals } from '@/browser-utils.ts';
 import { APP_ENV } from '@/config.ts';
 import { createLogger, type Logger } from '@/logger.ts';
 import { PRODUCT_SOURCE } from '@/types.ts';
+import playwright from 'playwright';
 
 export const baseUrl = 'https://www.sainsburys.co.uk/';
 const defaultLogger = createLogger(APP_ENV);

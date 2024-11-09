@@ -1,6 +1,6 @@
-import { playwrightUtils } from '@crawlee/playwright';
-
 import type { Page } from '@/browser.ts';
+
+import { playwrightUtils } from '@crawlee/playwright';
 
 export const closeCookieModals = playwrightUtils.closeCookieModals;
 
@@ -12,9 +12,9 @@ export const closeCookieModals = playwrightUtils.closeCookieModals;
  */
 export async function infiniteScroll(
   page: Page,
-  options: playwrightUtils.InfiniteScrollOptions & {
-    scrollHeight?: number | ((page: Page) => Promise<number>);
-  } = {},
+  options: {
+    scrollHeight?: ((page: Page) => Promise<number>) | number;
+  } & playwrightUtils.InfiniteScrollOptions = {},
 ): Promise<void> {
   const {
     buttonSelector,

@@ -1,11 +1,9 @@
-import { Duplex, Readable } from 'node:stream';
-
-import playwright from 'playwright';
-
 import { closeCookieModals, infiniteScroll } from '@/browser-utils.ts';
 import { APP_ENV } from '@/config.ts';
 import { createLogger, type Logger } from '@/logger.ts';
 import { PRODUCT_SOURCE } from '@/types.ts';
+import { Duplex, Readable } from 'node:stream';
+import playwright from 'playwright';
 
 export const baseUrl = 'https://www.ocado.com';
 const defaultLogger = createLogger(APP_ENV);

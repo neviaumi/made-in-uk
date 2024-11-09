@@ -1,12 +1,10 @@
-import { Readable } from 'node:stream';
-
-import { describe, expect, it } from 'vitest';
-
 import { closeBrowserPage, createBrowserPage } from '@/browser.ts';
 import { APP_ENV } from '@/config.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
 import { createLogger } from '@/logger.ts';
 import { baseUrl, createProductsSearchHandler } from '@/sainsbury.ts';
+import { Readable } from 'node:stream';
+import { describe, expect, it } from 'vitest';
 
 const logger = createLogger(APP_ENV);
 

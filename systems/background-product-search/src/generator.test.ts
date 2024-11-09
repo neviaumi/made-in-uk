@@ -1,9 +1,7 @@
+import * as generator from '@/generator.ts';
 import { Readable } from 'node:stream';
 import { setTimeout } from 'node:timers/promises';
-
 import { describe, expect, it } from 'vitest';
-
-import * as generator from '@/generator.ts';
 
 describe('Async Generator', () => {
   it('Combine two async generator', async () => {

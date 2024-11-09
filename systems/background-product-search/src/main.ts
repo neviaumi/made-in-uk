@@ -1,9 +1,3 @@
-import * as crypto from 'node:crypto';
-import { Readable } from 'node:stream';
-
-import Fastify from 'fastify';
-import hashObject from 'hash-object';
-
 import { closeBrowserPage, createBrowserPage } from '@/browser.ts';
 import {
   createCloudTaskClient,
@@ -30,6 +24,10 @@ import {
   REPLY_DATA_TYPE,
   SUBTASK_RELY_DATA_TYPE,
 } from '@/types.ts';
+import Fastify from 'fastify';
+import hashObject from 'hash-object';
+import * as crypto from 'node:crypto';
+import { Readable } from 'node:stream';
 
 import * as ocado from './ocado.ts';
 

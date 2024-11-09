@@ -1,6 +1,5 @@
 import { Readable } from 'node:stream';
 import { setTimeout } from 'node:timers/promises';
-
 import { describe, expect, it, vi } from 'vitest';
 
 describe('Async Generator', () => {
@@ -59,7 +58,7 @@ describe('Promise', () => {
       const callOnFinally = vi.fn();
       try {
         await alwayThrows().finally(callOnFinally);
-      } catch (e) {
+      } catch {
         // noop
       }
       expect(callOnFinally).toHaveBeenCalled();
