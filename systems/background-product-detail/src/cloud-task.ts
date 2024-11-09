@@ -1,9 +1,9 @@
-import { CloudTasksClient } from '@google-cloud/tasks';
-import { credentials } from '@grpc/grpc-js';
+import type { PRODUCT_SOURCE } from '@/types.ts';
 
 import { getInstanceServiceAccount } from '@/cloud-run.ts';
 import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
-import type { PRODUCT_SOURCE } from '@/types.ts';
+import { CloudTasksClient } from '@google-cloud/tasks';
+import { credentials } from '@grpc/grpc-js';
 
 const config = loadConfig(APP_ENV);
 

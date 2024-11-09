@@ -1,5 +1,5 @@
-import { type Page } from '@/browser.ts';
 import { closeCookieModals } from '@/browser-utils.ts';
+import { type Page } from '@/browser.ts';
 import { APP_ENV } from '@/config.ts';
 import { createLogger, type Logger } from '@/logger.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
@@ -46,11 +46,11 @@ export function createProductDetailsFetcher(
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const logger = options?.logger ?? createLogger(APP_ENV);
   return async function fetchProductDetails(productUrl: string): Promise<
+    | { data: Product; ok: true }
     | {
         error: { code: string; message: string; meta: Record<string, unknown> };
         ok: false;
       }
-    | { data: Product; ok: true }
   > {
     const fullUrl = new URL(productUrl, baseUrl).toString();
     await page.goto(fullUrl);

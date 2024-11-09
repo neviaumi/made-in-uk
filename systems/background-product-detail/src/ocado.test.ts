@@ -1,5 +1,3 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-
 import { closeBrowserPage, createBrowserPage } from '@/browser.ts';
 import { APP_ENV } from '@/config.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
@@ -8,6 +6,7 @@ import { createLLMPromptHandler } from '@/mocks/handlers.ts';
 import { HttpResponse } from '@/mocks/msw.ts';
 import { server } from '@/mocks/node.ts';
 import { baseUrl, createProductDetailsFetcher } from '@/ocado.ts';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 const logger = createLogger(APP_ENV);
 

@@ -1,20 +1,34 @@
-import busyboxEslintConfig, { globals } from '@busybox/eslint-config';
+import { useCodeSortingEslintConfig } from '@busybox/eslint-config-code-sorting';
+import { useESModuleEslintConfig } from '@busybox/eslint-config-esm';
+import {
+  useJSONEslintConfig,
+  useMarkdownEslintConfig,
+  useYamlEslintConfig,
+} from '@busybox/eslint-config-text-document';
+import { useTypescriptEslintConfig } from '@busybox/eslint-config-typescript';
+import globals from 'globals';
+
+import pkgJson from './package.json' with { type: 'json' };
 
 export default [
-  ...busyboxEslintConfig,
   {
     ignores: ['package-lock.json', 'dist/', 'coverage/'],
+    name: pkgJson.name,
   },
   {
     languageOptions: {
-      globals: {
-        ...globals.node,
-      },
+      globals: globals.node,
     },
+    name: pkgJson.name,
   },
-  {
+  useESModuleEslintConfig({
     rules: {
-      'no-inner-declarations': 'off',
+      'n/no-unsupported-features/node-builtins': 'off',
     },
-  },
-];
+  }),
+  useTypescriptEslintConfig(),
+  useCodeSortingEslintConfig(),
+  useJSONEslintConfig(),
+  useYamlEslintConfig(),
+  useMarkdownEslintConfig(),
+].flat();

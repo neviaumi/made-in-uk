@@ -1,10 +1,3 @@
-import {
-  FieldValue,
-  Firestore,
-  type Settings,
-  Timestamp,
-} from '@google-cloud/firestore';
-
 import { APP_ENV, loadConfig } from '@/config.ts';
 import {
   type Product,
@@ -12,20 +5,26 @@ import {
   REPLY_DATA_TYPE,
   TASK_STATE,
 } from '@/types.ts';
+import {
+  FieldValue,
+  Firestore,
+  type Settings,
+  Timestamp,
+} from '@google-cloud/firestore';
 
 const config = loadConfig(APP_ENV);
 
 export function databaseHealthCheck(database: Firestore) {
   return async function healthCheckByGetCollectionInfo(): Promise<
     | {
-        ok: true;
-      }
-    | {
         error: {
           code: string;
           message: string;
         };
         ok: false;
+      }
+    | {
+        ok: true;
       }
   > {
     return database
@@ -167,16 +166,16 @@ export function connectReplyStreamOnDatabase(
     shapeOfReplyStreamItem(
       productInfo:
         | {
+            data: Product;
+            type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL;
+          }
+        | {
             error: {
               code: string;
               message: string;
               meta: Record<string, unknown>;
             };
             type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL_FAILURE;
-          }
-        | {
-            data: Product;
-            type: REPLY_DATA_TYPE.FETCH_PRODUCT_DETAIL;
           },
     ) {
       return productInfo;

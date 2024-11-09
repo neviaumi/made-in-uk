@@ -1,11 +1,10 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-
 import { APP_ENV } from '@/config.ts';
 import { extractCountryFromAddress, extractTotalWeight } from '@/llm.ts';
 import { createLogger } from '@/logger.ts';
 import { createLLMPromptHandler } from '@/mocks/handlers.ts';
 import { HttpResponse } from '@/mocks/msw.ts';
 import { server } from '@/mocks/node.ts';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 beforeAll(() => {
   server.listen();

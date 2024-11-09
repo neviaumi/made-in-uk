@@ -17,7 +17,7 @@ export type Product = {
   id: string;
   image: string;
   price: string;
-  pricePerItem: string | null;
+  pricePerItem: null | string;
   source: PRODUCT_SOURCE;
   title: string;
   type: string;

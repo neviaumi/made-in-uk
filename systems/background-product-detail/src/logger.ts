@@ -1,13 +1,13 @@
 import type { FastifyBaseLogger } from 'fastify';
+
+import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
+import { Level, levels } from '@/logger.types.ts';
 import {
   createLogger as createWinstonLogger,
   format,
   type Logger,
   transports,
 } from 'winston';
-
-import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
-import { Level, levels } from '@/logger.types.ts';
 
 const config = loadConfig(APP_ENV);
 type LoggerPatched = FastifyBaseLogger | Logger;
@@ -39,7 +39,7 @@ export function createLogger(appEnv: AppEnvironment) {
       format(function includeGCPSeverity(info) {
         const gcpSeverityMapping = Object.fromEntries(
           Object.keys(Level).map(level => {
-            if ([Level.emerg, Level.crit].includes(level)) {
+            if ([Level.crit, Level.emerg].includes(level)) {
               if (level === Level.emerg) {
                 return [level, 'EMERGENCY'];
               }
