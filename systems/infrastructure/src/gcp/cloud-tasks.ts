@@ -2,6 +2,7 @@ import { cloudtasks } from '@pulumi/gcp';
 import * as pulumi from '@pulumi/pulumi';
 
 import type { PRODUCT_SOURCE } from '../types.ts';
+
 import { getLocation } from '../utils/get-gcp-config.ts';
 import { resourceName } from '../utils/resourceName.ts';
 

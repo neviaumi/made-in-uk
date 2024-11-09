@@ -1,5 +1,6 @@
-import { firebase } from '@pulumi/gcp';
 import type { Output } from '@pulumi/pulumi';
+
+import { firebase } from '@pulumi/gcp';
 
 import { resourceName } from '../utils/resourceName.ts';
 

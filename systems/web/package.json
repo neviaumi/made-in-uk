@@ -22,6 +22,7 @@
   "devDependencies": {
     "@busybox/eslint-config-code-sorting": "2024.11.7-alpha.2024",
     "@busybox/eslint-config-esm": "2024.11.7-alpha.2024",
+    "@busybox/eslint-config-react": "2024.11.7-alpha.2024",
     "@busybox/eslint-config-tailwindcss": "2024.11.7-alpha.2024",
     "@busybox/eslint-config-text-document": "2024.11.7-alpha.2024",
     "@busybox/eslint-config-typescript": "2024.11.7-alpha.2024",

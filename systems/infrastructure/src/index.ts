@@ -76,7 +76,7 @@ const {
         [source, fullQualifiedQueueName] as const,
     ),
   ) as Record<
-    PRODUCT_SOURCE.SAINSBURY | PRODUCT_SOURCE.OCADO,
+    PRODUCT_SOURCE.OCADO | PRODUCT_SOURCE.SAINSBURY,
     pulumi.Output<string>
   >,
 });
