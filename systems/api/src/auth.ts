@@ -1,10 +1,9 @@
-import { initializeApp } from 'firebase-admin/app';
-import { getAuth } from 'firebase-admin/auth';
-import { createGraphQLError, type Plugin } from 'graphql-yoga';
-
 import { APP_ENV } from '@/config.ts';
 import { withErrorCode } from '@/error.ts';
 import { createLogger, type Logger } from '@/logger.ts';
+import { initializeApp } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { createGraphQLError, type Plugin } from 'graphql-yoga';
 
 const SESSION_EXPIRATION = 60 * 60 * 24 * 7 * 1000; // 2 weeks
 const firebaseApp = initializeApp({});

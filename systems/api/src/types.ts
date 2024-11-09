@@ -4,7 +4,7 @@ export type Product = {
   countryOfOrigin: string;
   id: string;
   image: string;
-  pricePerItem: string | null;
+  pricePerItem: null | string;
   title: string;
   type: string;
   url: string;

@@ -1,6 +1,5 @@
-import { dirname, resolve } from 'node:path';
-
 import MagicString from 'magic-string';
+import { dirname, resolve } from 'node:path';
 import { nodeExternals } from 'rollup-plugin-node-externals';
 import { defineConfig, type Plugin, searchForWorkspaceRoot } from 'vite';
 

@@ -1,6 +1,5 @@
-import { isNativeError as _isNativeError } from 'node:util/types';
-
 import { GraphQLError } from 'graphql';
+import { isNativeError as _isNativeError } from 'node:util/types';
 
 export { createGraphQLError } from 'graphql-yoga';
 
@@ -14,11 +13,11 @@ export function isNativeError(e: unknown): e is NodeJS.ErrnoException {
 
 export function withErrorCode(
   code:
+    | 'ERR_FORBIDDEN_OPERATION'
     | 'ERR_UNAUTHENTICATED'
-    | 'ERR_UNEXPECTED_ERROR'
-    | 'ERR_FORBIDDEN_OPERATION',
+    | 'ERR_UNEXPECTED_ERROR',
 ) {
-  return (e: NodeJS.ErrnoException | GraphQLError) => {
+  return (e: GraphQLError | NodeJS.ErrnoException) => {
     if (isGraphQLError(e)) {
       if (e.extensions['code'])
         throw withErrorCode('ERR_FORBIDDEN_OPERATION')(
@@ -41,9 +40,9 @@ export function withErrorCode(
   };
 }
 
-export type HTTPError = NodeJS.ErrnoException & {
+export type HTTPError = {
   http: { message: string; retryAble: boolean; statusCode: number };
-};
+} & NodeJS.ErrnoException;
 
 export function isHTTPError(e: unknown): e is HTTPError {
   if (

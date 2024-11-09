@@ -1,6 +1,5 @@
-import convict from 'convict';
-
 import { Level } from '@/logger.types.ts';
+import convict from 'convict';
 
 export enum AppEnvironment {
   DEV = 'development',
@@ -29,7 +28,7 @@ if (
 
 export function loadConfig(appEnv: AppEnvironment) {
   const shouldUseCloudTasksEmulator =
-    [AppEnvironment.TEST, AppEnvironment.DEV].includes(appEnv) &&
+    [AppEnvironment.DEV, AppEnvironment.TEST].includes(appEnv) &&
     process.env['CLOUD_TASKS_EMULATOR_HOST'] !== undefined;
   const configSchema = convict({
     cloudTasks: {

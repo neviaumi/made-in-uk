@@ -1,17 +1,4 @@
-import { randomUUID } from 'node:crypto';
-
-import { useDeferStream } from '@graphql-yoga/plugin-defer-stream';
-import {
-  DateTimeISOResolver,
-  DateTimeISOTypeDefinition,
-} from 'graphql-scalars';
-import {
-  createSchema,
-  createYoga,
-  type Plugin,
-  useLogger,
-  useReadinessCheck,
-} from 'graphql-yoga';
+import type { GraphqlContext, Product } from '@/types.ts';
 
 import { useAuth } from '@/auth.ts';
 import { APP_ENV } from '@/config.ts';
@@ -29,7 +16,19 @@ import {
   searchProductQuery,
   searchProductStream,
 } from '@/search-product.query.ts';
-import type { GraphqlContext, Product } from '@/types.ts';
+import { useDeferStream } from '@graphql-yoga/plugin-defer-stream';
+import {
+  DateTimeISOResolver,
+  DateTimeISOTypeDefinition,
+} from 'graphql-scalars';
+import {
+  createSchema,
+  createYoga,
+  type Plugin,
+  useLogger,
+  useReadinessCheck,
+} from 'graphql-yoga';
+import { randomUUID } from 'node:crypto';
 
 import { createDatabaseConnection, databaseHealthCheck } from './database.ts';
 
@@ -86,9 +85,9 @@ export const schema = {
     Query: {
       dealMonitor: getDealMonitorQuery,
       dealMonitors: listDealMonitorsQuery,
+      products: searchProductQuery,
       productSearchHistories: productSearchHistoriesQuery,
       productSearchHistory: productSearchHistoryQuery,
-      products: searchProductQuery,
     },
     SearchProductResult: {
       stream: searchProductStream,
