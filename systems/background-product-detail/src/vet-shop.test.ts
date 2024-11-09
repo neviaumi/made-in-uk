@@ -1,5 +1,3 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-
 import { closeBrowserPage, createBrowserPage } from '@/browser.ts';
 import { APP_ENV } from '@/config.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
@@ -8,6 +6,7 @@ import { createLLMPromptHandler } from '@/mocks/handlers.ts';
 import { HttpResponse } from '@/mocks/msw.ts';
 import { server } from '@/mocks/node.ts';
 import { baseUrl, createProductDetailsFetcher } from '@/vet-shop.ts';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 describe('Vet Shop', () => {
   beforeAll(() => {
@@ -56,20 +55,20 @@ describe('Vet Shop', () => {
       })(url);
       await closeBrowserPage(page);
       expect(data.ok).toBeTruthy();
-      data.ok &&
-        expect(data.data).toEqual({
-          countryOfOrigin: 'Unknown',
-          id: '731873',
-          image:
-            'https://www.vetshop.co.uk/SCA%20Product%20Images/Lilys-Kitchen-Shredded-Fillets-Variety_vetshop-1.png',
-          price: '£7.55',
-          pricePerItem: '£13.48/kg',
-          source: 'VET_SHOP',
-          title:
-            "Lily's Kitchen Shredded Fillets Variety Pack Wet Cat Food Tins - 8 x 70g",
-          type: 'product',
-          url: expect.any(String),
-        });
+      if (!data.ok) throw new Error('expect data.ok to be true');
+      expect(data.data).toEqual({
+        countryOfOrigin: 'Unknown',
+        id: '731873',
+        image:
+          'https://www.vetshop.co.uk/SCA%20Product%20Images/Lilys-Kitchen-Shredded-Fillets-Variety_vetshop-1.png',
+        price: '£7.55',
+        pricePerItem: '£13.48/kg',
+        source: 'VET_SHOP',
+        title:
+          "Lily's Kitchen Shredded Fillets Variety Pack Wet Cat Food Tins - 8 x 70g",
+        type: 'product',
+        url: expect.any(String),
+      });
     },
     {
       timeout: 60000 * 60,

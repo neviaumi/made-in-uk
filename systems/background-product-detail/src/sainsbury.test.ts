@@ -1,10 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
-
 import { closeBrowserPage, createBrowserPage } from '@/browser.ts';
 import { APP_ENV } from '@/config.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
 import { createLogger } from '@/logger.ts';
 import { baseUrl, createProductDetailsFetcher } from '@/sainsbury.ts';
+import { describe, expect, it, vi } from 'vitest';
 
 const logger = createLogger(APP_ENV);
 

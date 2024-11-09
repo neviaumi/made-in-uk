@@ -1,8 +1,7 @@
-import { describe, expect, it } from 'vitest';
-
 import { closeBrowserPage, createBrowserPage } from '@/browser.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
 import { baseUrl, createProductDetailsFetcher } from '@/zooplus.ts';
+import { describe, expect, it } from 'vitest';
 
 describe('Zooplus', () => {
   it(
@@ -27,19 +26,19 @@ describe('Zooplus', () => {
       const data = await createProductDetailsFetcher(page)(url);
       await closeBrowserPage(page);
       expect(data.ok).toBeTruthy();
-      data.ok &&
-        expect(data.data).toEqual({
-          countryOfOrigin: 'Unknown',
-          id: '1934717',
-          image:
-            'https://media.zooplus.com/bilder/4/400/413997_pla_encore_cat_huhn_lachs_hs_01_4.jpg',
-          price: '£5.79',
-          pricePerItem: '£7.24/kg',
-          source: 'ZOOPLUS',
-          title: 'Encore Cat Chicken with Salmon | zooplus.co.uk',
-          type: 'product',
-          url: expect.any(String),
-        });
+      if (!data.ok) throw new Error('expect data.ok to be true');
+      expect(data.data).toEqual({
+        countryOfOrigin: 'Unknown',
+        id: '1934717',
+        image:
+          'https://media.zooplus.com/bilder/4/400/413997_pla_encore_cat_huhn_lachs_hs_01_4.jpg',
+        price: '£5.79',
+        pricePerItem: '£7.24/kg',
+        source: 'ZOOPLUS',
+        title: 'Encore Cat Chicken with Salmon | zooplus.co.uk',
+        type: 'product',
+        url: expect.any(String),
+      });
     },
     {
       timeout: 60000 * 60,
@@ -67,20 +66,20 @@ describe('Zooplus', () => {
       const data = await createProductDetailsFetcher(page)(url);
       await closeBrowserPage(page);
       expect(data.ok).toBeTruthy();
-      data.ok &&
-        expect(data.data).toEqual({
-          countryOfOrigin: 'Unknown',
-          id: '1946560',
-          image:
-            'https://media.zooplus.com/bilder/4/400/413498_encore_dose_bruhe_huhn_hs_01_3_4.jpg',
-          price: '€28.49',
-          pricePerItem: '€16.96/kg',
-          source: 'ZOOPLUS',
-          title:
-            'Encore Cans in Broth Saver Pack 24 x 70g | Top deals at zooplus!',
-          type: 'product',
-          url: expect.any(String),
-        });
+      if (!data.ok) throw new Error('expect data.ok to be true');
+      expect(data.data).toEqual({
+        countryOfOrigin: 'Unknown',
+        id: '1946560',
+        image:
+          'https://media.zooplus.com/bilder/4/400/413498_encore_dose_bruhe_huhn_hs_01_3_4.jpg',
+        price: '€28.49',
+        pricePerItem: '€16.96/kg',
+        source: 'ZOOPLUS',
+        title:
+          'Encore Cans in Broth Saver Pack 24 x 70g | Top deals at zooplus!',
+        type: 'product',
+        url: expect.any(String),
+      });
     },
     {
       timeout: 60000 * 60,

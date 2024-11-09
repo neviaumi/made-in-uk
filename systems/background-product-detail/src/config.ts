@@ -1,7 +1,6 @@
-import convict from 'convict';
-
 import { Level } from '@/logger.types.ts';
 import { PRODUCT_SOURCE } from '@/types.ts';
+import convict from 'convict';
 
 export enum AppEnvironment {
   DEV = 'development',
@@ -31,16 +30,16 @@ if (
 
 export function loadConfig(appEnv: AppEnvironment) {
   const shouldUseCloudTasksEmulator =
-    [AppEnvironment.TEST, AppEnvironment.DEV].includes(appEnv) &&
+    [AppEnvironment.DEV, AppEnvironment.TEST].includes(appEnv) &&
     process.env['CLOUD_TASKS_EMULATOR_HOST'] !== undefined;
 
   const taskQueueConfigs: {
     [key in PRODUCT_SOURCE]: { queueName: convict.SchemaObj<string> };
   } = {
-    [PRODUCT_SOURCE.SAINSBURY]: {
+    [PRODUCT_SOURCE.LILYS_KITCHEN]: {
       queueName: {
         default: null,
-        env: 'BG_PRODUCT_DETAIL_SAINSBURY_PRODUCT_DETAIL_QUEUE',
+        env: 'BG_PRODUCT_DETAIL_LILYS_KITCHEN_PRODUCT_DETAIL_QUEUE',
         format: String,
       },
     },
@@ -51,20 +50,6 @@ export function loadConfig(appEnv: AppEnvironment) {
         format: String,
       },
     },
-    [PRODUCT_SOURCE.ZOOPLUS]: {
-      queueName: {
-        default: null,
-        env: 'BG_PRODUCT_DETAIL_ZOOPLUS_PRODUCT_DETAIL_QUEUE',
-        format: String,
-      },
-    },
-    [PRODUCT_SOURCE.LILYS_KITCHEN]: {
-      queueName: {
-        default: null,
-        env: 'BG_PRODUCT_DETAIL_LILYS_KITCHEN_PRODUCT_DETAIL_QUEUE',
-        format: String,
-      },
-    },
     [PRODUCT_SOURCE.PETS_AT_HOME]: {
       queueName: {
         default: null,
@@ -72,10 +57,24 @@ export function loadConfig(appEnv: AppEnvironment) {
         format: String,
       },
     },
+    [PRODUCT_SOURCE.SAINSBURY]: {
+      queueName: {
+        default: null,
+        env: 'BG_PRODUCT_DETAIL_SAINSBURY_PRODUCT_DETAIL_QUEUE',
+        format: String,
+      },
+    },
     [PRODUCT_SOURCE.VET_SHOP]: {
       queueName: {
         default: null,
         env: 'BG_PRODUCT_DETAIL_VET_SHOP_PRODUCT_DETAIL_QUEUE',
+        format: String,
+      },
+    },
+    [PRODUCT_SOURCE.ZOOPLUS]: {
+      queueName: {
+        default: null,
+        env: 'BG_PRODUCT_DETAIL_ZOOPLUS_PRODUCT_DETAIL_QUEUE',
         format: String,
       },
     },

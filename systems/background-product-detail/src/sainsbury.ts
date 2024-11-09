@@ -1,4 +1,5 @@
 import type { Page } from '@/browser.ts';
+
 import { closeCookieModals } from '@/browser-utils.ts';
 import { extractCountryFromAddress } from '@/llm.ts';
 import { type Logger } from '@/logger.ts';
@@ -16,11 +17,11 @@ export function createProductDetailsFetcher(
   },
 ) {
   return async function fetchProductDetails(productUrl: string): Promise<
+    | { data: Product; ok: true }
     | {
         error: { code: string; message: string; meta: Record<string, unknown> };
         ok: false;
       }
-    | { data: Product; ok: true }
   > {
     const fullUrl = new URL(productUrl, baseUrl).toString();
     const apiRequest = page.waitForResponse(response => {
@@ -54,8 +55,8 @@ export function createProductDetailsFetcher(
       : product.retail_price.price;
     const pricePerUnit = hasNectarPrice
       ? product.nectar_price.unit_price
-      : product.unit_price?.price ?? null;
-    const pricePerUnitString = ((priceNumber: number | null) => {
+      : (product.unit_price?.price ?? null);
+    const pricePerUnitString = ((priceNumber: null | number) => {
       if (!priceNumber) return null;
       if (priceNumber < 1) {
         return `${priceNumber * 100}p`;
@@ -70,7 +71,7 @@ export function createProductDetailsFetcher(
       'base64',
     ).toString('utf-8');
     await page.setContent(productDetailHtml);
-    let countryOfOrigin: string | null = null;
+    let countryOfOrigin: null | string = null;
     if (productDetailHtml.includes('Country of Origin')) {
       countryOfOrigin = await page
         .locator('#accordion-content', {

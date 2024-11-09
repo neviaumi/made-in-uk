@@ -1,7 +1,7 @@
-import { GoogleAuth } from 'google-auth-library';
+import type { Logger } from '@/logger.ts';
 
 import { APP_ENV, AppEnvironment, loadConfig } from '@/config.ts';
-import type { Logger } from '@/logger.ts';
+import { GoogleAuth } from 'google-auth-library';
 
 const config = loadConfig(APP_ENV);
 const DEFAULT_LLM_TIMEOUT = 1000 * 60 * 5;
@@ -23,7 +23,7 @@ function withTimeout(timeout: number) {
 }
 
 function shapeOfPrompts(
-  prompts: Array<{ content: string; role: 'user' | 'system' | 'assistant' }>,
+  prompts: Array<{ content: string; role: 'assistant' | 'system' | 'user' }>,
 ) {
   return prompts;
 }
@@ -67,7 +67,7 @@ async function _extractTotalWeight(
   options: { logger: Logger; requestId: string },
 ): Promise<{
   data: {
-    totalWeight: number | null;
+    totalWeight: null | number;
     weightUnit: 'kg';
   };
   raw?: string;
@@ -206,7 +206,7 @@ total weight of Encore Natural Wet Cat Food Tins Tuna Fillet in Broth - 16 x 70g
           }
         })((jsonRes as { message: string })['message']);
       });
-  } catch (e) {
+  } catch {
     return { data: { totalWeight: null, weightUnit: 'kg' } };
   }
 }

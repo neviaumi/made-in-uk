@@ -1,4 +1,4 @@
-import pLimit from 'p-limit';
+import type { Logger } from '@/logger.ts';
 
 import {
   closeBrowserPage,
@@ -7,13 +7,13 @@ import {
 } from '@/browser.ts';
 import * as error from '@/error.ts';
 import * as lilysKitchen from '@/lilys-kitchen.ts';
-import type { Logger } from '@/logger.ts';
 import * as ocado from '@/ocado.ts';
 import * as petsAtHome from '@/pets-at-home.ts';
 import * as sainsbury from '@/sainsbury.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
 import * as vetShop from '@/vet-shop.ts';
 import * as zooplus from '@/zooplus.ts';
+import pLimit from 'p-limit';
 
 type ProductDetailRequest = {
   options: {
@@ -45,9 +45,9 @@ export async function processRequest(
       [PRODUCT_SOURCE.LILYS_KITCHEN]: lilysKitchen,
       [PRODUCT_SOURCE.OCADO]: ocado,
       [PRODUCT_SOURCE.PETS_AT_HOME]: petsAtHome,
-      [PRODUCT_SOURCE.ZOOPLUS]: zooplus,
-      [PRODUCT_SOURCE.VET_SHOP]: vetShop,
       [PRODUCT_SOURCE.SAINSBURY]: sainsbury,
+      [PRODUCT_SOURCE.VET_SHOP]: vetShop,
+      [PRODUCT_SOURCE.ZOOPLUS]: zooplus,
     };
     const productInfo = await fetchers[source]
       .createProductDetailsFetcher(page, {

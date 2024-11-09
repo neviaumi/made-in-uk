@@ -13,9 +13,9 @@ export function withErrorCode(
   };
 }
 
-export type HTTPError = NodeJS.ErrnoException & {
+export type HTTPError = {
   http: { message: string; retryAble: boolean; statusCode: number };
-};
+} & NodeJS.ErrnoException;
 
 export function isHTTPError(e: unknown): e is HTTPError {
   if (

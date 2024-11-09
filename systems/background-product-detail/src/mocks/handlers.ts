@@ -1,6 +1,5 @@
-import { http, HttpResponse } from 'msw';
-
 import { AppEnvironment, loadConfig } from '@/config.ts';
+import { http, HttpResponse } from 'msw';
 
 const config = loadConfig(AppEnvironment.TEST);
 

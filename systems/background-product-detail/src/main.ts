@@ -1,5 +1,3 @@
-import Fastify from 'fastify';
-
 import {
   createCloudTaskClient,
   createProductDetailSubTaskScheduler,
@@ -18,6 +16,7 @@ import * as error from '@/error.ts';
 import { adaptToFastifyLogger, createLogger } from '@/logger.ts';
 import * as requestQueue from '@/request-queue.ts';
 import { PRODUCT_SOURCE, REPLY_DATA_TYPE, TASK_STATE } from '@/types.ts';
+import Fastify from 'fastify';
 
 const config = loadConfig(APP_ENV);
 
@@ -223,7 +222,7 @@ fastify.post('/:source/product/detail', {
           replyStream.shapeOfReplyStreamItem({
             error: {
               code: error.isNativeError(e)
-                ? e.code ?? 'ERR_UNEXPECTED_ERROR'
+                ? (e.code ?? 'ERR_UNEXPECTED_ERROR')
                 : 'ERR_UNEXPECTED_ERROR',
               message: error.isNativeError(e) ? e.message : 'Unknown error',
               meta: {

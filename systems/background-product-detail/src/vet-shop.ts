@@ -46,11 +46,11 @@ export function createProductDetailsFetcher(
   options: { logger: Logger; requestId: string },
 ) {
   return async function fetchProductDetails(productUrl: string): Promise<
+    | { data: Product; ok: true }
     | {
         error: { code: string; message: string; meta: Record<string, unknown> };
         ok: false;
       }
-    | { data: Product; ok: true }
   > {
     const logger = options.logger;
     const apiURL = new URL('/api/items', baseUrl);

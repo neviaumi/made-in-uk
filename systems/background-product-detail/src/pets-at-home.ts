@@ -1,15 +1,16 @@
 import type { Page } from '@/browser.ts';
+
 import { closeCookieModals } from '@/browser-utils.ts';
 import { type Product, PRODUCT_SOURCE } from '@/types.ts';
 
 export const baseUrl = 'https://www.petsathome.com';
 export function createProductDetailsFetcher(page: Page) {
   return async function fetchProductDetails(productUrl: string): Promise<
+    | { data: Product; ok: true }
     | {
         error: { code: string; message: string; meta: Record<string, unknown> };
         ok: false;
       }
-    | { data: Product; ok: true }
   > {
     const fullUrl = new URL(productUrl, baseUrl).toString();
     await page.goto(fullUrl);

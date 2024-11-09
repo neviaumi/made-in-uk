@@ -1,4 +1,5 @@
 import type { Page } from '@/browser.ts';
+
 import { closeCookieModals } from '@/browser-utils.ts';
 import { APP_ENV } from '@/config.ts';
 import { extractCountryFromAddress } from '@/llm.ts';
@@ -87,11 +88,11 @@ export function createProductDetailsFetcher(
 ) {
   const logger = options?.logger ?? createLogger(APP_ENV);
   return async function getProductDetails(productUrl: string): Promise<
+    | { data: Product; ok: true }
     | {
         error: { code: string; message: string; meta: Record<string, unknown> };
         ok: false;
       }
-    | { data: Product; ok: true }
   > {
     const fullUrl = new URL(productUrl, baseUrl).toString();
     await page.goto(fullUrl);
@@ -134,8 +135,8 @@ export function createProductDetailsFetcher(
       };
     }
     const priceInfo: {
-      price?: string | null;
-      priceCurrency?: string | null;
+      price?: null | string;
+      priceCurrency?: null | string;
     } = Object.fromEntries(
       (
         await page
