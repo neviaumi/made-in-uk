@@ -76,7 +76,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
           };
           isError: boolean;
           requestedAt: string;
-          totalDocsExpected: number | null;
+          totalDocsExpected: null | number;
         };
       }>;
     };
@@ -95,7 +95,7 @@ export default function ProductSearchHistoryListing() {
     <Page className={'tw-mx-auto tw-pb-2'}>
       <Page.Header
         className={
-          'tw-sticky tw-top-0 tw-z-10 tw-border-b tw-border-solid tw-border-b-primary tw-bg-white  tw-pb-2'
+          'tw-sticky tw-top-0 tw-z-10 tw-border-b tw-border-solid tw-border-b-primary tw-bg-white tw-pb-2'
         }
       >
         <NavBar />

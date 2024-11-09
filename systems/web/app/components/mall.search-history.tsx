@@ -4,13 +4,13 @@ type SearchHistory = {
   completed: boolean;
   docsReceived: number;
   isError: boolean;
-  totalDocsExpected: number | null;
+  totalDocsExpected: null | number;
 };
 
 export function SearchStatusBadge({
   searchHistory: { completed: isCompleted, isError },
 }: {
-  searchHistory: Pick<SearchHistory, 'isError' | 'completed'>;
+  searchHistory: Pick<SearchHistory, 'completed' | 'isError'>;
 }) {
   if (isError) {
     return (
@@ -38,7 +38,7 @@ export function SearchProgress({
 }: {
   searchHistory: Pick<
     SearchHistory,
-    'docsReceived' | 'totalDocsExpected' | 'isError' | 'completed'
+    'completed' | 'docsReceived' | 'isError' | 'totalDocsExpected'
   >;
 }) {
   const shouldRenderProgress = totalDocsExpected && !isError && !completed;

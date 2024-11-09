@@ -8,7 +8,7 @@ type Product = {
   id: string;
   image: string;
   price: string;
-  pricePerItem: string | null;
+  pricePerItem: null | string;
   source: string;
   title: string;
   type: string;

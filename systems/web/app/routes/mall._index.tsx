@@ -119,14 +119,14 @@ export default function Index() {
   });
   const [matchingResults] = useQuery<
     {
+      products: {
+        requestId: string;
+        stream: Array<AsyncProductSuccess>;
+      };
       productSearchHistories: {
         searchHistories: Array<{
           id: string;
         }>;
-      };
-      products: {
-        requestId: string;
-        stream: Array<AsyncProductSuccess>;
       };
     },
     { input: typeof matchingFilters }
@@ -243,7 +243,7 @@ export default function Index() {
           >
             {fetching &&
               Array.from({ length: 8 }).map((_, index) => (
-                <Loader className={'tw-h-16 '} key={index} />
+                <Loader className={'tw-h-16'} key={index} />
               ))}
             {!fetching &&
               data &&

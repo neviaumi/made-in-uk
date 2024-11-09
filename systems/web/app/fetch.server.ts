@@ -3,10 +3,10 @@ import { GoogleAuth } from 'google-auth-library';
 import { APP_ENV, loadConfig } from '@/config.server.ts';
 import {
   Agent,
-  fetch as undiciFetch,
   type HeadersInit,
   Request,
   type RequestInit,
+  fetch as undiciFetch,
 } from '@/deps/undici.server.ts';
 import { withErrorCode } from '@/error.ts';
 
@@ -19,7 +19,7 @@ function headerInitToEntries(init: HeadersInit | undefined) {
 
 export function withCustomBodyTimeout(bodyTimeout: number) {
   return (fetchFunction: typeof global.fetch) => {
-    return (async (req: string | Request | URL, init?: RequestInit) => {
+    return (async (req: Request | string | URL, init?: RequestInit) => {
       if (!init)
         throw withErrorCode('ERR_UNEXPECTED_ERROR')(
           new Error('Unexpect usage of fetch, init is required'),
@@ -42,7 +42,7 @@ export function createAPIFetchClient(
     webEnv: config.get('env')!,
   };
 
-  return (async (req: string | Request | URL, init?: RequestInit) => {
+  return (async (req: Request | string | URL, init?: RequestInit) => {
     if (!init)
       throw withErrorCode('ERR_UNEXPECTED_ERROR')(
         new Error('Unexpect usage of fetch, init is required'),

@@ -73,9 +73,9 @@ async function verifyLoginSession({
   request: Request;
   requestId: string;
 }): Promise<
-  LoginSession & {
+  {
     shouldExtendSession: boolean;
-  }
+  } & LoginSession
 > {
   if (!(await isAuthSessionExist({ request }))) {
     throw withErrorCode('ERR_UNAUTHENTICATED')(new Error('Unauthorized'));
@@ -148,8 +148,8 @@ async function exchangeTokenForExtendLoginSession(
       return form;
     })(),
     headers: {
-      SessionCookie: currentToken,
       'request-id': requestId,
+      SessionCookie: currentToken,
     },
     method: 'POST',
   }).then(resp => {

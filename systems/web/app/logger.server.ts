@@ -29,7 +29,7 @@ export function createLogger(appEnv: AppEnvironment) {
       format(function includeGCPSeverity(info) {
         const gcpSeverityMapping = Object.fromEntries(
           Object.keys(Level).map(level => {
-            if ([Level.emerg, Level.crit].includes(level)) {
+            if ([Level.crit, Level.emerg].includes(level)) {
               if (level === Level.emerg) {
                 return [level, 'EMERGENCY'];
               }

@@ -87,7 +87,7 @@ export async function loader({ params, request }: LoaderFunctionArgs) {
           };
           isError: boolean;
           requestedAt: string;
-          totalDocsExpected: number | null;
+          totalDocsExpected: null | number;
         };
       };
     };
