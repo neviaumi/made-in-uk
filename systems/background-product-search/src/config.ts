@@ -1,7 +1,6 @@
-import convict from 'convict';
-
 import { Level } from '@/logger.types.ts';
 import { PRODUCT_SOURCE } from '@/types.ts';
+import convict from 'convict';
 
 export enum AppEnvironment {
   DEV = 'development',
@@ -31,22 +30,22 @@ if (
 
 export function loadConfig(appEnv: AppEnvironment) {
   const shouldUseCloudTasksEmulator =
-    [AppEnvironment.TEST, AppEnvironment.DEV].includes(appEnv) &&
+    [AppEnvironment.DEV, AppEnvironment.TEST].includes(appEnv) &&
     process.env['CLOUD_TASKS_EMULATOR_HOST'] !== undefined;
   const taskQueueConfigs: {
     [key in PRODUCT_SOURCE]: { queueName: convict.SchemaObj<string> };
   } = {
-    [PRODUCT_SOURCE.SAINSBURY]: {
-      queueName: {
-        default: null,
-        env: 'BG_PRODUCT_SEARCH_SAINSBURY_PRODUCT_SEARCH_QUEUE',
-        format: String,
-      },
-    },
     [PRODUCT_SOURCE.OCADO]: {
       queueName: {
         default: null,
         env: 'BG_PRODUCT_SEARCH_OCADO_PRODUCT_SEARCH_QUEUE',
+        format: String,
+      },
+    },
+    [PRODUCT_SOURCE.SAINSBURY]: {
+      queueName: {
+        default: null,
+        env: 'BG_PRODUCT_SEARCH_SAINSBURY_PRODUCT_SEARCH_QUEUE',
         format: String,
       },
     },

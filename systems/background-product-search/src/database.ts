@@ -1,12 +1,3 @@
-import { Duplex } from 'node:stream';
-
-import {
-  FieldValue,
-  Firestore,
-  type Settings,
-  Timestamp,
-} from '@google-cloud/firestore';
-
 import { TASK_STATE } from '@/cloud-task.ts';
 import { APP_ENV, loadConfig } from '@/config.ts';
 import { withErrorCode } from '@/error.ts';
@@ -16,20 +7,27 @@ import {
   type SearchResultItem,
   SUBTASK_RELY_DATA_TYPE,
 } from '@/types.ts';
+import {
+  FieldValue,
+  Firestore,
+  type Settings,
+  Timestamp,
+} from '@google-cloud/firestore';
+import { Duplex } from 'node:stream';
 
 const config = loadConfig(APP_ENV);
 
 export function databaseHealthCheck(database: Firestore) {
   return async function healthCheckByGetCollectionInfo(): Promise<
     | {
-        ok: true;
-      }
-    | {
         error: {
           code: string;
           message: string;
         };
         ok: false;
+      }
+    | {
+        ok: true;
       }
   > {
     return database
@@ -99,8 +97,8 @@ export function connectProductSearchCacheOnDatabase(
       return cacheDoc;
     },
     async getCachedSearchData(): Promise<
-      | { error: { code: string; message: string }; ok: false }
       | { data: [string, SearchResultItem][]; ok: true }
+      | { error: { code: string; message: string }; ok: false }
     > {
       const doc = await cacheDoc.get();
       if (!doc.exists) {
@@ -130,7 +128,7 @@ export function connectProductSearchCacheOnDatabase(
           ]),
           ok: true,
         };
-      } catch (e) {
+      } catch {
         return {
           error: {
             code: 'ERR_CACHE_NOT_FOUND',
@@ -190,18 +188,18 @@ export function connectReplyStreamOnDatabase(
     shapeOfReplyStreamItem(
       productInfo:
         | {
+            data: {
+              total: number;
+            };
+            type: REPLY_DATA_TYPE.SEARCH_PRODUCT;
+          }
+        | {
             error: {
               code: string | undefined;
               message: string;
               meta?: Record<string, unknown>;
             };
             type: REPLY_DATA_TYPE.SEARCH_PRODUCT_ERROR;
-          }
-        | {
-            data: {
-              total: number;
-            };
-            type: REPLY_DATA_TYPE.SEARCH_PRODUCT;
           },
     ) {
       return { search: productInfo };
@@ -233,18 +231,18 @@ export function connectToProductSearchSubTasksReplyStreamOnDatabase(
     shapeOfReplyStreamItem(
       productInfo:
         | {
+            data: {
+              total: number;
+            };
+            type: SUBTASK_RELY_DATA_TYPE.SEARCH_PRODUCT;
+          }
+        | {
             error: {
               code: string | undefined;
               message: string;
               meta?: Record<string, unknown>;
             };
             type: SUBTASK_RELY_DATA_TYPE.SEARCH_PRODUCT_ERROR;
-          }
-        | {
-            data: {
-              total: number;
-            };
-            type: SUBTASK_RELY_DATA_TYPE.SEARCH_PRODUCT;
           },
     ) {
       return productInfo;

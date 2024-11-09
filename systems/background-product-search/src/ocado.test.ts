@@ -1,10 +1,8 @@
-import { Readable } from 'node:stream';
-
-import { describe, expect, it } from 'vitest';
-
 import { closeBrowserPage, createBrowserPage } from '@/browser.ts';
 import { loadFixtures } from '@/fixtures/loader.ts';
 import { baseUrl, createProductsSearchHandler } from '@/ocado.ts';
+import { Readable } from 'node:stream';
+import { describe, expect, it } from 'vitest';
 
 describe(
   'background-product-search',
