@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
-  config as winstonConfig,
   createLogger as createWinstonLogger,
   format,
   transports,
+  config as winstonConfig,
 } from 'winston';
 
 describe('winston', () => {

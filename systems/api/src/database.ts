@@ -1,25 +1,23 @@
-import { Duplex } from 'node:stream';
-
-import { Firestore, type Settings, Timestamp } from '@google-cloud/firestore';
-import pLimit from 'p-limit';
-
 import { APP_ENV, loadConfig } from '@/config.ts';
 import { createGraphQLError, withErrorCode } from '@/error.ts';
 import { createLogger, type Logger } from '@/logger.ts';
+import { Firestore, type Settings, Timestamp } from '@google-cloud/firestore';
+import { Duplex } from 'node:stream';
+import pLimit from 'p-limit';
 
 const config = loadConfig(APP_ENV);
 
 export function databaseHealthCheck(database: Firestore) {
   return async function healthCheckByGetCollectionInfo(): Promise<
     | {
-        ok: true;
-      }
-    | {
         error: {
           code: string;
           message: string;
         };
         ok: false;
+      }
+    | {
+        ok: true;
       }
   > {
     return database

@@ -1,6 +1,5 @@
 import { Duplex, Readable } from 'node:stream';
 import { isNativeError } from 'node:util/types';
-
 import { describe, expect, it, vi } from 'vitest';
 
 describe('node:stream', () => {

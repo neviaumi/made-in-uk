@@ -1,4 +1,4 @@
-import { Readable } from 'node:stream';
+import type { GraphqlContext, ResolverFunction } from '@/types.ts';
 
 import {
   createCloudTaskClient,
@@ -9,7 +9,7 @@ import {
   connectToReplyStreamOnDatabase,
   createDatabaseConnection,
 } from '@/database.ts';
-import type { GraphqlContext, ResolverFunction } from '@/types.ts';
+import { Readable } from 'node:stream';
 
 type DealMonitorQueryArgument = {
   input: { monitorId: string };
@@ -21,7 +21,7 @@ const monitors: {
     id: string;
     items: Array<{
       id: string;
-      source: 'LILYS_KITCHEN' | 'PETS_AT_HOME' | 'ZOOPLUS' | 'VET_SHOP';
+      source: 'LILYS_KITCHEN' | 'PETS_AT_HOME' | 'VET_SHOP' | 'ZOOPLUS';
       url: string;
     }>;
     name: string;
@@ -201,7 +201,7 @@ export const dealMonitorItemDefer: ResolverFunction<
   await Readable.from(productStream).forEach(item => {
     if (!item.type) return;
     if (
-      ['FETCH_PRODUCT_DETAIL_FAILURE', 'FETCH_PRODUCT_DETAIL'].includes(
+      ['FETCH_PRODUCT_DETAIL', 'FETCH_PRODUCT_DETAIL_FAILURE'].includes(
         item.type,
       )
     ) {
