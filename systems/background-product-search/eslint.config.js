@@ -21,11 +21,7 @@ export default [
     },
     name: pkgJson.name,
   },
-  useESModuleEslintConfig({
-    rules: {
-      'n/no-unsupported-features/node-builtins': 'off',
-    },
-  }),
+  useESModuleEslintConfig(),
   useTypescriptEslintConfig(),
   useCodeSortingEslintConfig(),
   useJSONEslintConfig(),

@@ -9,6 +9,14 @@ import globals from 'globals';
 
 import pkgjson from './package.json' with { type: 'json' };
 
+function withOverride(override) {
+  return config => {
+    return Object.assign(config, {
+      rules: Object.assign(config.rules ?? {}, override.rules ?? {}),
+    });
+  };
+}
+
 export default [
   {
     ignores: ['systems/**/*', 'package-lock.json', 'gha-creds-*.json'],
@@ -23,10 +31,10 @@ export default [
   useESModuleEslintConfig(),
   useCodeSortingEslintConfig(),
   useJSONEslintConfig(),
-  useMarkdownEslintConfig({
+  withOverride({
     rules: {
       'markdownlint/md013': 'off',
     },
-  }),
+  })(useMarkdownEslintConfig()),
   useYamlEslintConfig(),
 ].flat();

@@ -12,6 +12,14 @@ import globals from 'globals';
 
 import pkgjson from './package.json' with { type: 'json' };
 
+function withOverride(override) {
+  return config => {
+    return Object.assign(config, {
+      rules: Object.assign(config.rules ?? {}, override.rules ?? {}),
+    });
+  };
+}
+
 export default [
   {
     ignores: ['package-lock.json', 'build', '.cache', 'public/build'],
@@ -23,36 +31,19 @@ export default [
     },
     name: pkgjson.name,
   },
-  {
-    name: pkgjson.name,
-    settings: {
-      tailwindcss: {
-        config: './tailwind.config.mjs',
-      },
-    },
-  },
-  useESModuleEslintConfig({
-    rules: {
-      'n/no-unsupported-features/node-builtins': 'off',
-    },
-  }),
-  useReactEslintConfig({
+  useESModuleEslintConfig(),
+  withOverride({
     rules: {
       'import/prefer-default-export': 'off',
       'react-refresh/only-export-components': 'off',
     },
-  }),
-  useCodeSortingEslintConfig({
+  })(useReactEslintConfig()),
+  withOverride({
     rules: {
       'perfectionist/sort-imports': 'off',
     },
-  }),
-  useTypescriptEslintConfig({
-    rules: {
-      '@typescript-eslint/adjacent-overload-signatures': 'off',
-      '@typescript-eslint/sort-type-constituents': 'off',
-    },
-  }),
+  })(useCodeSortingEslintConfig()),
+  useTypescriptEslintConfig(),
   useTailwindCSSEslintConfig({
     files: ['app/**/*.ts*(x)'],
   }),
@@ -61,11 +52,10 @@ export default [
   useMarkdownEslintConfig(),
   {
     files: ['app/entry.server.tsx'],
-
     name: pkgjson.name,
     rules: {
       'max-params': 'off',
       'no-console': 'off',
     },
   },
-].flat();
+];

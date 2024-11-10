@@ -40,4 +40,4 @@ export default [
       'no-console': 'off',
     },
   },
-].flat();
+];
