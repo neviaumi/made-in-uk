@@ -40,7 +40,7 @@
   "name": "infrastructure",
   "private": true,
   "scripts": {
-    "build": "npx babel --out-dir ./bin --extensions .ts --ignore ./src/gcp/**/node_modules --copy-files --no-copy-ignored ./src"
+    "build": "npx babel --out-dir ./bin --extensions .ts ./src"
   },
   "type": "module",
   "version": "2024.10.31-alpha.1719"
