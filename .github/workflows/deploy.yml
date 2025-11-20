@@ -8,7 +8,7 @@ jobs:
     needs: release
     runs-on: ubuntu-latest
     steps: 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - env:
           GITHUB_TOKEN: ${{secrets.REPO_SCOPED_TOKEN}}
           HEAD_BRANCH: ${{needs.release.outputs.release_branch}}
@@ -25,7 +25,7 @@ jobs:
       released_version: ${{ steps.release.outputs.released_version }}
     runs-on: ubuntu-latest
     steps: 
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Use Node.js lts
         uses: actions/setup-node@v6
         with: 
